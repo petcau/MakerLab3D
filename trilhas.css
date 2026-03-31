@@ -1,0 +1,441 @@
+/* --- ESTILOS EXCLUSIVOS DAS TRILHAS --- */
+
+:root {
+  --trilha-bg: #f7f8fc;
+  --trilha-surface: #ffffff;
+  --trilha-surface-2: #f3f6fb;
+  --trilha-text: #23314d;
+  --trilha-muted: #62708c;
+  --trilha-line: #dbe2ef;
+  --trilha-blue: #30446f;
+  --trilha-blue-2: #465f94;
+  --trilha-yellow: #f5c400;
+  --trilha-yellow-dark: #c99800;
+  --trilha-orange: #ff7b2c;
+  --trilha-green: #39b56a;
+  --trilha-shadow: 0 18px 42px rgba(35, 49, 77, 0.08);
+}
+
+.trilhas-page {
+  padding-top: 80px;
+  background:
+    radial-gradient(circle at top left, rgba(245, 196, 0, 0.08), transparent 24%),
+    linear-gradient(180deg, #fbfcff 0%, var(--trilha-bg) 100%);
+}
+
+.trilhas-hero {
+  padding: 88px 0 44px;
+}
+
+.trilhas-hero-box {
+  background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(243,246,251,0.96));
+  border: 1px solid var(--trilha-line);
+  border-radius: 32px;
+  padding: 38px;
+  box-shadow: var(--trilha-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.trilhas-hero-box::after {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 196, 0, 0.18), transparent 70%);
+  top: -110px;
+  right: -80px;
+  pointer-events: none;
+}
+
+.trilhas-hero h1 {
+  font-size: clamp(2.2rem, 4vw, 4rem);
+  color: var(--secondary);
+  margin: 10px 0 16px;
+}
+
+.trilhas-hero p {
+  color: var(--trilha-muted);
+  max-width: 760px;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.trilhas-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--trilha-line);
+  background: var(--trilha-surface);
+  color: var(--trilha-blue);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-blue { background: var(--trilha-blue); }
+.dot-green { background: var(--trilha-green); }
+.dot-orange { background: var(--trilha-orange); }
+.dot-yellow { background: var(--trilha-yellow); }
+
+.trilhas-nav-path {
+  position: sticky;
+  top: 70px;
+  z-index: 900;
+  background: rgba(247, 248, 252, 0.88);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(219, 226, 239, 0.8);
+  border-bottom: 1px solid rgba(219, 226, 239, 0.8);
+}
+
+.trilhas-nav-path .container {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 14px 0;
+  scrollbar-width: none;
+}
+
+.trilhas-nav-path .container::-webkit-scrollbar {
+  display: none;
+}
+
+.trilhas-nav-path a {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  border-radius: 999px;
+  background: var(--trilha-surface);
+  border: 1px solid var(--trilha-line);
+  color: var(--trilha-blue);
+  font-size: 0.92rem;
+  font-weight: 700;
+  transition: 0.25s ease;
+}
+
+.trilhas-nav-path a:hover {
+  background: #fffdf5;
+  border-color: var(--trilha-yellow-dark);
+  transform: translateY(-2px);
+}
+
+.trilhas-wrapper {
+  padding: 44px 0 90px;
+}
+
+.trilha-block {
+  position: relative;
+  padding-left: 88px;
+  margin-bottom: 52px;
+}
+
+.trilha-block:last-child {
+  margin-bottom: 0;
+}
+
+.trilha-block::before {
+  content: "";
+  position: absolute;
+  left: 34px;
+  top: 0;
+  bottom: -52px;
+  width: 6px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--trilha-yellow) 0%, var(--trilha-orange) 100%);
+}
+
+.trilha-block:last-child::before {
+  bottom: 140px;
+}
+
+.trilha-marker {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--trilha-blue), var(--trilha-blue-2));
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: var(--trilha-shadow);
+  border: 4px solid #fff;
+}
+
+.trilha-card-box {
+  background: var(--trilha-surface);
+  border: 1px solid var(--trilha-line);
+  border-radius: 30px;
+  box-shadow: var(--trilha-shadow);
+  overflow: hidden;
+}
+
+.trilha-intro {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 20px;
+  align-items: start;
+  padding: 28px 30px 20px;
+  background: linear-gradient(135deg, rgba(48,68,111,0.03), rgba(245,196,0,0.08));
+}
+
+.trilha-kicker {
+  display: inline-flex;
+  margin-bottom: 10px;
+  color: var(--trilha-orange);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.trilha-intro h2 {
+  font-size: clamp(1.55rem, 2.4vw, 2.3rem);
+  color: var(--secondary);
+  margin-bottom: 12px;
+}
+
+.trilha-intro p {
+  color: var(--trilha-muted);
+  line-height: 1.7;
+}
+
+.trilha-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.summary-mini {
+  background: rgba(255,255,255,0.88);
+  border: 1px solid var(--trilha-line);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.summary-mini strong {
+  display: block;
+  color: var(--trilha-blue);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.summary-mini span {
+  font-size: 0.98rem;
+  color: var(--trilha-text);
+  font-weight: 700;
+}
+
+.trilha-route {
+  padding: 26px 24px 24px;
+}
+
+.route-title {
+  color: var(--trilha-blue);
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 18px;
+}
+
+.route-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.route-step {
+  grid-column: span 3;
+  position: relative;
+  background: linear-gradient(180deg, #fff, #fbfcff);
+  border: 1px solid var(--trilha-line);
+  border-radius: 24px;
+  padding: 18px 16px;
+  min-height: 150px;
+}
+
+.route-step::after {
+  content: "→";
+  position: absolute;
+  top: 50%;
+  right: -13px;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--trilha-yellow);
+  color: var(--trilha-blue);
+  font-weight: 900;
+  box-shadow: 0 4px 16px rgba(245,196,0,0.35);
+}
+
+.route-step:last-child::after {
+  display: none;
+}
+
+.step-number {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--trilha-blue);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.step-type {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.cat-apresentacao { background: rgba(48,68,111,0.1); color: var(--trilha-blue); }
+.cat-conteudo { background: rgba(57,181,106,0.14); color: #25784a; }
+.cat-pratica { background: rgba(255,123,44,0.14); color: #c75d18; }
+.cat-desafio { background: rgba(245,196,0,0.2); color: #926d00; }
+
+.route-step h3 {
+  font-size: 1rem;
+  color: var(--trilha-text);
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+
+.route-step p {
+  font-size: 0.9rem;
+  color: var(--trilha-muted);
+  line-height: 1.5;
+}
+
+.trilha-assets-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  padding: 24px;
+}
+
+.asset-panel {
+  background: var(--trilha-surface-2);
+  border: 1px dashed #c7d1e5;
+  border-radius: 22px;
+  padding: 20px;
+}
+
+.asset-panel h3 {
+  font-size: 1rem;
+  color: var(--trilha-blue);
+  margin-bottom: 12px;
+}
+
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.asset-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--trilha-line);
+  color: var(--trilha-text);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+@media (max-width: 1080px) {
+  .route-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+
+  .route-step {
+    grid-column: span 4;
+  }
+
+  .trilha-intro {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .trilhas-hero {
+    padding: 56px 0 32px;
+  }
+
+  .trilhas-hero-box {
+    padding: 24px;
+    border-radius: 24px;
+  }
+
+  .trilhas-hero h1 {
+    font-size: 2rem;
+  }
+
+  .trilhas-nav-path {
+    position: relative;
+    top: 0;
+  }
+
+  .trilha-block {
+    padding-left: 0;
+  }
+
+  .trilha-block::before,
+  .trilha-marker {
+    display: none;
+  }
+
+  .route-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .route-step {
+    grid-column: auto;
+    min-height: auto;
+  }
+
+  .route-step::after {
+    content: "↓";
+    right: 50%;
+    top: auto;
+    bottom: -13px;
+    transform: translateX(50%);
+  }
+
+  .trilha-summary-grid,
+  .trilha-assets-grid {
+    grid-template-columns: 1fr;
+  }
+}

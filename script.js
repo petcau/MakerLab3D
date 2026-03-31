@@ -59,7 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, observerOptions);
 
-    const animateElements = document.querySelectorAll('.animate-up, .animate-scale, .animate-fade, .eco-card, .journey-box, .media-card');
+  
+    const animateElements = document.querySelectorAll('.animate-up, .animate-scale, .animate-fade, .eco-card, .journey-box, .media-card, .testimonial-card, .video-card');
     
     animateElements.forEach(el => {
         // Adicionando classe de transição se não estiver no CSS
