@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MakerLab 3D — Painel de Cards</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-logo">MAKER<span>LAB</span> 3D</div>
+    <div class="header-sub">Painel de Cards</div>
+  </div>
+
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">Cards</span>
+        <button class="btn-novo" onclick="novoCard()">+ Novo Card</button>
+      </div>
+      <div class="card-list" id="card-list">
+        <div class="list-loading">Carregando cards...</div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main" id="main-content">
+      <div class="empty-state">
+        <div class="empty-state-icon">🃏</div>
+        <p>Selecione um card na lista<br>ou crie um novo para começar.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

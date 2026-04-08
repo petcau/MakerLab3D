@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MakerLab 3D — Desafio</title>
+  <link rel="stylesheet" href="card.css">
+</head>
+<body>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <span>carregando desafio...</span>
+  </div>
+
+  <div id="error"></div>
+
+  <div id="card-page" style="display:none;">
+
+    <!-- HERO -->
+    <div class="card-hero">
+      <div class="hero-topbar">
+        <img src="../assets/logo_makerlab_3d.png" alt="MakerLab 3D" class="hero-topbar-logo">
+        <div class="hero-topbar-right">
+          <span class="nivel-pill" id="nivel-badge">—</span>
+          <span class="desafio-code" id="desafio-num">—</span>
+        </div>
+      </div>
+
+      <div class="hero-body">
+        <div class="hero-left">
+          <div class="hero-tema-wrap" id="hero-tema-wrap" style="display:none;">
+            <span class="hero-tema" id="hero-tema"></span>
+          </div>
+          <h1 class="hero-title" id="nome-desafio">—</h1>
+          <p class="hero-objetivo" id="objetivo">—</p>
+        </div>
+        <div class="hero-imagem-wrap" id="hero-imagem-wrap">
+          <div class="hero-imagem-placeholder">
+            <span>📷</span>
+            <span>Imagem do desafio</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-stats-wrap">
+        <div class="hero-stats">
+          <div class="stat-block" id="stat-duracao" style="display:none;">
+            <div class="stat-icon">⏱</div>
+            <strong class="stat-val" id="duracao">—</strong>
+            <span class="stat-lbl">duração</span>
+          </div>
+          <div class="stat-block" id="stat-pontos" style="display:none;">
+            <div class="stat-icon">⭐</div>
+            <strong class="stat-val" id="pontos">—</strong>
+            <span class="stat-lbl">pontos</span>
+          </div>
+          <div class="stat-block" id="stat-kit" style="display:none;">
+            <div class="stat-icon">📦</div>
+            <strong class="stat-val" id="kit">—</strong>
+            <span class="stat-lbl">kit</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEFINIÇÃO -->
+    <div class="section" id="sec-definicao" style="display:none;">
+      <div class="section-header">
+        <div class="section-icon">📖</div>
+        <span class="section-title" id="def-titulo">—</span>
+      </div>
+      <div class="def-texto texto-livre" id="def-texto"></div>
+    </div>
+
+    <!-- CARDS VINCULADOS -->
+    <div class="section" id="sec-vinculados" style="display:none;">
+      <div class="section-header">
+        <div class="section-icon">🔗</div>
+        <span class="section-title">Cards Vinculados</span>
+      </div>
+      <div class="linked-grid" id="linked-grid"></div>
+    </div>
+
+    <!-- CURIOSIDADES -->
+    <div class="section" id="sec-curiosidades" style="display:none;">
+      <div class="section-header">
+        <div class="section-icon">💡</div>
+        <span class="section-title">Curiosidades</span>
+      </div>
+      <div class="texto-livre" id="curiosidades"></div>
+    </div>
+
+    <!-- ATIVIDADE RÁPIDA -->
+    <div class="section" id="sec-atividade" style="display:none;">
+      <div class="section-header">
+        <div class="section-icon">⚡</div>
+        <span class="section-title">Atividade Rápida</span>
+      </div>
+      <div class="texto-livre" id="ativ-descricao"></div>
+      <div class="ativ-imagem-wrap" id="ativ-imagem-wrap" style="display:none;">
+        <img id="ativ-imagem" src="" alt="Circuito" class="ativ-imagem">
+      </div>
+      <div class="ativ-codigo-wrap" id="ativ-codigo-wrap" style="display:none;">
+        <div class="ativ-codigo-label">💻 Código Arduino IDE</div>
+        <pre class="ativ-codigo" id="ativ-codigo"></pre>
+      </div>
+      <div class="ativ-glossario-wrap" id="ativ-glossario-wrap" style="display:none;">
+        <div class="ativ-codigo-label">📋 Glossário de Código</div>
+        <table class="ativ-glossario-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>O que faz?</th>
+            </tr>
+          </thead>
+          <tbody id="ativ-glossario-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VÍDEO -->
+    <div class="section" id="sec-video" style="display:none;">
+      <div class="section-header">
+        <div class="section-icon">▶️</div>
+        <span class="section-title">Assista como se faz!</span>
+      </div>
+      <div class="video-wrap">
+        <iframe id="video-iframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    </div>
+
+    <!-- AVALIAÇÃO -->
+    <div class="section" id="sec-avaliacao" style="display:none;">
+      <div class="section-header">
+        <div class="section-icon">📝</div>
+        <span class="section-title">Avaliação — Questões Reflexivas</span>
+      </div>
+      <div class="texto-livre" id="avaliacao"></div>
+    </div>
+
+    <!-- DESAFIO EXTRA -->
+    <div class="section-desafio-extra" id="sec-desafio-extra" style="display:none;">
+      <div class="desafio-extra-header">
+        <div class="desafio-extra-badge">🚀 Desafio Extra</div>
+        <p class="desafio-extra-sub">Vai além! Você consegue?</p>
+      </div>
+      <div class="texto-livre desafio-extra-body" id="desafio-extra"></div>
+    </div>
+
+    <!-- CTA TUTORIAL -->
+    <div class="section section-cta" id="sec-cta" style="display:none;">
+      <div class="cta-left">
+        <div class="cta-eyebrow">📲 Tutorial Completo</div>
+        <div class="cta-text">Acesse o vídeo, o código-fonte<br>e a ficha técnica deste desafio.</div>
+      </div>
+      <a class="cta-btn" id="qr-link" href="#" target="_blank">
+        Acessar Tutorial →
+      </a>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="card-footer">
+      <img src="../assets/logo_makerlab_3d.png" alt="MakerLab 3D" class="footer-logo">
+      <div class="footer-copy">
+        <strong>Método Maker Cognitivo</strong>
+        <span>Tecnologia Educacional</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="card.js"></script>
+</body>
+</html>
