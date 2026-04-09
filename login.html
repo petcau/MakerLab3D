@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Educacional | MakerLab3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 20px 60px;
+      background:
+        radial-gradient(circle at top right, rgba(245,196,0,0.08), transparent 40%),
+        radial-gradient(circle at bottom left, rgba(48,68,111,0.06), transparent 40%),
+        #f7f8fc;
+    }
+
+    .login-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+      max-width: 960px;
+      width: 100%;
+    }
+
+    /* Lado esquerdo — apresentação */
+    .login-promo {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .login-promo .tag {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245,196,0,0.15);
+      border: 1px solid rgba(245,196,0,0.4);
+      color: #926d00;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 999px;
+    }
+
+    .login-promo h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      font-weight: 800;
+      color: #23314d;
+      line-height: 1.2;
+    }
+
+    .login-promo h1 span { color: #f5c400; }
+
+    .login-promo p {
+      color: #62708c;
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    .login-features {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .login-feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: #62708c;
+      font-weight: 500;
+    }
+
+    .login-feature-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #f5c400;
+      flex-shrink: 0;
+    }
+
+    /* Card de login */
+    .login-card {
+      background: #fff;
+      border: 1px solid #dbe2ef;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(35,49,77,0.08);
+    }
+
+    .login-card-header {
+      background: linear-gradient(135deg, #30446f, #465f94);
+      padding: 28px 32px;
+      text-align: center;
+    }
+
+    .login-card-logo {
+      font-family: 'Poppins', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .login-card-logo span { color: #f5c400; }
+
+    .login-card-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+    }
+
+    .login-card-body { padding: 28px 32px 32px; }
+
+    .btn-google-full {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 13px 20px;
+      border: 1.5px solid #dbe2ef;
+      border-radius: 12px;
+      background: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #23314d;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 20px;
+    }
+
+    .btn-google-full:hover {
+      background: #f7f8fc;
+      border-color: #30446f;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(48,68,111,0.08);
+    }
+
+    .btn-google-full img { width: 20px; height: 20px; }
+
+    .divider-ou {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      color: #b0b8cc;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .divider-ou::before,
+    .divider-ou::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #dbe2ef;
+    }
+
+    .form-group { margin-bottom: 14px; }
+
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #62708c;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .form-group input {
+      width: 100%;
+      border: 1.5px solid #dbe2ef;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      color: #23314d;
+      background: #f7f8fc;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .form-group input:focus {
+      border-color: #30446f;
+      background: #fff;
+    }
+
+    .btn-entrar {
+      width: 100%;
+      background: linear-gradient(135deg, #30446f, #465f94);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 4px;
+    }
+
+    .btn-entrar:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(48,68,111,0.25);
+    }
+
+    .link-esqueci {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      font-size: 12px;
+      color: #62708c;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .link-esqueci:hover { color: #30446f; }
+
+    .msg-login {
+      display: none;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 14px;
+    }
+
+    .msg-login.erro    { background: #fdf2f2; border: 1px solid #f5c6c6; color: #c0392b; }
+    .msg-login.sucesso { background: #f0fdf4; border: 1px solid #a7f3d0; color: #27ae60; }
+
+    /* Loading */
+    .page-loading {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.75);
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      backdrop-filter: blur(4px);
+    }
+
+    .page-spinner {
+      width: 44px; height: 44px;
+      border: 3px solid #dbe2ef;
+      border-top-color: #f5c400;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      .login-wrap { grid-template-columns: 1fr; gap: 32px; }
+      .login-promo { text-align: center; align-items: center; }
+      .login-card-body { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER DO SITE -->
+  <header id="main-header" class="scrolled">
+    <div class="container nav-wrapper">
+      <div class="logo">
+        <a href="index.html">
+          <span class="logo-bold">MakerLab</span><span class="logo-accent">3D</span>
+        </a>
+      </div>
+      <nav class="nav-menu" id="nav-menu">
+        <ul>
+          <li><a href="index.html#inicio">Início</a></li>
+          <li><a href="index.html#ecossistema">Soluções</a></li>
+          <li><a href="index.html#metodo">Método</a></li>
+          <li><a href="index.html#midia">Mídia</a></li>
+          <li><a href="portal_educacional.html" class="btn-nav">Portal Educacional</a></li>
+          <li><a href="index.html#contato" class="btn-nav">Contato</a></li>
+        </ul>
+      </nav>
+      <button class="hamburger" id="hamburger">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <div class="page-loading" id="loading">
+    <div class="page-spinner"></div>
+  </div>
+
+  <main class="login-page">
+    <div class="login-wrap">
+
+      <!-- APRESENTAÇÃO -->
+      <div class="login-promo">
+        <div class="tag">🚀 Trilhas de Aprendizagem</div>
+        <h1>Explore, crie e <span>inove</span> no seu ritmo</h1>
+        <p>Acesse as trilhas pedagógicas do MakerLab 3D e embarque em uma jornada de descobertas com eletrônica, robótica e programação.</p>
+        <div class="login-features">
+          <div class="login-feature"><div class="login-feature-dot"></div>Trilhas organizadas por nível de aprendizagem</div>
+          <div class="login-feature"><div class="login-feature-dot"></div>Desafios práticos com Arduino e robótica</div>
+          <div class="login-feature"><div class="login-feature-dot"></div>Vídeos, códigos e tutoriais integrados</div>
+          <div class="login-feature"><div class="login-feature-dot"></div>Acompanhamento do seu progresso</div>
+        </div>
+      </div>
+
+      <!-- CARD DE LOGIN -->
+      <div class="login-card">
+        <div class="login-card-header">
+          <div class="login-card-logo">Maker<span>Lab</span> 3D</div>
+          <div class="login-card-sub">Portal Educacional</div>
+        </div>
+        <div class="login-card-body">
+
+          <button class="btn-google-full" id="btn-google">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
+            Entrar com Google
+          </button>
+
+          <div class="divider-ou">ou</div>
+
+          <div class="form-group">
+            <label>E-mail</label>
+            <input type="email" id="email" placeholder="seu@email.com">
+          </div>
+          <div class="form-group">
+            <label>Senha</label>
+            <input type="password" id="senha" placeholder="••••••••">
+          </div>
+
+          <button class="btn-entrar" id="btn-entrar">Entrar →</button>
+
+          <a href="#" class="link-esqueci" id="link-esqueci">Esqueci minha senha</a>
+
+          <div class="msg-login" id="msg"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged,
+      signInWithPopup, signInWithEmailAndPassword,
+      sendPasswordResetEmail, GoogleAuthProvider
+    } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAndgQiwxpe6wyCF8aa5NqqdMuwLJfMIMM",
+      authDomain: "makerlab3d-4e455.firebaseapp.com",
+      projectId: "makerlab3d-4e455",
+      storageBucket: "makerlab3d-4e455.firebasestorage.app",
+      messagingSenderId: "495457985822",
+      appId: "1:495457985822:web:05efcebeed970ecb82150f"
+    };
+
+    const app      = initializeApp(firebaseConfig);
+    const auth     = getAuth(app);
+    const db       = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    function showLoading(v) { document.getElementById('loading').style.display = v ? 'flex' : 'none'; }
+
+    function mostrarMsg(msg, tipo) {
+      const el = document.getElementById('msg');
+      el.textContent = msg;
+      el.className = `msg-login ${tipo}`;
+      el.style.display = 'block';
+    }
+
+    // Se já estiver logado redireciona
+    onAuthStateChanged(auth, async user => {
+      if (user) {
+        showLoading(true);
+        await redirecionar(user);
+      }
+    });
+
+    async function redirecionar(user) {
+      try {
+        const snap = await getDoc(doc(db, 'usuarios', user.uid));
+        if (!snap.exists()) {
+          mostrarMsg('Usuário não cadastrado. Fale com sua escola.', 'erro');
+          await auth.signOut();
+          showLoading(false);
+          return;
+        }
+        const perfil = snap.data().perfil;
+        // Todos vão para trilhas.html
+        window.location.href = 'portal_educacional.html';
+      } catch(err) {
+        mostrarMsg('Erro ao verificar acesso: ' + err.message, 'erro');
+        showLoading(false);
+      }
+    }
+
+    // Google
+    document.getElementById('btn-google').addEventListener('click', async () => {
+      showLoading(true);
+      try {
+        const result = await signInWithPopup(auth, provider);
+        await redirecionar(result.user);
+      } catch(err) {
+        showLoading(false);
+        if (err.code !== 'auth/popup-closed-by-user') {
+          mostrarMsg('Erro ao entrar com Google.', 'erro');
+        }
+      }
+    });
+
+    // E-mail/senha
+    document.getElementById('btn-entrar').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value;
+      if (!email || !senha) return mostrarMsg('Preencha e-mail e senha.', 'erro');
+      showLoading(true);
+      try {
+        const result = await signInWithEmailAndPassword(auth, email, senha);
+        await redirecionar(result.user);
+      } catch(err) {
+        showLoading(false);
+        const msgs = {
+          'auth/user-not-found':    'Usuário não encontrado.',
+          'auth/wrong-password':    'Senha incorreta.',
+          'auth/invalid-email':     'E-mail inválido.',
+          'auth/invalid-credential':'E-mail ou senha incorretos.',
+          'auth/too-many-requests': 'Muitas tentativas. Tente mais tarde.',
+        };
+        mostrarMsg(msgs[err.code] || 'Erro: ' + err.message, 'erro');
+      }
+    });
+
+    // Enter na senha
+    document.getElementById('senha').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-entrar').click();
+    });
+
+    // Esqueci a senha
+    document.getElementById('link-esqueci').addEventListener('click', async e => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) return mostrarMsg('Digite seu e-mail acima primeiro.', 'erro');
+      try {
+        await sendPasswordResetEmail(auth, email);
+        mostrarMsg('✅ E-mail de redefinição enviado! Verifique sua caixa de entrada.', 'sucesso');
+      } catch(err) {
+        mostrarMsg('Erro ao enviar e-mail. Verifique o endereço.', 'erro');
+      }
+    });
+  </script>
+
+</body>
+</html>

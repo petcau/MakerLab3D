@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Educacional | MakerLab3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .portal-page {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top right, rgba(245,196,0,0.08), transparent 40%),
+        radial-gradient(circle at bottom left, rgba(48,68,111,0.06), transparent 40%),
+        #f7f8fc;
+      padding-top: 80px;
+    }
+
+    /* Loading overlay */
+    .page-loading {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: rgba(247,248,252,0.95);
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .page-spinner {
+      width: 44px; height: 44px;
+      border: 3px solid #dbe2ef;
+      border-top-color: #f5c400;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .page-loading p {
+      color: #62708c;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Hero do portal */
+    .portal-hero {
+      background: linear-gradient(135deg, #23314d 0%, #30446f 100%);
+      padding: 60px 0 50px;
+      color: #fff;
+    }
+
+    .portal-hero-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+    }
+
+    .portal-hero-text h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800;
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+
+    .portal-hero-text h1 span { color: #f5c400; }
+
+    .portal-hero-text p {
+      color: rgba(255,255,255,0.7);
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 480px;
+    }
+
+    .portal-user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 12px 20px;
+      flex-shrink: 0;
+    }
+
+    .portal-user-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: #f5c400;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 800;
+      color: #23314d;
+      font-size: 1rem;
+      overflow: hidden;
+    }
+
+    .portal-user-avatar img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .portal-user-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .portal-user-email {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.55);
+    }
+
+    .portal-user-perfil {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: #f5c400;
+      color: #23314d;
+      padding: 3px 10px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-top: 5px;
+    }
+
+    .portal-user-escola {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 3px;
+    }
+
+    .btn-sair {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.8);
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-sair:hover {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+    }
+
+    /* Seletor de visualização (apenas gestor) */
+    .visualizar-como {
+      display: none;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 10px 16px;
+      margin-top: 14px;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .visualizar-como.visivel { display: flex; }
+
+    .visualizar-como-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.5);
+      white-space: nowrap;
+    }
+
+    .visualizar-como-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-visao {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.7);
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .btn-visao:hover {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    .btn-visao.ativo {
+      background: #f5c400;
+      border-color: #f5c400;
+      color: #23314d;
+    }
+
+    /* ── Sub-painéis do aluno ── */
+    .sub-painel {
+      background: #fff;
+      border: 1px solid #dbe2ef;
+      border-radius: 20px;
+      padding: 28px 28px 32px;
+      margin-bottom: 24px;
+    }
+
+    .sub-painel-titulo {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #23314d;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── RANKING ── */
+    .ranking-grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 28px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 900px) { .ranking-grid { grid-template-columns: 1fr; } }
+
+    .ranking-selo-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .selo-img-wrap {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(35,49,77,0.12);
+    }
+
+    #selo-canvas { display: block; width: 100%; height: auto; }
+
+    .selo-nivel-nome {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #23314d;
+    }
+
+    .selo-nivel-desc {
+      font-size: 0.82rem;
+      color: #62708c;
+      text-align: center;
+    }
+
+    .ranking-dados {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .ranking-pontos-box {
+      background: linear-gradient(135deg, #23314d, #30446f);
+      border-radius: 16px;
+      padding: 20px 22px;
+      color: #fff;
+    }
+
+    .ranking-pontos-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 4px;
+    }
+
+    .ranking-pontos-valor {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: #f5c400;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .ranking-pontos-next {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 2px;
+    }
+
+    .ranking-posicoes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .rank-pos-card {
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .rank-pos-card.escola { background: rgba(245,196,0,0.10); border: 1px solid rgba(245,196,0,0.25); }
+    .rank-pos-card.geral  { background: rgba(48,68,111,0.07); border: 1px solid rgba(48,68,111,0.15); }
+
+    .rank-pos-icone { font-size: 1.4rem; }
+
+    .rank-pos-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #62708c;
+    }
+
+    .rank-pos-valor {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #23314d;
+      line-height: 1.1;
+    }
+
+    .rank-pos-sub {
+      font-size: 0.72rem;
+      color: #62708c;
+    }
+
+    .ranking-niveis {
+      background: #f7f8fc;
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+
+    .ranking-niveis-titulo {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #62708c;
+      margin-bottom: 12px;
+    }
+
+    .niveis-lista { display: flex; flex-direction: column; gap: 6px; }
+
+    .nivel-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: #8a94ad;
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+
+    .nivel-item.conquistado { color: #23314d; background: rgba(39,174,96,0.07); }
+    .nivel-item.atual       { color: #23314d; background: rgba(245,196,0,0.12); font-weight: 700; }
+
+    .nivel-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #dbe2ef;
+      flex-shrink: 0;
+    }
+
+    .nivel-item.conquistado .nivel-dot { background: #27ae60; }
+    .nivel-item.atual       .nivel-dot { background: #f5c400; }
+
+    .nivel-pts { margin-left: auto; font-size: 0.75rem; font-weight: 600; }
+
+    /* ── TRILHAS ── */
+    .trilha-loading {
+      color: #62708c;
+      font-size: 0.9rem;
+      padding: 20px 0;
+    }
+
+    .trilha-bloco {
+      margin-bottom: 28px;
+    }
+
+    .trilha-bloco-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .trilha-bloco-nome {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #23314d;
+    }
+
+    .trilha-bloco-prog {
+      font-size: 0.78rem;
+      color: #62708c;
+      font-weight: 600;
+    }
+
+    .trilha-progress-bar {
+      height: 4px;
+      background: #edf0f7;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .trilha-progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f5c400, #e6a800);
+    }
+
+    .trilha-cards-row {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: #dbe2ef transparent;
+    }
+
+    .trilha-card-item {
+      flex-shrink: 0;
+      width: 140px;
+      border-radius: 14px;
+      padding: 14px 12px;
+      border: 1.5px solid #dbe2ef;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.2s;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .trilha-card-item:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(35,49,77,0.08); }
+
+    .trilha-card-item.concluido {
+      border-color: #27ae60;
+      background: rgba(39,174,96,0.04);
+    }
+
+    .trilha-card-item.proximo {
+      border-color: #f5c400;
+      background: rgba(245,196,0,0.05);
+    }
+
+    .trilha-card-item.bloqueado {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .trilha-card-status {
+      position: absolute;
+      top: 8px; right: 8px;
+      font-size: 0.9rem;
+    }
+
+    .trilha-card-num {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #8a94ad;
+    }
+
+    .trilha-card-nome {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #23314d;
+      line-height: 1.3;
+    }
+
+    .trilha-card-pts {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #62708c;
+    }
+
+    /* ── PROGRESSO ── */
+    .progresso-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 600px) { .progresso-grid { grid-template-columns: repeat(2,1fr); } }
+
+    .prog-stat {
+      background: #f7f8fc;
+      border-radius: 14px;
+      padding: 18px 16px;
+      text-align: center;
+    }
+
+    .prog-stat-val {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #23314d;
+    }
+
+    .prog-stat-lab {
+      font-size: 0.75rem;
+      color: #62708c;
+      margin-top: 4px;
+    }
+
+    .prog-semanas-titulo {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #62708c;
+      margin-bottom: 12px;
+    }
+
+    .prog-semanas-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .semana-dot {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      cursor: default;
+    }
+
+    .semana-dot.ok      { background: #27ae60; color: #fff; }
+    .semana-dot.atual   { background: #f5c400; color: #23314d; }
+    .semana-dot.vazio   { background: #edf0f7; color: #8a94ad; }
+
+    /* ── GAMIFICAÇÃO ── */
+    .gamif-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .gamif-tab {
+      background: #f0f2f7;
+      border: none;
+      border-radius: 999px;
+      padding: 7px 18px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #62708c;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .gamif-tab.ativo {
+      background: #23314d;
+      color: #fff;
+    }
+
+    .gamif-lista { display: flex; flex-direction: column; gap: 8px; }
+
+    .gamif-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #f7f8fc;
+      border: 1px solid #edf0f7;
+    }
+
+    .gamif-item.destaque { background: #fff; border-color: #dbe2ef; }
+    .gamif-item.eu       { background: rgba(245,196,0,0.08); border-color: rgba(245,196,0,0.3); }
+
+    .gamif-pos { font-size: 1.1rem; width: 28px; text-align: center; font-weight: 800; color: #62708c; }
+
+    .gamif-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: #30446f;
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 800;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .gamif-avatar.eu-av { background: #f5c400; color: #23314d; }
+
+    .gamif-nome { font-size: 0.85rem; font-weight: 700; color: #23314d; }
+    .gamif-escola-tag { font-size: 0.72rem; color: #62708c; }
+    .gamif-pts { margin-left: auto; font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 0.88rem; color: #23314d; }
+
+    /* ── Painéis por perfil ── */
+    .painel-perfil {
+      display: none;
+      margin-bottom: 48px;
+    }
+    .painel-perfil.visivel { display: block; }
+
+    .painel-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .painel-header-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .painel-header-icon.aluno    { background: rgba(245,196,0,0.15); }
+    .painel-header-icon.prof     { background: rgba(48,68,111,0.12); }
+    .painel-header-icon.gestor   { background: rgba(39,174,96,0.12); }
+
+    .painel-header-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #23314d;
+    }
+
+    .painel-header-sub {
+      font-size: 0.8rem;
+      color: #62708c;
+      margin-top: 1px;
+    }
+
+    .painel-header::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #dbe2ef;
+    }
+
+    /* Cards compactos de acesso */
+    .acesso-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    @media (max-width: 900px) { .acesso-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .acesso-grid { grid-template-columns: 1fr; } }
+
+    .acesso-card {
+      background: #fff;
+      border: 1px solid #dbe2ef;
+      border-radius: 16px;
+      padding: 20px 18px;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.22s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .acesso-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 36px rgba(35,49,77,0.10);
+      border-color: #30446f;
+    }
+
+    .acesso-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .acesso-card-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .acesso-card-icon.amarelo { background: rgba(245,196,0,0.13); }
+    .acesso-card-icon.azul    { background: rgba(48,68,111,0.10); }
+    .acesso-card-icon.verde   { background: rgba(39,174,96,0.10); }
+    .acesso-card-icon.roxo    { background: rgba(142,68,173,0.10); }
+    .acesso-card-icon.laranja { background: rgba(230,126,34,0.10); }
+
+    .acesso-card-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .acesso-card-badge.em-breve {
+      background: #f0f2f7;
+      color: #8a94ad;
+    }
+
+    .acesso-card-badge.novo {
+      background: rgba(39,174,96,0.12);
+      color: #1a8a4a;
+    }
+
+    .acesso-card-badge.destaque {
+      background: rgba(245,196,0,0.18);
+      color: #926d00;
+    }
+
+    .acesso-card h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #23314d;
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .acesso-card p {
+      font-size: 0.78rem;
+      color: #62708c;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* Barra de progresso */
+    .acesso-card-progress {
+      margin-top: 4px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #62708c;
+      margin-bottom: 5px;
+    }
+
+    .progress-bar {
+      height: 5px;
+      background: #edf0f7;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f5c400, #e6a800);
+      transition: width 0.8s ease;
+    }
+
+    .progress-fill.verde { background: linear-gradient(90deg, #27ae60, #1e8449); }
+
+    /* Ranking mini */
+    .acesso-card-rank {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .rank-posicao {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #f5c400;
+      line-height: 1;
+    }
+
+    .rank-label {
+      font-size: 0.72rem;
+      color: #62708c;
+      line-height: 1.3;
+    }
+
+    /* Conteúdo principal */
+    .portal-main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .portal-section-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #23314d;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .portal-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #dbe2ef;
+    }
+
+    /* Cards de acesso rápido */
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+
+    .portal-card {
+      background: #fff;
+      border: 1px solid #dbe2ef;
+      border-radius: 20px;
+      padding: 28px 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: all 0.25s;
+      cursor: pointer;
+    }
+
+    .portal-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(35,49,77,0.10);
+      border-color: #30446f;
+    }
+
+    .portal-card-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+    }
+
+    .portal-card-icon.amarelo { background: rgba(245,196,0,0.12); }
+    .portal-card-icon.azul    { background: rgba(48,68,111,0.10); }
+    .portal-card-icon.verde   { background: rgba(39,174,96,0.10); }
+    .portal-card-icon.roxo    { background: rgba(142,68,173,0.10); }
+
+    .portal-card h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #23314d;
+      margin: 0;
+    }
+
+    .portal-card p {
+      font-size: 0.87rem;
+      color: #62708c;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .portal-card-arrow {
+      margin-top: auto;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #30446f;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Desafios recentes */
+    .portal-desafios {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .desafio-card {
+      background: #fff;
+      border: 1px solid #dbe2ef;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: box-shadow 0.2s;
+    }
+
+    .desafio-card:hover {
+      box-shadow: 0 8px 24px rgba(35,49,77,0.08);
+    }
+
+    .desafio-nivel {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .desafio-nivel.explorador { background: rgba(245,196,0,0.15); }
+    .desafio-nivel.criador    { background: rgba(48,68,111,0.12); }
+    .desafio-nivel.inovador   { background: rgba(231,76,60,0.10); }
+
+    .desafio-info h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #23314d;
+      margin: 0 0 4px;
+    }
+
+    .desafio-info p {
+      font-size: 0.8rem;
+      color: #62708c;
+      margin: 0;
+    }
+
+    .desafio-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-top: 6px;
+      display: inline-block;
+    }
+
+    .desafio-tag.explorador { background: rgba(245,196,0,0.15); color: #926d00; }
+    .desafio-tag.criador    { background: rgba(48,68,111,0.12); color: #30446f; }
+    .desafio-tag.inovador   { background: rgba(231,76,60,0.10); color: #c0392b; }
+
+    @media (max-width: 768px) {
+      .portal-hero-inner { flex-direction: column; align-items: flex-start; }
+      .portal-user-info  { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOADING (exibido até verificar autenticação) -->
+  <div class="page-loading" id="loading">
+    <div class="page-spinner"></div>
+    <p>Verificando acesso...</p>
+    <p id="loading-sub" style="font-size:0.78rem; margin-top:4px; color:#aab; display:none;">
+      Redirecionando para o login...
+    </p>
+  </div>
+
+  <!-- HEADER -->
+  <header id="main-header" class="scrolled">
+    <div class="container nav-wrapper">
+      <div class="logo">
+        <a href="index.html">
+          <span class="logo-bold">MakerLab</span><span class="logo-accent">3D</span>
+        </a>
+      </div>
+      <nav class="nav-menu" id="nav-menu">
+        <ul>
+          <li><a href="index.html#inicio">Início</a></li>
+          <li><a href="index.html#ecossistema">Soluções</a></li>
+          <li><a href="index.html#metodo">Método</a></li>
+          <li><a href="index.html#midia">Mídia</a></li>
+          <li><a href="portal_educacional.html" class="btn-nav">Portal Educacional</a></li>
+          <li><a href="index.html#contato">Contato</a></li>
+        </ul>
+      </nav>
+      <button class="hamburger" id="hamburger">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO DO PORTAL (oculto até login confirmado) -->
+  <div id="portal-content" style="display:none;">
+
+    <!-- HERO DO PORTAL -->
+    <div class="portal-hero">
+      <div class="portal-hero-inner">
+        <div class="portal-hero-text">
+          <h1>Portal <span>Educacional</span></h1>
+          <p>Bem-vindo ao seu espaço maker. Acesse trilhas, desafios, materiais e recursos pedagógicos integrados.</p>
+        </div>
+        <div class="portal-user-info">
+          <div class="portal-user-avatar" id="user-avatar">?</div>
+          <div>
+            <div class="portal-user-name" id="user-name">Carregando...</div>
+            <div class="portal-user-email" id="user-email"></div>
+            <div class="portal-user-perfil" id="user-perfil"></div>
+            <div class="portal-user-escola" id="user-escola" style="display:none;"></div>
+          </div>
+          <button class="btn-sair" id="btn-sair">Sair</button>
+        </div>
+      </div>
+
+      <!-- SELETOR DE VISUALIZAÇÃO (apenas gestores) -->
+      <div class="portal-hero-inner" style="padding-top:0; padding-bottom:20px;">
+        <div class="visualizar-como" id="visualizar-como">
+          <span class="visualizar-como-label">👁️ Visualizar como:</span>
+          <div class="visualizar-como-btns">
+            <button class="btn-visao ativo" data-visao="gestor" onclick="mudarVisao('gestor')">Gestor</button>
+            <button class="btn-visao" data-visao="professor" onclick="mudarVisao('professor')">Professor</button>
+            <button class="btn-visao" data-visao="aluno" onclick="mudarVisao('aluno')">Aluno</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="portal-main">
+
+      <!-- ══════════════════════════════════════════
+           PAINEL ALUNO
+      ══════════════════════════════════════════ -->
+      <div class="painel-perfil" id="painel-aluno">
+
+        <div class="painel-header">
+          <div class="painel-header-icon aluno">👨‍🎓</div>
+          <div>
+            <div class="painel-header-title">Aluno</div>
+            <div class="painel-header-sub">Sua jornada maker</div>
+          </div>
+        </div>
+
+        <!-- ── SUB-PAINEL 1: RANKING ─────────────────────────────── -->
+        <div class="sub-painel" id="sub-ranking">
+          <div class="sub-painel-titulo">🏆 Ranking & Conquistas</div>
+
+          <div class="ranking-grid">
+
+            <!-- Selo de conquista -->
+            <div class="ranking-selo-box">
+              <div class="selo-img-wrap">
+                <canvas id="selo-canvas" width="450" height="300"></canvas>
+              </div>
+              <div class="selo-nivel-nome" id="selo-nivel-nome">Explorador</div>
+              <div class="selo-nivel-desc" id="selo-nivel-desc">Primeiros passos na jornada maker</div>
+            </div>
+
+            <!-- Dados do ranking -->
+            <div class="ranking-dados">
+
+              <div class="ranking-pontos-box">
+                <div class="ranking-pontos-label">Pontuação total</div>
+                <div class="ranking-pontos-valor" id="rank-pontos">340</div>
+                <div class="ranking-pontos-next">Próximo nível: <strong>Criador</strong> em <span id="rank-pts-prox">160 pts</span></div>
+                <div class="progress-bar" style="margin-top:10px;">
+                  <div class="progress-fill" id="rank-barra" style="width: 34%;"></div>
+                </div>
+              </div>
+
+              <div class="ranking-posicoes">
+                <div class="rank-pos-card escola">
+                  <div class="rank-pos-icone">🏫</div>
+                  <div class="rank-pos-info">
+                    <div class="rank-pos-label">Posição na escola</div>
+                    <div class="rank-pos-valor" id="rank-pos-escola">#3º</div>
+                    <div class="rank-pos-sub" id="rank-escola-nome">E.M. João Paulo II</div>
+                  </div>
+                </div>
+                <div class="rank-pos-card geral">
+                  <div class="rank-pos-icone">🌎</div>
+                  <div class="rank-pos-info">
+                    <div class="rank-pos-label">Posição geral</div>
+                    <div class="rank-pos-valor" id="rank-pos-geral">#47º</div>
+                    <div class="rank-pos-sub">Entre todas as escolas</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ranking-niveis">
+                <div class="ranking-niveis-titulo">Níveis de conquista</div>
+                <div class="niveis-lista">
+                  <div class="nivel-item conquistado"><span class="nivel-dot"></span><span class="nivel-nome">🌱 Aprendiz</span><span class="nivel-pts">0 pts</span></div>
+                  <div class="nivel-item conquistado"><span class="nivel-dot"></span><span class="nivel-nome">🧭 Explorador</span><span class="nivel-pts">100 pts</span></div>
+                  <div class="nivel-item atual">       <span class="nivel-dot"></span><span class="nivel-nome">⚙️ Criador</span><span class="nivel-pts">500 pts</span></div>
+                  <div class="nivel-item">             <span class="nivel-dot"></span><span class="nivel-nome">🚀 Inovador</span><span class="nivel-pts">1.000 pts</span></div>
+                  <div class="nivel-item">             <span class="nivel-dot"></span><span class="nivel-nome">🏆 Mestre Maker</span><span class="nivel-pts">2.000 pts</span></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SUB-PAINEL 2: TRILHAS ─────────────────────────────── -->
+        <div class="sub-painel" id="sub-trilhas">
+          <div class="sub-painel-titulo">🗺️ Trilhas de Aprendizagem</div>
+          <div id="trilhas-aluno-container">
+            <div class="trilha-loading">Carregando trilhas...</div>
+          </div>
+        </div>
+
+        <!-- ── SUB-PAINEL 3: MEU PROGRESSO ──────────────────────── -->
+        <div class="sub-painel" id="sub-progresso">
+          <div class="sub-painel-titulo">🟢 Meu Progresso</div>
+          <div class="progresso-grid">
+            <div class="prog-stat">
+              <div class="prog-stat-val">12</div>
+              <div class="prog-stat-lab">Desafios concluídos</div>
+            </div>
+            <div class="prog-stat">
+              <div class="prog-stat-val">3</div>
+              <div class="prog-stat-lab">Semana atual</div>
+            </div>
+            <div class="prog-stat">
+              <div class="prog-stat-val">340</div>
+              <div class="prog-stat-lab">Pontos acumulados</div>
+            </div>
+            <div class="prog-stat">
+              <div class="prog-stat-val">85%</div>
+              <div class="prog-stat-lab">Taxa de conclusão</div>
+            </div>
+          </div>
+          <div class="prog-semanas-titulo">Progresso nas 40 semanas</div>
+          <div class="prog-semanas-grid" id="prog-semanas-grid"></div>
+        </div>
+
+        <!-- ── SUB-PAINEL 4: GAMIFICAÇÃO ─────────────────────────── -->
+        <div class="sub-painel" id="sub-gamificacao">
+          <div class="sub-painel-titulo">🎮 Gamificação — Top Alunos</div>
+          <div class="gamif-tabs">
+            <button class="gamif-tab ativo" onclick="gamifTab('escola')">Minha Escola</button>
+            <button class="gamif-tab" onclick="gamifTab('geral')">Ranking Geral</button>
+          </div>
+          <div id="gamif-lista-escola" class="gamif-lista">
+            <div class="gamif-item destaque">
+              <div class="gamif-pos">🥇</div><div class="gamif-avatar">M</div>
+              <div class="gamif-info"><div class="gamif-nome">Maria Clara</div><div class="gamif-escola-tag">E.M. João Paulo II</div></div>
+              <div class="gamif-pts">820 pts</div>
+            </div>
+            <div class="gamif-item destaque">
+              <div class="gamif-pos">🥈</div><div class="gamif-avatar">R</div>
+              <div class="gamif-info"><div class="gamif-nome">Rafael Souza</div><div class="gamif-escola-tag">E.M. João Paulo II</div></div>
+              <div class="gamif-pts">710 pts</div>
+            </div>
+            <div class="gamif-item eu">
+              <div class="gamif-pos">🥉</div><div class="gamif-avatar eu-av" id="gamif-eu-av">P</div>
+              <div class="gamif-info"><div class="gamif-nome" id="gamif-eu-nome">Você</div><div class="gamif-escola-tag">E.M. João Paulo II</div></div>
+              <div class="gamif-pts">340 pts</div>
+            </div>
+            <div class="gamif-item">
+              <div class="gamif-pos">4º</div><div class="gamif-avatar">J</div>
+              <div class="gamif-info"><div class="gamif-nome">João Pedro</div><div class="gamif-escola-tag">E.M. João Paulo II</div></div>
+              <div class="gamif-pts">290 pts</div>
+            </div>
+            <div class="gamif-item">
+              <div class="gamif-pos">5º</div><div class="gamif-avatar">A</div>
+              <div class="gamif-info"><div class="gamif-nome">Ana Beatriz</div><div class="gamif-escola-tag">E.M. João Paulo II</div></div>
+              <div class="gamif-pts">210 pts</div>
+            </div>
+          </div>
+          <div id="gamif-lista-geral" class="gamif-lista" style="display:none;">
+            <div class="gamif-item destaque">
+              <div class="gamif-pos">🥇</div><div class="gamif-avatar">L</div>
+              <div class="gamif-info"><div class="gamif-nome">Lucas Mendes</div><div class="gamif-escola-tag">E.M. Castro Alves</div></div>
+              <div class="gamif-pts">1.240 pts</div>
+            </div>
+            <div class="gamif-item destaque">
+              <div class="gamif-pos">🥈</div><div class="gamif-avatar">I</div>
+              <div class="gamif-info"><div class="gamif-nome">Isabela Rocha</div><div class="gamif-escola-tag">C.E. Dois de Julho</div></div>
+              <div class="gamif-pts">1.090 pts</div>
+            </div>
+            <div class="gamif-item destaque">
+              <div class="gamif-pos">🥉</div><div class="gamif-avatar">G</div>
+              <div class="gamif-info"><div class="gamif-nome">Gabriel Lima</div><div class="gamif-escola-tag">E.M. Rui Barbosa</div></div>
+              <div class="gamif-pts">980 pts</div>
+            </div>
+            <div class="gamif-item eu" style="margin-top:8px; border-top:1px dashed #dbe2ef; padding-top:8px;">
+              <div class="gamif-pos">47º</div><div class="gamif-avatar eu-av" id="gamif-eu-av2">P</div>
+              <div class="gamif-info"><div class="gamif-nome" id="gamif-eu-nome2">Você</div><div class="gamif-escola-tag">E.M. João Paulo II</div></div>
+              <div class="gamif-pts">340 pts</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           PAINEL PROFESSOR
+      ══════════════════════════════════════════ -->
+      <div class="painel-perfil" id="painel-professor">
+        <div class="painel-header">
+          <div class="painel-header-icon prof">👩‍🏫</div>
+          <div>
+            <div class="painel-header-title">Professor</div>
+            <div class="painel-header-sub">Gestão pedagógica</div>
+          </div>
+        </div>
+
+        <div class="acesso-grid">
+
+          <div class="acesso-card">
+            <div class="acesso-card-top">
+              <div class="acesso-card-icon azul">📋</div>
+              <span class="acesso-card-badge em-breve">Em breve</span>
+            </div>
+            <h4>Planos de Aula</h4>
+            <p>Materiais completos alinhados à BNCC para cada nível de aprendizagem.</p>
+          </div>
+
+          <div class="acesso-card">
+            <div class="acesso-card-top">
+              <div class="acesso-card-icon verde">👥</div>
+              <span class="acesso-card-badge em-breve">Em breve</span>
+            </div>
+            <h4>Minhas Turmas</h4>
+            <p>Acompanhe o progresso dos alunos e gerencie as atividades da sua escola.</p>
+          </div>
+
+          <div class="acesso-card">
+            <div class="acesso-card-top">
+              <div class="acesso-card-icon amarelo">🛠️</div>
+              <span class="acesso-card-badge em-breve">Em breve</span>
+            </div>
+            <h4>Roteiros de Oficinas</h4>
+            <p>3 roteiros estruturados nos níveis básico, intermediário e avançado.</p>
+          </div>
+
+          <div class="acesso-card">
+            <div class="acesso-card-top">
+              <div class="acesso-card-icon laranja">📊</div>
+              <span class="acesso-card-badge em-breve">Em breve</span>
+            </div>
+            <h4>Progresso dos Alunos</h4>
+            <p>Visualize o desempenho coletivo e identifique pontos de atenção.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           PAINEL GESTOR
+      ══════════════════════════════════════════ -->
+      <div class="painel-perfil" id="painel-gestor">
+        <div class="painel-header">
+          <div class="painel-header-icon gestor">🏫</div>
+          <div>
+            <div class="painel-header-title">Gestão Geral</div>
+            <div class="painel-header-sub">Visão do programa</div>
+          </div>
+        </div>
+
+        <div class="acesso-grid">
+
+          <div class="acesso-card">
+            <div class="acesso-card-top">
+              <div class="acesso-card-icon verde">🏫</div>
+              <span class="acesso-card-badge em-breve">Em breve</span>
+            </div>
+            <h4>Escolas</h4>
+            <p>Gerencie as 30 escolas participantes do programa Mais Ciência na Escola.</p>
+          </div>
+
+          <div class="acesso-card">
+            <div class="acesso-card-top">
+              <div class="acesso-card-icon azul">👤</div>
+              <span class="acesso-card-badge em-breve">Em breve</span>
+            </div>
+            <h4>Usuários</h4>
+            <p>Cadastre e gerencie professores, alunos e facilitadores do programa.</p>
+          </div>
+
+          <div class="acesso-card">
+            <div class="acesso-card-top">
+              <div class="acesso-card-icon amarelo">📊</div>
+              <span class="acesso-card-badge em-breve">Em breve</span>
+            </div>
+            <h4>Relatórios</h4>
+            <p>Acompanhe indicadores de desempenho e impacto do programa nas escolas.</p>
+          </div>
+
+          <div class="acesso-card">
+            <div class="acesso-card-top">
+              <div class="acesso-card-icon laranja">📦</div>
+              <span class="acesso-card-badge em-breve">Em breve</span>
+            </div>
+            <h4>Biblioteca 3D (STL)</h4>
+            <p>Repositório de modelos para impressão e reposição de peças dos kits.</p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, signOut
+    } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc
+    } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAndgQiwxpe6wyCF8aa5NqqdMuwLJfMIMM",
+      authDomain: "makerlab3d-4e455.firebaseapp.com",
+      projectId: "makerlab3d-4e455",
+      storageBucket: "makerlab3d-4e455.firebasestorage.app",
+      messagingSenderId: "495457985822",
+      appId: "1:495457985822:web:05efcebeed970ecb82150f"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    const loading = document.getElementById('loading');
+    const content = document.getElementById('portal-content');
+
+    const perfilLabels = {
+      gestor:       'Gestor',
+      conteudista:  'Conteudista',
+      professor:    'Professor',
+      aluno:        'Aluno'
+    };
+
+    // ── MODO PREVIEW (sem login) ──────────────────────────────────────────
+    // Acesse com ?preview=1 para testar sem autenticação
+    const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
+
+    if (isPreview) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('portal-content').style.display = 'block';
+      document.getElementById('user-name').textContent  = 'Peterson Lobato';
+      document.getElementById('user-email').textContent = 'peterson.lobato@hotmail.com';
+      document.getElementById('user-avatar').textContent = 'P';
+      document.getElementById('user-perfil').textContent = 'Gestor';
+      document.getElementById('visualizar-como').classList.add('visivel');
+      inicializarPaineis('gestor');
+      carregarTrilhasAluno();
+      desenharSelo(340);
+      renderSemanas(2, 3, 40);
+    } else {
+
+    // Timeout de segurança: se Firebase demorar >6s, redireciona para login
+    setTimeout(() => {
+      const sub = document.getElementById('loading-sub');
+      if (sub) sub.style.display = 'block';
+    }, 3000);
+
+    const authTimeout = setTimeout(() => {
+      window.location.href = 'login.html';
+    }, 6000);
+
+    onAuthStateChanged(auth, async user => {
+      clearTimeout(authTimeout);
+
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Exibe conteúdo
+      loading.style.display = 'none';
+      content.style.display = 'block';
+
+      // Nome e e-mail
+      const nome = user.displayName || user.email.split('@')[0];
+      document.getElementById('user-name').textContent = nome;
+      document.getElementById('user-email').textContent = user.email;
+
+      // Avatar
+      const avatarEl = document.getElementById('user-avatar');
+      if (user.photoURL) {
+        avatarEl.innerHTML = `<img src="${user.photoURL}" alt="${nome}">`;
+      } else {
+        avatarEl.textContent = nome.charAt(0).toUpperCase();
+      }
+
+      // Buscar perfil e escola no Firestore
+      try {
+        const snap = await getDoc(doc(db, 'usuarios', user.uid));
+        if (snap.exists()) {
+          const dados = snap.data();
+          const perfil = dados.perfil || '';
+
+          // Exibe o perfil
+          const perfilEl = document.getElementById('user-perfil');
+          perfilEl.textContent = perfilLabels[perfil] || perfil;
+
+          // Mostra seletor somente para gestor
+          if (perfil === 'gestor') {
+            document.getElementById('visualizar-como').classList.add('visivel');
+          }
+
+          // Inicializa painéis conforme perfil
+          inicializarPaineis(perfil);
+
+          // Se for aluno (ou gestor visualizando), carrega trilhas
+          if (perfil === 'aluno' || perfil === 'gestor') {
+            carregarTrilhasAluno();
+          }
+
+          // Atualiza nome do aluno no ranking
+          const nomeDisplay = user.displayName || user.email.split('@')[0];
+          const gamifEuNome  = document.getElementById('gamif-eu-nome');
+          const gamifEuNome2 = document.getElementById('gamif-eu-nome2');
+          const gamifEuAv    = document.getElementById('gamif-eu-av');
+          const gamifEuAv2   = document.getElementById('gamif-eu-av2');
+          if (gamifEuNome)  gamifEuNome.textContent  = nomeDisplay;
+          if (gamifEuNome2) gamifEuNome2.textContent = nomeDisplay;
+          if (gamifEuAv)    gamifEuAv.textContent    = nomeDisplay.charAt(0).toUpperCase();
+          if (gamifEuAv2)   gamifEuAv2.textContent   = nomeDisplay.charAt(0).toUpperCase();
+
+          // Se for professor ou aluno, busca nome da escola
+          if ((perfil === 'professor' || perfil === 'aluno') && dados.escola_id) {
+            const escolaSnap = await getDoc(doc(db, 'escolas', dados.escola_id));
+            const escolaEl = document.getElementById('user-escola');
+            if (escolaSnap.exists()) {
+              escolaEl.textContent = '🏫 ' + (escolaSnap.data().nome || dados.escola_id);
+            } else {
+              escolaEl.textContent = '🏫 ' + dados.escola_id;
+            }
+            escolaEl.style.display = 'block';
+          }
+        }
+      } catch(e) {
+        console.warn('Erro ao buscar perfil:', e);
+      }
+    });
+
+    // ── Painéis por visão ──────────────────────────────────────────────────
+    const paineis = {
+      aluno:     document.getElementById('painel-aluno'),
+      professor: document.getElementById('painel-professor'),
+      gestor:    document.getElementById('painel-gestor'),
+    };
+
+    const subtitulos = {
+      gestor:    'Bem-vindo ao seu espaço maker. Acesse trilhas, desafios, materiais e recursos pedagógicos integrados.',
+      professor: 'Visualizando como Professor — acesse planos de aula, trilhas formativas e gerencie suas turmas.',
+      aluno:     'Visualizando como Aluno — explore desafios, acumule pontos e avance nas trilhas maker.',
+    };
+
+    function mostrarPaineis(visao) {
+      // Gestor vê todos os painéis; outros veem só o seu
+      if (visao === 'gestor') {
+        Object.values(paineis).forEach(p => p && p.classList.add('visivel'));
+      } else {
+        Object.entries(paineis).forEach(([k, p]) => {
+          if (!p) return;
+          p.classList.toggle('visivel', k === visao);
+        });
+      }
+    }
+
+    // Inicializa painel conforme perfil real do usuário
+    function inicializarPaineis(perfil) {
+      mostrarPaineis(perfil);
+    }
+
+    // Seletor de visualização (apenas gestor)
+    let visaoAtual = 'gestor';
+
+    window.mudarVisao = function(visao) {
+      visaoAtual = visao;
+
+      // Botões
+      document.querySelectorAll('.btn-visao').forEach(btn => {
+        btn.classList.toggle('ativo', btn.dataset.visao === visao);
+      });
+
+      // Subtítulo
+      const sub = document.querySelector('.portal-hero-text p');
+      if (sub) sub.textContent = subtitulos[visao] || subtitulos.gestor;
+
+      // Badge
+      const perfilEl = document.getElementById('user-perfil');
+      const labels = { gestor: 'Gestor', professor: 'Professor', aluno: 'Aluno' };
+      if (visao !== 'gestor') {
+        perfilEl.textContent = labels[visao] + ' (visualização)';
+        perfilEl.style.background = 'rgba(255,255,255,0.15)';
+        perfilEl.style.color = '#fff';
+      } else {
+        perfilEl.textContent = 'Gestor';
+        perfilEl.style.background = '#f5c400';
+        perfilEl.style.color = '#23314d';
+      }
+
+      // Painéis
+      mostrarPaineis(visao);
+    };
+
+    // ── Gamificação tabs ───────────────────────────────────────────────────
+    window.gamifTab = function(tipo) {
+      document.querySelectorAll('.gamif-tab').forEach(b => b.classList.remove('ativo'));
+      document.querySelector(`.gamif-tab[onclick="gamifTab('${tipo}')"]`).classList.add('ativo');
+      document.getElementById('gamif-lista-escola').style.display = tipo === 'escola' ? 'flex' : 'none';
+      document.getElementById('gamif-lista-geral').style.display  = tipo === 'geral'  ? 'flex' : 'none';
+    };
+
+    // ── Grid de semanas ────────────────────────────────────────────────────
+    function renderSemanas(concluidas, atual, total) {
+      const grid = document.getElementById('prog-semanas-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      for (let i = 1; i <= total; i++) {
+        const dot = document.createElement('div');
+        dot.title = 'Semana ' + i;
+        dot.textContent = i;
+        if (i < atual)      dot.className = 'semana-dot ok';
+        else if (i === atual) dot.className = 'semana-dot atual';
+        else                  dot.className = 'semana-dot vazio';
+        grid.appendChild(dot);
+      }
+    }
+    renderSemanas(2, 3, 40);
+
+    // ── Selo Canvas ────────────────────────────────────────────────────────
+    const NIVEIS = [
+      { nome: 'Aprendiz',     min: 0,    max: 99,   emoji: '🌱', cor1: '#4a7c59', cor2: '#2d5a3d', desc: 'Primeiros passos na jornada maker'    },
+      { nome: 'Explorador',   min: 100,  max: 499,  emoji: '🧭', cor1: '#2980b9', cor2: '#1a5276', desc: 'Explorando o universo maker'           },
+      { nome: 'Criador',      min: 500,  max: 999,  emoji: '⚙️', cor1: '#8e44ad', cor2: '#6c3483', desc: 'Criando soluções com tecnologia'       },
+      { nome: 'Inovador',     min: 1000, max: 1999, emoji: '🚀', cor1: '#e67e22', cor2: '#ca6f1e', desc: 'Inovando com impacto real'             },
+      { nome: 'Mestre Maker', min: 2000, max: 99999,emoji: '🏆', cor1: '#c0392b', cor2: '#922b21', desc: 'O mais alto grau da cultura maker'     },
+    ];
+
+    function getNivel(pts) {
+      return NIVEIS.find(n => pts >= n.min && pts <= n.max) || NIVEIS[0];
+    }
+
+    function desenharSelo(pts) {
+      const canvas = document.getElementById('selo-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = 450, H = 300;
+      canvas.width = W; canvas.height = H;
+
+      const nivel = getNivel(pts);
+      const prox  = NIVEIS.find(n => n.min > pts);
+      const pct   = prox ? Math.min((pts - nivel.min) / (prox.min - nivel.min), 1) : 1;
+
+      // Fundo degradê
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, nivel.cor1);
+      bg.addColorStop(1, nivel.cor2);
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.roundRect(0, 0, W, H, 18);
+      ctx.fill();
+
+      // Círculos decorativos
+      ctx.globalAlpha = 0.08;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(W - 60, 60, 90, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(40, H - 40, 60, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Estrelas decorativas
+      ctx.font = '18px serif';
+      ctx.globalAlpha = 0.3;
+      [[30,30],[W-30,H-30],[W-30,40],[30,H-40]].forEach(([x,y]) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillText('✦', x - 9, y + 7);
+      });
+      ctx.globalAlpha = 1;
+
+      // Emoji grande
+      ctx.font = '72px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(nivel.emoji, W / 2, 110);
+
+      // Nome do nível
+      ctx.font = 'bold 28px Poppins, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0,0,0,0.3)';
+      ctx.shadowBlur = 8;
+      ctx.fillText(nivel.nome, W / 2, 152);
+      ctx.shadowBlur = 0;
+
+      // Pontos
+      ctx.font = 'bold 16px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.fillText(pts + ' pontos', W / 2, 178);
+
+      // Barra de progresso
+      const bx = 60, by = 200, bw = W - 120, bh = 10;
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 5); ctx.fill();
+
+      const grad = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+      grad.addColorStop(0, '#f5c400');
+      grad.addColorStop(1, '#fff176');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.roundRect(bx, by, bw * pct, bh, 5); ctx.fill();
+
+      // Próximo nível
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      if (prox) {
+        ctx.textAlign = 'left';
+        ctx.fillText(nivel.nome, bx, by + 26);
+        ctx.textAlign = 'right';
+        ctx.fillText(prox.nome + ' →', bx + bw, by + 26);
+      } else {
+        ctx.textAlign = 'center';
+        ctx.fillText('Nível máximo atingido! 🎉', W / 2, by + 26);
+      }
+
+      // Texto inferior
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.textAlign = 'center';
+      ctx.fillText('MakerLab 3D — Mais Ciência na Escola', W / 2, H - 14);
+
+      // Atualiza textos externos
+      const nomeEl = document.getElementById('selo-nivel-nome');
+      const descEl = document.getElementById('selo-nivel-desc');
+      if (nomeEl) nomeEl.textContent = nivel.emoji + ' ' + nivel.nome;
+      if (descEl) descEl.textContent = nivel.desc;
+
+      // Atualiza barra do ranking
+      const barra = document.getElementById('rank-barra');
+      if (barra) barra.style.width = Math.round(pct * 100) + '%';
+
+      // Próximo nível na caixa de pontos
+      const proxEl = document.getElementById('rank-pts-prox');
+      if (proxEl && prox) proxEl.textContent = (prox.min - pts) + ' pts';
+    }
+
+    // Simulação: 340 pontos → nível Explorador
+    desenharSelo(340);
+
+    // ── Carregar trilhas do Firestore ──────────────────────────────────────
+    async function carregarTrilhasAluno() {
+      const container = document.getElementById('trilhas-aluno-container');
+      if (!container) return;
+
+      // Dados simulados de progresso do aluno
+      const progressoSimulado = {
+        'pensamento-computacional': ['card-01', 'card-02', 'card-03'],
+        'eletronica-basica':        ['card-04'],
+        'robotica-criativa':        [],
+      };
+
+      try {
+        const { getDocs, collection: col } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
+        const trilhasSnap = await getDocs(col(db, 'trilhas'));
+
+        if (trilhasSnap.empty) {
+          // Sem trilhas cadastradas → mostra dados simulados
+          container.innerHTML = renderTrilhaSimulada();
+          return;
+        }
+
+        const trilhas = [];
+        trilhasSnap.forEach(d => { if (d.data().publicado) trilhas.push({ id: d.id, ...d.data() }); });
+        trilhas.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+
+        if (trilhas.length === 0) {
+          container.innerHTML = renderTrilhaSimulada();
+          return;
+        }
+
+        // Buscar dados dos cards
+        const cardsSnap = await getDocs(col(db, 'cards'));
+        const cardsDB   = {};
+        cardsSnap.forEach(d => { cardsDB[d.id] = d.data(); });
+
+        container.innerHTML = '';
+        trilhas.forEach(trilha => {
+          const concluidos = (progressoSimulado[trilha.id] || []).length;
+          const total      = (trilha.cards || []).length;
+          const pct        = total ? Math.round((concluidos / total) * 100) : 0;
+
+          const bloco = document.createElement('div');
+          bloco.className = 'trilha-bloco';
+          bloco.innerHTML = `
+            <div class="trilha-bloco-header">
+              <div class="trilha-bloco-nome">${trilha.nome || trilha.id}</div>
+              <div class="trilha-bloco-prog">${concluidos}/${total} desafios · ${pct}%</div>
+            </div>
+            <div class="trilha-progress-bar">
+              <div class="trilha-progress-fill" style="width:${pct}%"></div>
+            </div>
+            <div class="trilha-cards-row">
+              ${(trilha.cards || []).map((cid, i) => {
+                const c    = cardsDB[cid] || {};
+                const done = (progressoSimulado[trilha.id] || []).includes(cid);
+                const next = !done && i === concluidos;
+                const cls  = done ? 'concluido' : next ? 'proximo' : 'bloqueado';
+                const ico  = done ? '✅' : next ? '▶️' : '🔒';
+                return \`<div class="trilha-card-item \${cls}">
+                  <div class="trilha-card-status">\${ico}</div>
+                  <div class="trilha-card-num">\${c.tipo || 'Desafio'} \${String(c.numero || (i+1)).padStart(2,'0')}</div>
+                  <div class="trilha-card-nome">\${c.nome || cid}</div>
+                  <div class="trilha-card-pts">\${c.pontos || 10} pts</div>
+                </div>\`;
+              }).join('')}
+            </div>
+          `;
+          container.appendChild(bloco);
+        });
+
+      } catch(e) {
+        console.warn('Firestore trilhas:', e);
+        container.innerHTML = renderTrilhaSimulada();
+      }
+    }
+
+    function renderTrilhaSimulada() {
+      const trilhas = [
+        { nome: 'Pensamento Computacional', cards: [
+          { num:'01', nome:'Pisca-Pisca',      pts:10, status:'concluido' },
+          { num:'02', nome:'Sensor de Luz',    pts:10, status:'concluido' },
+          { num:'03', nome:'Potenciômetro',    pts:15, status:'concluido' },
+          { num:'04', nome:'Buzzer Musical',   pts:15, status:'proximo'   },
+          { num:'05', nome:'Semáforo',         pts:20, status:'bloqueado' },
+          { num:'06', nome:'Termômetro',       pts:20, status:'bloqueado' },
+        ]},
+        { nome: 'Eletrônica Básica', cards: [
+          { num:'01', nome:'Circuito LED',     pts:10, status:'concluido' },
+          { num:'02', nome:'Resistores',       pts:10, status:'proximo'   },
+          { num:'03', nome:'Protoboard',       pts:15, status:'bloqueado' },
+          { num:'04', nome:'Corrente',         pts:15, status:'bloqueado' },
+        ]},
+        { nome: 'Robótica Criativa', cards: [
+          { num:'01', nome:'Montagem Básica',  pts:20, status:'bloqueado' },
+          { num:'02', nome:'Motores',          pts:20, status:'bloqueado' },
+          { num:'03', nome:'Sensores',         pts:25, status:'bloqueado' },
+        ]},
+      ];
+
+      return trilhas.map(t => {
+        const total     = t.cards.length;
+        const concluidos = t.cards.filter(c => c.status === 'concluido').length;
+        const pct        = Math.round((concluidos / total) * 100);
+        return \`
+          <div class="trilha-bloco">
+            <div class="trilha-bloco-header">
+              <div class="trilha-bloco-nome">\${t.nome}</div>
+              <div class="trilha-bloco-prog">\${concluidos}/\${total} desafios · \${pct}%</div>
+            </div>
+            <div class="trilha-progress-bar">
+              <div class="trilha-progress-fill" style="width:\${pct}%"></div>
+            </div>
+            <div class="trilha-cards-row">
+              \${t.cards.map(c => {
+                const ico = c.status === 'concluido' ? '✅' : c.status === 'proximo' ? '▶️' : '🔒';
+                return \`<div class="trilha-card-item \${c.status}">
+                  <div class="trilha-card-status">\${ico}</div>
+                  <div class="trilha-card-num">Desafio \${c.num}</div>
+                  <div class="trilha-card-nome">\${c.nome}</div>
+                  <div class="trilha-card-pts">\${c.pts} pts</div>
+                </div>\`;
+              }).join('')}
+            </div>
+          </div>
+        \`;
+      }).join('');
+    }
+
+    } // fim do else (modo preview)
+
+    // Botão sair
+    document.getElementById('btn-sair').addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = 'login.html';
+    });
+  </script>
+
+</body>
+</html>
