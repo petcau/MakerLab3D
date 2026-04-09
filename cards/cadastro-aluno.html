@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MakerLab 3D — Cadastro de Aluno</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --amarelo:   #E5C84C;
+      --azul-dark: #2F3447;
+      --azul:      #5F6480;
+      --off-white: #F5F3EE;
+      --borda:     #DDD8CC;
+      --verde:     #27ae60;
+      --erro:      #e74c3c;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      background: #ECEAE4;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1.5px solid var(--borda);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 540px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(47,52,71,0.10);
+    }
+
+    .card-header {
+      background: var(--amarelo);
+      padding: 24px 32px;
+      text-align: center;
+    }
+
+    .logo { font-family: 'Nunito', sans-serif; font-size: 24px; font-weight: 900; color: var(--azul-dark); letter-spacing: 1px; margin-bottom: 4px; }
+    .logo span { color: #fff; }
+    .header-sub { font-size: 11px; color: rgba(47,52,71,0.6); text-transform: uppercase; letter-spacing: 2px; font-weight: 700; }
+
+    .card-body { padding: 28px 32px 36px; }
+
+    .escola-info {
+      background: var(--off-white);
+      border: 1.5px solid var(--borda);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .escola-icon { font-size: 22px; }
+    .escola-label { font-size: 10px; color: var(--azul); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 2px; }
+    .escola-nome  { font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800; color: var(--azul-dark); }
+
+    .secao { border: 1.5px solid var(--borda); border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+    .secao-titulo { background: var(--off-white); border-bottom: 1px solid var(--borda); padding: 10px 16px; font-size: 10px; font-weight: 800; color: var(--azul); text-transform: uppercase; letter-spacing: 1.5px; }
+    .secao-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-row.full { grid-template-columns: 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+
+    label { font-size: 10px; font-weight: 700; color: var(--azul); text-transform: uppercase; letter-spacing: 1px; }
+
+    input, select {
+      border: 1.5px solid var(--borda);
+      border-radius: 9px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-family: 'Nunito Sans', sans-serif;
+      color: var(--azul-dark);
+      background: var(--off-white);
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    input:focus, select:focus { border-color: var(--azul-dark); background: #fff; }
+    input.erro { border-color: var(--erro); }
+
+    .codigo-input { letter-spacing: 3px; font-family: monospace; font-weight: 700; font-size: 16px; text-align: center; text-transform: uppercase; }
+    .helper { font-size: 10px; color: var(--azul); }
+
+    /* Divisor ou */
+    .ou-divisor {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #bbb;
+      font-size: 12px;
+      margin: 4px 0;
+    }
+    .ou-divisor::before, .ou-divisor::after { content: ''; flex: 1; height: 1px; background: var(--borda); }
+
+    /* Botão Google */
+    .btn-google {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 11px 16px;
+      border: 1.5px solid var(--borda);
+      border-radius: 10px;
+      background: #fff;
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--azul-dark);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-google:hover { background: var(--off-white); border-color: var(--azul); }
+    .btn-google img { width: 18px; height: 18px; }
+
+    .btn-cadastrar {
+      width: 100%;
+      background: var(--azul-dark);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 8px;
+    }
+    .btn-cadastrar:hover { background: #3d4460; }
+    .btn-cadastrar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .msg { display: none; border-radius: 10px; padding: 12px 16px; font-size: 13px; text-align: center; margin-top: 14px; }
+    .msg.erro    { background: #fdf2f2; border: 1px solid #f5c6c6; color: var(--erro); }
+    .msg.sucesso { background: #f0fdf4; border: 1px solid #a7f3d0; color: var(--verde); }
+
+    .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.7); align-items: center; justify-content: center; z-index: 999; }
+    .spinner { width: 40px; height: 40px; border: 3px solid var(--borda); border-top-color: var(--amarelo); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .sucesso-screen { display: none; text-align: center; padding: 48px 32px; }
+    .sucesso-icon   { font-size: 56px; margin-bottom: 16px; }
+    .sucesso-titulo { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900; color: var(--azul-dark); margin-bottom: 10px; }
+    .sucesso-texto  { color: var(--azul); font-size: 14px; line-height: 1.7; margin-bottom: 24px; }
+    .btn-acessar { display: inline-block; background: var(--amarelo); color: var(--azul-dark); font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; padding: 14px 32px; border-radius: 12px; text-decoration: none; transition: opacity 0.2s; }
+    .btn-acessar:hover { opacity: 0.85; }
+
+    @media (max-width: 480px) { .card-body { padding: 20px; } .form-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="logo">MAKER<span>LAB</span> 3D</div>
+      <div class="header-sub">Cadastro de Aluno</div>
+    </div>
+
+    <div class="card-body" id="form-body">
+
+      <div class="escola-info">
+        <div class="escola-icon">🏫</div>
+        <div>
+          <div class="escola-label">Escola</div>
+          <div class="escola-nome" id="escola-nome">Carregando...</div>
+        </div>
+      </div>
+
+      <!-- CÓDIGO -->
+      <div class="secao">
+        <div class="secao-titulo">Código de Acesso</div>
+        <div class="secao-body">
+          <div class="form-group">
+            <label>Código *</label>
+            <input type="text" id="codigo" class="codigo-input" placeholder="XXXXXXXX" maxlength="8"
+              oninput="this.value = this.value.toUpperCase()">
+            <span class="helper">Digite o código fornecido pela sua escola.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DADOS PESSOAIS -->
+      <div class="secao">
+        <div class="secao-titulo">Dados Pessoais</div>
+        <div class="secao-body">
+          <div class="form-row full">
+            <div class="form-group">
+              <label>Nome Completo *</label>
+              <input type="text" id="nome" placeholder="Seu nome completo">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Data de Nascimento *</label>
+              <input type="date" id="data-nascimento">
+            </div>
+            <div class="form-group">
+              <label>Sexo *</label>
+              <select id="sexo">
+                <option value="">Selecione</option>
+                <option value="masculino">Masculino</option>
+                <option value="feminino">Feminino</option>
+                <option value="outro">Outro</option>
+                <option value="prefiro_nao_informar">Prefiro não informar</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DADOS ESCOLARES -->
+      <div class="secao">
+        <div class="secao-titulo">Dados Escolares</div>
+        <div class="secao-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Matrícula *</label>
+              <input type="text" id="matricula" placeholder="Número de matrícula">
+            </div>
+            <div class="form-group">
+              <label>Ano Letivo *</label>
+              <select id="ano-letivo">
+                <option value="">Selecione</option>
+                <option value="1_ano">1º Ano</option>
+                <option value="2_ano">2º Ano</option>
+                <option value="3_ano">3º Ano</option>
+                <option value="4_ano">4º Ano</option>
+                <option value="5_ano">5º Ano</option>
+                <option value="6_ano">6º Ano</option>
+                <option value="7_ano">7º Ano</option>
+                <option value="8_ano">8º Ano</option>
+                <option value="9_ano">9º Ano</option>
+                <option value="1_em">1º Ano EM</option>
+                <option value="2_em">2º Ano EM</option>
+                <option value="3_em">3º Ano EM</option>
+                <option value="eja">EJA</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Turno *</label>
+              <select id="turno">
+                <option value="">Selecione</option>
+                <option value="matutino">Matutino</option>
+                <option value="vespertino">Vespertino</option>
+                <option value="noturno">Noturno</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACESSO -->
+      <div class="secao">
+        <div class="secao-titulo">Criar Acesso</div>
+        <div class="secao-body">
+          <button class="btn-google" id="btn-google" onclick="cadastrarGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
+            Cadastrar com Google
+          </button>
+          <div class="ou-divisor">ou</div>
+          <div class="form-group">
+            <label>E-mail *</label>
+            <input type="email" id="email" placeholder="seu@email.com">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Senha *</label>
+              <input type="password" id="senha" placeholder="Mínimo 6 caracteres">
+            </div>
+            <div class="form-group">
+              <label>Confirmar Senha *</label>
+              <input type="password" id="senha2" placeholder="Repita a senha">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-cadastrar" id="btn-cadastrar" onclick="cadastrarEmail()">
+        Criar minha conta →
+      </button>
+
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="sucesso-screen" id="sucesso-screen">
+      <div class="sucesso-icon">🎉</div>
+      <div class="sucesso-titulo">Cadastro realizado!</div>
+      <div class="sucesso-texto">Bem-vindo(a) ao MakerLab 3D!<br>Agora você pode acessar as trilhas de aprendizagem.</div>
+      <a href="../trilhas.html" class="btn-acessar">Acessar Trilhas →</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import {
+      getAuth, createUserWithEmailAndPassword,
+      signInWithPopup, GoogleAuthProvider
+    } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAndgQiwxpe6wyCF8aa5NqqdMuwLJfMIMM",
+      authDomain: "makerlab3d-4e455.firebaseapp.com",
+      projectId: "makerlab3d-4e455",
+      storageBucket: "makerlab3d-4e455.firebasestorage.app",
+      messagingSenderId: "495457985822",
+      appId: "1:495457985822:web:05efcebeed970ecb82150f"
+    };
+
+    const app      = initializeApp(firebaseConfig);
+    const auth     = getAuth(app);
+    const db       = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    const params   = new URLSearchParams(window.location.search);
+    const escolaId = params.get('escola');
+    let   escolaData = null;
+
+    async function init() {
+      if (!escolaId) {
+        document.getElementById('escola-nome').textContent = 'Link inválido.';
+        document.getElementById('btn-cadastrar').disabled = true;
+        document.getElementById('btn-google').disabled    = true;
+        return;
+      }
+      try {
+        const snap = await getDoc(doc(db, 'escolas', escolaId));
+        if (!snap.exists()) {
+          document.getElementById('escola-nome').textContent = 'Escola não encontrada.';
+          return;
+        }
+        escolaData = snap.data();
+        document.getElementById('escola-nome').textContent = escolaData.nome || 'Escola';
+        if (!escolaData.ativo) {
+          mostrarMsg('Esta escola não está ativa no sistema.', 'erro');
+          document.getElementById('btn-cadastrar').disabled = true;
+          document.getElementById('btn-google').disabled    = true;
+        }
+      } catch(err) {
+        document.getElementById('escola-nome').textContent = 'Erro ao carregar escola.';
+      }
+    }
+
+    function showLoading(v) { document.getElementById('loading').style.display = v ? 'flex' : 'none'; }
+
+    function mostrarMsg(msg, tipo) {
+      const el = document.getElementById('msg');
+      el.textContent = msg;
+      el.className = `msg ${tipo}`;
+      el.style.display = 'block';
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function validarCampos() {
+      const codigo = document.getElementById('codigo').value.trim().toUpperCase();
+      const nome   = document.getElementById('nome').value.trim();
+      const dtNasc = document.getElementById('data-nascimento').value;
+      const sexo   = document.getElementById('sexo').value;
+      const matr   = document.getElementById('matricula').value.trim();
+      const ano    = document.getElementById('ano-letivo').value;
+      const turno  = document.getElementById('turno').value;
+
+      if (!codigo)  { mostrarMsg('Informe o código de acesso.', 'erro'); return null; }
+      if (!escolaData) { mostrarMsg('Escola não encontrada.', 'erro'); return null; }
+      if (codigo !== escolaData.codigo_acesso) {
+        document.getElementById('codigo').classList.add('erro');
+        mostrarMsg('Código de acesso incorreto.', 'erro'); return null;
+      }
+      document.getElementById('codigo').classList.remove('erro');
+      if (!nome)   { mostrarMsg('Informe seu nome completo.', 'erro'); return null; }
+      if (!dtNasc) { mostrarMsg('Informe sua data de nascimento.', 'erro'); return null; }
+      if (!sexo)   { mostrarMsg('Selecione o sexo.', 'erro'); return null; }
+      if (!matr)   { mostrarMsg('Informe sua matrícula.', 'erro'); return null; }
+      if (!ano)    { mostrarMsg('Selecione o ano letivo.', 'erro'); return null; }
+      if (!turno)  { mostrarMsg('Selecione o turno.', 'erro'); return null; }
+
+      return { nome, dtNasc, sexo, matr, ano, turno };
+    }
+
+    async function proximoIdAluno() {
+      let max = 0;
+      const snap = await getDocs(collection(db, 'usuarios'));
+      snap.forEach(d => { const n = d.data().id_aluno || 0; if (n > max) max = n; });
+      return max + 1;
+    }
+
+    async function salvarAluno(uid, email, dados) {
+      const idAluno = await proximoIdAluno();
+      await setDoc(doc(db, 'usuarios', uid), {
+        id_aluno:           idAluno,
+        nome:               dados.nome,
+        email,
+        data_nascimento:    dados.dtNasc,
+        sexo:               dados.sexo,
+        matricula:          dados.matr,
+        ano_letivo:         dados.ano,
+        turno:              dados.turno,
+        perfil:             'aluno',
+        escola_id:          escolaId,
+        ativo:              true,
+        participa_maker:    false,
+        nivel_maker:        'Explorador',
+        data_inicio_maker:  new Date().toISOString().split('T')[0],
+        observacoes:        '',
+        criado_em:          new Date().toISOString()
+      });
+    }
+
+    window.cadastrarEmail = async function() {
+      const dados = validarCampos();
+      if (!dados) return;
+
+      const email  = document.getElementById('email').value.trim();
+      const senha  = document.getElementById('senha').value;
+      const senha2 = document.getElementById('senha2').value;
+
+      if (!email)  return mostrarMsg('Informe seu e-mail.', 'erro');
+      if (!senha || senha.length < 6) return mostrarMsg('A senha deve ter pelo menos 6 caracteres.', 'erro');
+      if (senha !== senha2) return mostrarMsg('As senhas não coincidem.', 'erro');
+
+      showLoading(true);
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, senha);
+        await salvarAluno(cred.user.uid, email, dados);
+        showLoading(false);
+        document.getElementById('form-body').style.display    = 'none';
+        document.getElementById('sucesso-screen').style.display = 'block';
+      } catch(err) {
+        showLoading(false);
+        const msgs = {
+          'auth/email-already-in-use': 'E-mail já cadastrado.',
+          'auth/weak-password':        'Senha muito fraca.',
+          'auth/invalid-email':        'E-mail inválido.',
+        };
+        mostrarMsg(msgs[err.code] || 'Erro: ' + err.message, 'erro');
+      }
+    };
+
+    window.cadastrarGoogle = async function() {
+      const dados = validarCampos();
+      if (!dados) return;
+
+      showLoading(true);
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user   = result.user;
+        // Verifica se já tem cadastro
+        const snap = await getDoc(doc(db, 'usuarios', user.uid));
+        if (snap.exists()) {
+          showLoading(false);
+          mostrarMsg('Esta conta Google já está cadastrada.', 'erro');
+          return;
+        }
+        await salvarAluno(user.uid, user.email, dados);
+        showLoading(false);
+        document.getElementById('form-body').style.display    = 'none';
+        document.getElementById('sucesso-screen').style.display = 'block';
+      } catch(err) {
+        showLoading(false);
+        if (err.code !== 'auth/popup-closed-by-user') {
+          mostrarMsg('Erro ao entrar com Google: ' + err.message, 'erro');
+        }
+      }
+    };
+
+    init();
+  </script>
+</body>
+</html>

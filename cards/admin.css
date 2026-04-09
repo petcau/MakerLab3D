@@ -989,3 +989,286 @@ textarea { resize: vertical; min-height: 80px; }
 }
 
 .trilha-btn-rem:hover { background: #fdf2f2; color: var(--vermelho); border-color: var(--vermelho); }
+
+/* ---- Header direito (user + logout) ---- */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-user {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-logout {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter Tight', sans-serif;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+/* ---- Checkboxes grid ---- */
+.checkboxes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--preto);
+  cursor: pointer;
+  padding: 8px 14px;
+  background: var(--off-white);
+  border: 1.5px solid var(--cinza-medio);
+  border-radius: 8px;
+  transition: all 0.15s;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.checkbox-label:hover {
+  border-color: var(--azul);
+  background: #EEEDF8;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--azul-dark);
+  cursor: pointer;
+}
+
+/* ---- Section title com botão ---- */
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.section-title-row .section-title { margin-bottom: 0; }
+
+/* ---- Lista de professores ---- */
+.professores-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prof-empty {
+  text-align: center;
+  color: #bbb;
+  font-size: 13px;
+  font-style: italic;
+  padding: 16px;
+  border: 1.5px dashed var(--cinza-medio);
+  border-radius: 10px;
+}
+
+.prof-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--off-white);
+  border: 1.5px solid var(--cinza-medio);
+  border-radius: 10px;
+  gap: 12px;
+}
+
+.prof-info { flex: 1; min-width: 0; }
+
+.prof-nome {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--preto);
+}
+
+.prof-email {
+  font-size: 11px;
+  color: var(--cinza-label);
+  margin-top: 2px;
+}
+
+.prof-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.prof-btn-edit {
+  background: var(--azul-dark);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.prof-btn-edit:hover { opacity: 0.85; }
+
+.prof-btn-del {
+  background: none;
+  border: 1px solid var(--cinza-medio);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--cinza-label);
+  transition: all 0.2s;
+}
+
+.prof-btn-del:hover { background: #fdf2f2; color: var(--vermelho); border-color: var(--vermelho); }
+
+/* ---- Modal ---- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--cinza-medio);
+}
+
+.modal-title {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--preto);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: var(--cinza-label);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.modal-close:hover { color: var(--preto); }
+
+.modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--cinza-medio);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ---- Botão convidar professor ---- */
+.btn-convidar {
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.btn-convidar:hover { opacity: 0.85; }
+
+/* ---- Botão WhatsApp ---- */
+.btn-whatsapp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #25D366;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-whatsapp:hover { opacity: 0.88; }
+
+/* ---- Modal largo (professores) ---- */
+.modal-box-lg {
+  max-width: 620px !important;
+}
+
+.modal-scroll {
+  max-height: 70vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #ddd transparent;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal-grid .form-group.full {
+  grid-column: 1 / -1;
+}
+
+.modal-secao-titulo {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--cinza-label);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--cinza-medio);
+  margin-bottom: 12px;
+}

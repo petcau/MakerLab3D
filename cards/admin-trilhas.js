@@ -24,15 +24,15 @@ let todosCardsDB = {}; // cache id -> data
 
 // ---- TAB SWITCH ----
 window.switchTab = function(tab) {
-  document.getElementById('view-cards').style.display   = tab === 'cards'   ? '' : 'none';
-  document.getElementById('view-trilhas').style.display = tab === 'trilhas' ? '' : 'none';
-  document.getElementById('tab-cards').classList.toggle('active',   tab === 'cards');
-  document.getElementById('tab-trilhas').classList.toggle('active', tab === 'trilhas');
-  document.getElementById('header-sub').textContent = tab === 'cards' ? 'Painel de Cards' : 'Trilhas de Aprendizagem';
-  if (tab === 'trilhas') {
-    listarTrilhas();
-    carregarTodosCards();
-  }
+  ['cards','trilhas','usuarios','escolas'].forEach(t => {
+    const view = document.getElementById('view-' + t);
+    const btn  = document.getElementById('tab-' + t);
+    if (view) view.style.display = t === tab ? '' : 'none';
+    if (btn)  btn.classList.toggle('active', t === tab);
+  });
+  if (tab === 'trilhas')  { listarTrilhas(); carregarTodosCards(); }
+  if (tab === 'usuarios') { carregarUsuarios(); }
+  if (tab === 'escolas')  { carregarEscolas(); }
 };
 
 // ---- TOAST (reutiliza do admin.js) ----

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MakerLab 3D — Entrar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --amarelo:   #E5C84C;
+      --azul-dark: #2F3447;
+      --azul:      #5F6480;
+      --off-white: #F5F3EE;
+      --borda:     #DDD8CC;
+      --erro:      #e74c3c;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      background: #ECEAE4;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: #fff;
+      border: 1.5px solid var(--borda);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(47,52,71,0.10);
+    }
+
+    .login-header {
+      background: var(--amarelo);
+      padding: 28px 32px 24px;
+      text-align: center;
+    }
+
+    .login-logo {
+      font-family: 'Nunito', sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--azul-dark);
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .login-logo span { color: #fff; }
+
+    .login-sub {
+      font-size: 12px;
+      color: rgba(47,52,71,0.6);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+
+    .login-body { padding: 32px; }
+
+    .login-title {
+      font-family: 'Nunito', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--azul-dark);
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    /* Google button */
+    .btn-google {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 13px 20px;
+      border: 1.5px solid var(--borda);
+      border-radius: 12px;
+      background: #fff;
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--azul-dark);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 20px;
+    }
+
+    .btn-google:hover { background: var(--off-white); border-color: var(--azul); }
+
+    .btn-google img { width: 20px; height: 20px; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      color: #bbb;
+      font-size: 12px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--borda);
+    }
+
+    /* Form */
+    .form-group { margin-bottom: 16px; }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--azul);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      border: 1.5px solid var(--borda);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: 'Nunito Sans', sans-serif;
+      color: var(--azul-dark);
+      background: var(--off-white);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: var(--azul-dark); background: #fff; }
+
+    .btn-entrar {
+      width: 100%;
+      background: var(--azul-dark);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 4px;
+    }
+
+    .btn-entrar:hover { background: #3d4460; }
+
+    .erro-msg {
+      display: none;
+      background: #fdf2f2;
+      border: 1px solid #f5c6c6;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--erro);
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--borda);
+      border-top-color: var(--amarelo);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">MAKER<span>LAB</span> 3D</div>
+      <div class="login-sub">Painel Administrativo</div>
+    </div>
+    <div class="login-body">
+      <div class="login-title">Entrar</div>
+
+      <!-- Login com Google -->
+      <button class="btn-google" id="btn-google">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Entrar com Google
+      </button>
+
+      <div class="divider">ou</div>
+
+      <!-- Login com E-mail/Senha -->
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="email" placeholder="seu@email.com">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="senha" placeholder="••••••••">
+      </div>
+      <button class="btn-entrar" id="btn-entrar">Entrar</button>
+      <div style="text-align:center; margin-top:12px;">
+        <a href="#" id="link-esqueci" style="font-size:12px; color:var(--azul); text-decoration:none; font-weight:600;">
+          Esqueci minha senha
+        </a>
+      </div>
+
+      <div class="erro-msg" id="erro-msg"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithPopup,
+      signInWithEmailAndPassword,
+      GoogleAuthProvider,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAndgQiwxpe6wyCF8aa5NqqdMuwLJfMIMM",
+      authDomain: "makerlab3d-4e455.firebaseapp.com",
+      projectId: "makerlab3d-4e455",
+      storageBucket: "makerlab3d-4e455.firebasestorage.app",
+      messagingSenderId: "495457985822",
+      appId: "1:495457985822:web:05efcebeed970ecb82150f"
+    };
+
+    const app      = initializeApp(firebaseConfig);
+    const auth     = getAuth(app);
+    const db       = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    function showLoading(show) {
+      document.getElementById('loading').style.display = show ? 'flex' : 'none';
+    }
+
+    function showErro(msg) {
+      const el = document.getElementById('erro-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    // Verifica se usuário já está logado
+    onAuthStateChanged(auth, async user => {
+      if (user) {
+        showLoading(true);
+        await redirecionarPorPerfil(user);
+      }
+    });
+
+    async function redirecionarPorPerfil(user) {
+      try {
+        const snap = await getDoc(doc(db, 'usuarios', user.uid));
+        if (!snap.exists()) {
+          showErro('Usuário não cadastrado no sistema. Fale com o administrador.');
+          await auth.signOut();
+          showLoading(false);
+          return;
+        }
+        const perfil = snap.data().perfil;
+        if (perfil === 'gestor' || perfil === 'conteudista') {
+          window.location.href = 'admin.html';
+        } else {
+          showErro('Acesso não autorizado para este painel.');
+          await auth.signOut();
+          showLoading(false);
+        }
+      } catch(err) {
+        showErro('Erro ao verificar perfil: ' + err.message);
+        showLoading(false);
+      }
+    }
+
+    // Login com Google
+    document.getElementById('btn-google').addEventListener('click', async () => {
+      showLoading(true);
+      try {
+        const result = await signInWithPopup(auth, provider);
+        await redirecionarPorPerfil(result.user);
+      } catch(err) {
+        showErro('Erro ao entrar com Google: ' + err.message);
+        showLoading(false);
+      }
+    });
+
+    // Login com e-mail/senha
+    document.getElementById('btn-entrar').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value;
+      if (!email || !senha) { showErro('Preencha e-mail e senha.'); return; }
+      showLoading(true);
+      try {
+        const result = await signInWithEmailAndPassword(auth, email, senha);
+        await redirecionarPorPerfil(result.user);
+      } catch(err) {
+        const msgs = {
+          'auth/user-not-found':  'Usuário não encontrado.',
+          'auth/wrong-password':  'Senha incorreta.',
+          'auth/invalid-email':   'E-mail inválido.',
+          'auth/too-many-requests': 'Muitas tentativas. Tente mais tarde.',
+        };
+        showErro(msgs[err.code] || 'Erro: ' + err.message);
+        showLoading(false);
+      }
+    });
+
+    // Enter no campo de senha
+    document.getElementById('senha').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-entrar').click();
+    });
+
+    // Esqueci minha senha
+    document.getElementById('link-esqueci').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) {
+        showErro('Digite seu e-mail acima para redefinir a senha.');
+        return;
+      }
+      try {
+        const { sendPasswordResetEmail } = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js");
+        await sendPasswordResetEmail(auth, email);
+        const err = document.getElementById('erro-msg');
+        err.textContent = '✅ E-mail de redefinição enviado! Verifique sua caixa de entrada.';
+        err.style.display = 'block';
+        err.style.background = '#f0fdf4';
+        err.style.borderColor = '#a7f3d0';
+        err.style.color = '#27ae60';
+      } catch(error) {
+        showErro('Erro ao enviar e-mail. Verifique se o endereço está correto.');
+      }
+    });
+  </script>
+
+</body>
+</html>
