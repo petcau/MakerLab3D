@@ -1,0 +1,63 @@
+/* ---- Extras dinâmicos ---- */
+
+.trilha-spinner {
+  width: 40px; height: 40px;
+  border: 3px solid #dbe2ef;
+  border-top-color: var(--trilha-yellow);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Cards clicáveis no caminho */
+.route-step h3 a {
+  color: var(--trilha-text);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.route-step h3 a:hover {
+  color: var(--trilha-blue);
+  text-decoration: underline;
+}
+
+/* Último step sem seta */
+.route-step-last::after { display: none !important; }
+
+/* Vídeo de apresentação */
+.trilha-video-wrap {
+  aspect-ratio: 16 / 9;
+  margin: 0 24px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--trilha-line);
+}
+
+.trilha-video-wrap iframe {
+  width: 100%; height: 100%; display: block;
+}
+
+/* Objetivo full width */
+.summary-mini.full-col {
+  grid-column: 1 / -1;
+}
+
+/* Animação de entrada */
+.trilha-block {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.trilha-block.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---- Ícone da trilha ---- */
+.trilha-icon {
+  font-size: 0.85em;
+  margin-right: 6px;
+}

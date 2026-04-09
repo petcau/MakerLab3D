@@ -58,7 +58,8 @@ body {
 .layout {
   display: grid;
   grid-template-columns: 340px 1fr;
-  min-height: calc(100vh - 60px);
+  height: calc(100vh - 60px);
+  overflow: hidden;
 }
 
 /* ---- Sidebar ---- */
@@ -67,6 +68,8 @@ body {
   border-right: 1px solid var(--cinza-medio);
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .sidebar-header {
@@ -104,6 +107,25 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cinza-medio) transparent;
+}
+
+.card-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.card-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.card-list::-webkit-scrollbar-thumb {
+  background: var(--cinza-medio);
+  border-radius: 3px;
+}
+
+.card-list::-webkit-scrollbar-thumb:hover {
+  background: var(--cinza-label);
 }
 
 .card-item {
@@ -165,6 +187,7 @@ body {
 .main {
   padding: 32px;
   overflow-y: auto;
+  height: 100%;
 }
 
 .form-header {
@@ -829,3 +852,140 @@ textarea { resize: vertical; min-height: 80px; }
   height: 100%;
   display: block;
 }
+
+/* ---- Abas do header ---- */
+.header-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab-btn {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter Tight', sans-serif;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.tab-btn.active { background: var(--amarelo); color: var(--preto); border-color: var(--amarelo); }
+
+.tab-view { height: calc(100vh - 60px); }
+
+/* ---- Trilha: linha de adição ---- */
+.trilha-add-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* ---- Lista ordenável de cards da trilha ---- */
+.trilha-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trilha-empty {
+  padding: 20px;
+  text-align: center;
+  color: #bbb;
+  font-size: 13px;
+  font-style: italic;
+  border: 1.5px dashed var(--cinza-medio);
+  border-radius: 10px;
+}
+
+.trilha-card-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--off-white);
+  border: 1.5px solid var(--cinza-medio);
+  border-radius: 10px;
+  cursor: grab;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.trilha-card-item:hover { border-color: var(--azul); background: #EEEDF8; }
+.trilha-card-item.dragging { opacity: 0.4; }
+.trilha-card-item.drag-over { border-color: var(--amarelo); background: #FFF8DC; transform: scale(1.01); }
+
+.trilha-card-drag {
+  font-size: 18px;
+  color: #ccc;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.trilha-card-ordem {
+  width: 28px; height: 28px;
+  background: var(--azul-dark);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.trilha-card-info { flex: 1; min-width: 0; }
+
+.trilha-card-meta {
+  font-size: 10px;
+  color: var(--cinza-label);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.trilha-card-nome {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--preto);
+}
+
+.trilha-card-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.trilha-btn-up,
+.trilha-btn-down {
+  background: var(--cinza-claro);
+  border: 1px solid var(--cinza-medio);
+  border-radius: 5px;
+  width: 28px; height: 28px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--azul);
+  transition: all 0.2s;
+}
+
+.trilha-btn-up:hover, .trilha-btn-down:hover { background: var(--azul); color: #fff; }
+.trilha-btn-up:disabled, .trilha-btn-down:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.trilha-btn-rem {
+  background: none;
+  border: 1px solid var(--cinza-medio);
+  border-radius: 5px;
+  width: 28px; height: 28px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--cinza-label);
+  transition: all 0.2s;
+}
+
+.trilha-btn-rem:hover { background: #fdf2f2; color: var(--vermelho); border-color: var(--vermelho); }
