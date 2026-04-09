@@ -154,6 +154,37 @@
 
     .helper { font-size: 10px; color: var(--azul); }
 
+    /* Botão Google */
+    .btn-google {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 11px 16px;
+      border: 1.5px solid var(--borda);
+      border-radius: 10px;
+      background: #fff;
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--azul-dark);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-google:hover { background: var(--off-white); border-color: var(--azul); }
+    .btn-google img { width: 18px; height: 18px; }
+
+    .ou-divisor {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #bbb;
+      font-size: 12px;
+      margin: 4px 0;
+    }
+    .ou-divisor::before, .ou-divisor::after { content: ''; flex: 1; height: 1px; background: var(--borda); }
+
     /* Checkboxes */
     .checks-row {
       display: flex;
@@ -312,26 +343,11 @@
               <input type="text" id="nome" placeholder="Seu nome completo">
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>E-mail *</label>
-              <input type="email" id="email" placeholder="seu@email.com">
-            </div>
+          <div class="form-row full">
             <div class="form-group">
               <label>Telefone *</label>
               <input type="text" id="telefone" placeholder="(00) 00000-0000">
             </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Senha *</label>
-              <input type="password" id="senha" placeholder="Mínimo 6 caracteres">
-            </div>
-            <div class="form-group">
-              <label>Confirmar Senha *</label>
-              <input type="password" id="senha2" placeholder="Digite a senha novamente">
-            </div>
-
           </div>
         </div>
       </div>
@@ -394,7 +410,33 @@
         </div>
       </div>
 
-      <button class="btn-cadastrar" id="btn-cadastrar" onclick="cadastrar()">
+      <!-- CRIAR ACESSO -->
+      <div class="secao">
+        <div class="secao-titulo">Criar Acesso</div>
+        <div class="secao-body">
+          <button class="btn-google" id="btn-google" onclick="cadastrarGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
+            Cadastrar com Google
+          </button>
+          <div class="ou-divisor">ou</div>
+          <div class="form-group">
+            <label>E-mail *</label>
+            <input type="email" id="email" placeholder="seu@email.com">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Senha *</label>
+              <input type="password" id="senha" placeholder="Mínimo 6 caracteres">
+            </div>
+            <div class="form-group">
+              <label>Confirmar Senha *</label>
+              <input type="password" id="senha2" placeholder="Digite a senha novamente">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-cadastrar" id="btn-cadastrar" onclick="cadastrarEmail()">
         Criar minha conta →
       </button>
 
@@ -416,7 +458,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -428,9 +470,10 @@
       appId: "1:495457985822:web:05efcebeed970ecb82150f"
     };
 
-    const app  = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
+    const app      = initializeApp(firebaseConfig);
+    const auth     = getAuth(app);
+    const db       = getFirestore(app);
+    const provider = new GoogleAuthProvider();
 
     const params   = new URLSearchParams(window.location.search);
     const escolaId = params.get('escola');
@@ -440,13 +483,13 @@
       if (!escolaId) {
         document.getElementById('escola-nome').textContent = 'Link inválido.';
         document.getElementById('btn-cadastrar').disabled = true;
+        document.getElementById('btn-google').disabled    = true;
         return;
       }
       try {
         const snap = await getDoc(doc(db, 'escolas', escolaId));
         if (!snap.exists()) {
           document.getElementById('escola-nome').textContent = 'Escola não encontrada.';
-          document.getElementById('btn-cadastrar').disabled = true;
           return;
         }
         escolaData = snap.data();
@@ -454,20 +497,17 @@
         if (!escolaData.ativo) {
           mostrarMsg('Esta escola não está ativa no sistema.', 'erro');
           document.getElementById('btn-cadastrar').disabled = true;
+          document.getElementById('btn-google').disabled    = true;
         }
       } catch(err) {
         document.getElementById('escola-nome').textContent = 'Erro ao carregar escola.';
       }
     }
 
-    // Gera próximo id_professor sequencial
     async function proximoIdProfessor() {
       let max = 0;
       const snap = await getDocs(collection(db, 'usuarios'));
-      snap.forEach(d => {
-        const n = d.data().id_professor || 0;
-        if (n > max) max = n;
-      });
+      snap.forEach(d => { const n = d.data().id_professor || 0; if (n > max) max = n; });
       return max + 1;
     }
 
@@ -481,80 +521,101 @@
       el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    window.cadastrar = async function() {
-      const codigo   = document.getElementById('codigo').value.trim().toUpperCase();
-      const nome     = document.getElementById('nome').value.trim();
-      const email    = document.getElementById('email').value.trim();
-      const senha    = document.getElementById('senha').value;
-      const telefone = document.getElementById('telefone').value.trim();
+    function validarCamposObrigatorios() {
+      const codigo  = document.getElementById('codigo').value.trim().toUpperCase();
+      const nome    = document.getElementById('nome').value.trim();
+      const tel     = document.getElementById('telefone').value.trim();
+      const vinculo = document.getElementById('tipo-vinculo').value;
+      const area    = document.getElementById('area-atuacao').value.trim();
+      const form    = document.getElementById('formacao').value.trim();
+      const nivel   = document.getElementById('nivel-experiencia').value;
 
-      const telefone_v  = document.getElementById('telefone').value.trim();
-      const vinculo_v   = document.getElementById('tipo-vinculo').value;
-      const area_v      = document.getElementById('area-atuacao').value.trim();
-      const formacao_v  = document.getElementById('formacao').value.trim();
-      const nivel_v     = document.getElementById('nivel-experiencia').value;
-
-      if (!codigo)               return mostrarMsg('Informe o código de acesso.', 'erro');
-      if (!nome)                 return mostrarMsg('Informe seu nome completo.', 'erro');
-      if (!email)                return mostrarMsg('Informe seu e-mail.', 'erro');
-      if (!telefone_v)           return mostrarMsg('Informe seu telefone.', 'erro');
-      const senha2 = document.getElementById('senha2').value;
-      if (!senha || senha.length < 6) return mostrarMsg('A senha deve ter pelo menos 6 caracteres.', 'erro');
-      if (senha !== senha2) return mostrarMsg('As senhas não coincidem. Verifique e tente novamente.', 'erro');
-      if (!vinculo_v)            return mostrarMsg('Selecione o tipo de vínculo.', 'erro');
-      if (!area_v)               return mostrarMsg('Informe sua área de atuação.', 'erro');
-      if (!formacao_v)           return mostrarMsg('Informe sua formação.', 'erro');
-      if (!nivel_v)              return mostrarMsg('Selecione seu nível de experiência maker.', 'erro');
-
-      if (!escolaData) return mostrarMsg('Escola não encontrada.', 'erro');
+      if (!codigo)  { mostrarMsg('Informe o código de acesso.', 'erro'); return null; }
+      if (!escolaData) { mostrarMsg('Escola não encontrada.', 'erro'); return null; }
       if (codigo !== escolaData.codigo_acesso) {
         document.getElementById('codigo').classList.add('erro');
-        return mostrarMsg('Código de acesso incorreto. Verifique com sua escola.', 'erro');
+        mostrarMsg('Código de acesso incorreto. Verifique com sua escola.', 'erro'); return null;
       }
       document.getElementById('codigo').classList.remove('erro');
+      if (!nome)    { mostrarMsg('Informe seu nome completo.', 'erro'); return null; }
+      if (!tel)     { mostrarMsg('Informe seu telefone.', 'erro'); return null; }
+      if (!vinculo) { mostrarMsg('Selecione o tipo de vínculo.', 'erro'); return null; }
+      if (!area)    { mostrarMsg('Informe sua área de atuação.', 'erro'); return null; }
+      if (!form)    { mostrarMsg('Informe sua formação.', 'erro'); return null; }
+      if (!nivel)   { mostrarMsg('Selecione seu nível de experiência maker.', 'erro'); return null; }
+      return { nome, tel, vinculo, area, form, nivel };
+    }
 
+    async function salvarNoDB(uid, email, campos) {
+      const idProf = await proximoIdProfessor();
+      await setDoc(doc(db, 'usuarios', uid), {
+        id_professor:            idProf,
+        nome:                    campos.nome,
+        email,
+        telefone:                campos.tel,
+        perfil:                  'professor',
+        escola_id:               escolaId,
+        ativo:                   true,
+        tipo_vinculo:            campos.vinculo,
+        area_atuacao:            campos.area,
+        formacao:                campos.form,
+        possui_formacao_maker:   document.getElementById('form-maker').checked,
+        nivel_experiencia_maker: campos.nivel,
+        mediador_tecnico:        document.getElementById('med-tec').checked,
+        mediador_pedagogico:     document.getElementById('med-ped').checked,
+        data_inicio:             new Date().toISOString().split('T')[0],
+        observacoes:             '',
+        criado_em:               new Date().toISOString()
+      });
+    }
+
+    function mostrarSucesso() {
+      document.getElementById('form-body').style.display     = 'none';
+      document.getElementById('sucesso-screen').style.display = 'block';
+    }
+
+    window.cadastrarEmail = async function() {
+      const campos = validarCamposObrigatorios();
+      if (!campos) return;
+      const email  = document.getElementById('email').value.trim();
+      const senha  = document.getElementById('senha').value;
+      const senha2 = document.getElementById('senha2').value;
+      if (!email)  return mostrarMsg('Informe seu e-mail.', 'erro');
+      if (!senha || senha.length < 6) return mostrarMsg('A senha deve ter pelo menos 6 caracteres.', 'erro');
+      if (senha !== senha2) return mostrarMsg('As senhas não coincidem.', 'erro');
       showLoading(true);
       try {
-        const idProf = await proximoIdProfessor();
-        const cred   = await createUserWithEmailAndPassword(auth, email, senha);
-
-        await setDoc(doc(db, 'usuarios', cred.user.uid), {
-          id_professor:            idProf,
-          nome,
-          email,
-          telefone,
-          perfil:                  'professor',
-          escola_id:               escolaId,
-          ativo:                   true,
-          tipo_vinculo:            document.getElementById('tipo-vinculo').value    || '',
-          area_atuacao:            document.getElementById('area-atuacao').value.trim() || '',
-          formacao:                document.getElementById('formacao').value.trim() || '',
-          possui_formacao_maker:   document.getElementById('form-maker').checked,
-          nivel_experiencia_maker: document.getElementById('nivel-experiencia').value || '',
-          mediador_tecnico:        document.getElementById('med-tec').checked,
-          mediador_pedagogico:     document.getElementById('med-ped').checked,
-          data_inicio:             new Date().toISOString().split('T')[0],
-          observacoes:             '',
-          criado_em:               new Date().toISOString()
-        });
-
+        const cred = await createUserWithEmailAndPassword(auth, email, senha);
+        await salvarNoDB(cred.user.uid, email, campos);
         showLoading(false);
-        document.getElementById('form-body').style.display    = 'none';
-        document.getElementById('sucesso-screen').style.display = 'block';
-
+        mostrarSucesso();
       } catch(err) {
         showLoading(false);
-        const msgs = {
-          'auth/email-already-in-use': 'Este e-mail já está cadastrado.',
-          'auth/weak-password':        'Senha muito fraca.',
-          'auth/invalid-email':        'E-mail inválido.',
-        };
+        const msgs = { 'auth/email-already-in-use': 'E-mail já cadastrado.', 'auth/weak-password': 'Senha muito fraca.', 'auth/invalid-email': 'E-mail inválido.' };
         mostrarMsg(msgs[err.code] || 'Erro: ' + err.message, 'erro');
       }
     };
 
+    window.cadastrarGoogle = async function() {
+      const campos = validarCamposObrigatorios();
+      if (!campos) return;
+      showLoading(true);
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user   = result.user;
+        const snap   = await getDoc(doc(db, 'usuarios', user.uid));
+        if (snap.exists()) { showLoading(false); mostrarMsg('Esta conta Google já está cadastrada.', 'erro'); return; }
+        await salvarNoDB(user.uid, user.email, campos);
+        showLoading(false);
+        mostrarSucesso();
+      } catch(err) {
+        showLoading(false);
+        if (err.code !== 'auth/popup-closed-by-user') mostrarMsg('Erro ao entrar com Google: ' + err.message, 'erro');
+      }
+    };
+
     document.getElementById('senha').addEventListener('keydown', e => {
-      if (e.key === 'Enter') window.cadastrar();
+      if (e.key === 'Enter') window.cadastrarEmail();
     });
 
     init();

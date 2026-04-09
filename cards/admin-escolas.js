@@ -108,13 +108,18 @@ function renderEscolaForm(id, e = {}) {
   const ufOptions = ufs.map(u => `<option value="${u}" ${e.uf === u ? 'selected' : ''}>${u}</option>`).join('');
 
   content.innerHTML = `
-    <div class="form-header">
-      <div class="form-title">${id ? `Escola ${e.id_escola || ''}` : 'Nova Escola'}</div>
-      <div class="form-actions">
-        ${id ? `<button class="btn-deletar" onclick="deletarEscola('${id}')">🗑 Remover</button>` : ''}
-        ${id ? `<button class="btn-convidar" onclick="abrirModalConvite('${id}')">📩 Convidar Professor</button>` : ''}
-        <button class="btn-salvar"   onclick="salvarEscola(getEscolaAtiva(), false)">⏸ Salvar e Inativar</button>
-        <button class="btn-publicar" onclick="salvarEscola(getEscolaAtiva(), true)">✅ Salvar e Ativar</button>
+    <div class="form-header" style="flex-direction:column; gap:0; align-items:stretch; padding:0; background:none; border:none;">
+      ${id ? `
+      <div style="display:flex; justify-content:flex-end; gap:8px; padding:16px 24px 12px; border-bottom:1px solid var(--cinza-medio); background:var(--off-white); border-radius:12px 12px 0 0;">
+        <button class="btn-convidar" onclick="abrirModalConvite('${id}')">📩 Convidar Professor</button>
+        <button class="btn-convidar" style="background:#8e44ad;" onclick="abrirModalConviteAluno('${id}')">🎒 Convidar Aluno</button>
+      </div>` : ''}
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 24px;">
+        <div class="form-title" style="margin:0;">${id ? `Escola ${e.id_escola || ''}` : 'Nova Escola'}</div>
+        <div style="display:flex; gap:8px;">
+          ${id ? `<button class="btn-deletar" onclick="deletarEscola('${id}')">🗑 Remover</button>` : ''}
+          <button class="btn-publicar" onclick="salvarEscola(getEscolaAtiva())">💾 Salvar</button>
+        </div>
       </div>
     </div>
 
@@ -329,7 +334,7 @@ window.regenerarCodigo = function() {
 };
 
 // ---- SALVAR ESCOLA ----
-window.salvarEscola = async function(id, ativar) {
+window.salvarEscola = async function(id) {
   const nome = document.getElementById('e-nome')?.value?.trim();
   if (!nome) { showToast('⚠️ Informe o nome da escola.', 'error'); return; }
 
@@ -339,7 +344,7 @@ window.salvarEscola = async function(id, ativar) {
     id_escola:                  parseInt(document.getElementById('e-id-escola')?.value) || 1,
     nome,
     codigo_acesso:              document.getElementById('e-codigo')?.value?.trim()     || gerarCodigo(),
-    ativo:                      ativar !== undefined ? ativar : document.getElementById('e-ativo')?.value === 'true',
+    ativo:                      document.getElementById('e-ativo')?.value === 'true',
     endereco:                   document.getElementById('e-endereco')?.value?.trim()   || '',
     bairro:                     document.getElementById('e-bairro')?.value?.trim()     || '',
     cidade:                     document.getElementById('e-cidade')?.value?.trim()     || '',
