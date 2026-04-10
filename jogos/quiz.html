@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz | MakerLab 3D</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ouro:     #E5C84C;
+      --ouro-esc: #C9A830;
+      --azul:     #2F3447;
+      --azul-med: #5F6480;
+      --off:      #F5F3EE;
+      --borda:    #DDD8CC;
+      --verde:    #27ae60;
+      --vermelho: #e74c3c;
+      --bg:       #ECEAE4;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 60px;
+    }
+
+    /* Header */
+    .q-header {
+      width: 100%; max-width: 680px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .q-logo { font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 900; color: var(--azul); }
+    .q-logo span { color: var(--ouro-esc); }
+    .q-card-nome { font-size: 13px; font-weight: 700; color: var(--azul-med); max-width: 200px; text-align: right; }
+
+    /* Player card */
+    .player-card {
+      width: 100%; max-width: 680px;
+      background: linear-gradient(135deg, #fffbea, #fff8d0);
+      border: 2px solid var(--ouro-esc);
+      border-radius: 20px;
+      padding: 14px 20px;
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 18px;
+      box-shadow: 0 0 0 4px rgba(201,168,48,0.10);
+    }
+    .player-avatar { width: 68px; height: 68px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 8px rgba(201,168,48,0.3)); }
+    .player-info { flex: 1; }
+    .player-nome { font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 900; color: var(--azul); }
+    .player-nivel { font-size: 11px; font-weight: 700; color: var(--ouro-esc); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+    .player-pts-box {
+      display: flex; flex-direction: column; align-items: center;
+      background: rgba(201,168,48,0.12); border: 1px solid rgba(201,168,48,0.3);
+      border-radius: 12px; padding: 8px 16px; flex-shrink: 0;
+    }
+    .player-pts-val { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900; color: var(--ouro-esc); line-height: 1; }
+    .player-pts-label { font-size: 10px; font-weight: 700; color: #b8910e; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Progresso */
+    .q-prog-wrap { width: 100%; max-width: 680px; margin-bottom: 14px; }
+    .q-prog-info { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--azul-med); margin-bottom: 6px; }
+    .q-prog-bar { height: 8px; background: var(--borda); border-radius: 999px; overflow: hidden; }
+    .q-prog-fill { height: 100%; background: linear-gradient(90deg, var(--ouro), var(--ouro-esc)); border-radius: 999px; transition: width 0.4s ease; }
+
+    /* Card pergunta */
+    .q-box { width: 100%; max-width: 680px; background: #fff; border: 1.5px solid var(--borda); border-radius: 24px; overflow: hidden; box-shadow: 0 4px 24px rgba(47,52,71,0.08); }
+
+    .q-box-top {
+      background: linear-gradient(135deg, var(--azul), #3d4460);
+      padding: 22px 28px 20px; position: relative;
+    }
+    .q-estrelas { font-size: 13px; letter-spacing: 6px; color: var(--ouro); margin-bottom: 8px; }
+    .q-num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.45); margin-bottom: 6px; }
+    .q-texto { font-family: 'Nunito', sans-serif; font-size: 20px; font-weight: 800; color: #fff; line-height: 1.35; }
+    .q-pts-badge {
+      position: absolute; top: 18px; right: 22px;
+      background: var(--ouro); color: var(--azul);
+      font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900;
+      padding: 4px 12px; border-radius: 20px;
+    }
+
+    /* Alternativas */
+    .q-alts { padding: 18px 22px 20px; display: flex; flex-direction: column; gap: 10px; }
+    .q-alt {
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 18px;
+      border: 2px solid var(--borda); border-radius: 14px;
+      cursor: pointer; transition: all 0.2s;
+      background: var(--off);
+      font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; color: var(--azul);
+      text-align: left; width: 100%;
+    }
+    .q-alt:hover:not(:disabled) { border-color: var(--ouro-esc); background: #fffbea; transform: translateX(5px); }
+    .q-alt-letra {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--borda); display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 900; flex-shrink: 0; transition: all 0.2s;
+    }
+    .q-alt.correta { border-color: var(--verde); background: #f0fdf4; animation: pulse-v 0.4s ease; }
+    .q-alt.correta .q-alt-letra { background: var(--verde); color: #fff; }
+    .q-alt.errada  { border-color: var(--vermelho); background: #fdf2f2; }
+    .q-alt.errada .q-alt-letra  { background: var(--vermelho); color: #fff; }
+    .q-alt.revelada { border-color: var(--verde); background: #f0fdf4; }
+    .q-alt.revelada .q-alt-letra { background: var(--verde); color: #fff; }
+    .q-alt:disabled { cursor: not-allowed; }
+
+    @keyframes pulse-v { 0%{transform:scale(1)} 50%{transform:scale(1.02)} 100%{transform:scale(1)} }
+
+    /* Feedback */
+    .q-feedback {
+      display: none; margin: 0 22px 14px;
+      padding: 11px 16px; border-radius: 12px;
+      font-size: 14px; font-weight: 600; line-height: 1.5;
+    }
+    .q-feedback.acerto { background: #f0fdf4; border: 1px solid #a7f3d0; color: #15803d; }
+    .q-feedback.erro   { background: #fdf2f2; border: 1px solid #f5c6c6; color: #b91c1c; }
+
+    /* Botão próxima */
+    .btn-prox {
+      display: none;
+      width: calc(100% - 44px); margin: 0 22px 22px;
+      background: linear-gradient(135deg, var(--ouro), var(--ouro-esc));
+      color: var(--azul); border: none; border-radius: 14px; padding: 14px;
+      font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 900;
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 4px 16px rgba(201,168,48,0.3);
+    }
+    .btn-prox:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,48,0.4); }
+
+    /* Placar */
+    .q-placar { width: 100%; max-width: 680px; display: flex; gap: 10px; margin-top: 14px; }
+    .pl-item { flex: 1; background: #fff; border: 1.5px solid var(--borda); border-radius: 14px; padding: 12px; text-align: center; }
+    .pl-item.ac { border-color: #a7f3d0; background: #f0fdf4; }
+    .pl-item.er { border-color: #f5c6c6; background: #fdf2f2; }
+    .pl-item.pt { border-color: var(--ouro); background: #fffbea; }
+    .pl-val { font-family: 'Nunito', sans-serif; font-size: 28px; font-weight: 900; line-height: 1; }
+    .ac .pl-val { color: var(--verde); }
+    .er .pl-val { color: var(--vermelho); }
+    .pt .pl-val { color: var(--ouro-esc); }
+    .pl-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--azul-med); margin-top: 4px; }
+
+    /* Tela Final */
+    .tela-final {
+      display: none; width: 100%; max-width: 680px;
+      background: #fff;
+      border: 2px solid var(--ouro-esc); border-radius: 28px; overflow: hidden;
+      box-shadow: 0 0 0 4px rgba(201,168,48,0.10), 0 8px 40px rgba(47,52,71,0.10);
+    }
+    .tf-top {
+      background: linear-gradient(135deg, var(--azul), #3d4460);
+      padding: 40px 28px 32px; text-align: center;
+    }
+    .tf-emoji { font-size: 60px; margin-bottom: 14px; }
+    .tf-titulo { font-family: 'Nunito', sans-serif; font-size: 28px; font-weight: 900; color: #fff; margin-bottom: 6px; }
+    .tf-sub { font-size: 14px; color: rgba(255,255,255,0.55); }
+
+    .tf-body { padding: 28px; }
+
+    .res-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 22px; }
+    .res-item { text-align: center; padding: 16px 10px; border-radius: 16px; border: 1.5px solid var(--borda); }
+    .res-item.rac { border-color: #a7f3d0; background: #f0fdf4; }
+    .res-item.rer { border-color: #f5c6c6; background: #fdf2f2; }
+    .res-item.rpt { border-color: var(--ouro);  background: #fffbea; }
+    .res-val { font-family: 'Nunito', sans-serif; font-size: 34px; font-weight: 900; line-height: 1; }
+    .rac .res-val { color: var(--verde); }
+    .rer .res-val { color: var(--vermelho); }
+    .rpt .res-val { color: var(--ouro-esc); }
+    .res-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--azul-med); margin-top: 6px; }
+
+    .res-msg { text-align: center; font-size: 15px; color: var(--azul-med); line-height: 1.6; margin-bottom: 22px; }
+
+    .tf-avatar-wrap { display: flex; justify-content: center; margin-bottom: 20px; }
+    .tf-avatar { width: 110px; height: 110px; object-fit: contain; filter: drop-shadow(0 4px 16px rgba(201,168,48,0.35)); }
+
+    .btn-tentar {
+      display: block; width: 100%;
+      background: linear-gradient(135deg, var(--ouro), var(--ouro-esc));
+      color: var(--azul); border: none; border-radius: 14px; padding: 14px;
+      font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800;
+      cursor: pointer; margin-bottom: 10px; transition: all 0.2s;
+    }
+    .btn-tentar:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-voltar {
+      display: block; width: 100%;
+      background: var(--azul); color: #fff;
+      border: none; border-radius: 14px; padding: 14px;
+      font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .btn-voltar:hover { background: #3d4460; }
+
+    /* Loading */
+    .loading { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 80px 20px; color: var(--azul-med); font-size: 15px; }
+    .spinner { width: 44px; height: 44px; border: 3px solid var(--borda); border-top-color: var(--ouro); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 480px) {
+      .q-texto { font-size: 17px; }
+      .player-avatar { width: 52px; height: 52px; }
+      .q-logo { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="q-header">
+    <div class="q-logo">MAKER<span>LAB</span> 3D</div>
+    <div class="q-card-nome" id="q-card-nome">Carregando...</div>
+  </div>
+
+  <div class="player-card" id="player-card" style="display:none;">
+    <img class="player-avatar" id="player-avatar" src="../assets/robo 1_transparente.png" alt="Avatar">
+    <div class="player-info">
+      <div class="player-nome" id="player-nome">—</div>
+      <div class="player-nivel" id="player-nivel">Nível 1</div>
+    </div>
+    <div class="player-pts-box">
+      <div class="player-pts-val" id="player-pts">0</div>
+      <div class="player-pts-label">pontos</div>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    Carregando quiz...
+  </div>
+
+  <div class="q-prog-wrap" id="q-prog-wrap" style="display:none;">
+    <div class="q-prog-info">
+      <span id="prog-txt">Pergunta 1 de 5</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="q-prog-bar"><div class="q-prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="q-box" id="q-box" style="display:none;">
+    <div class="q-box-top">
+      <div class="q-estrelas">★ ★ ★</div>
+      <div class="q-num" id="q-num">Pergunta 1</div>
+      <div class="q-texto" id="q-texto">—</div>
+      <div class="q-pts-badge" id="q-pts-badge">+1 pt</div>
+    </div>
+    <div class="q-alts" id="q-alts"></div>
+    <div class="q-feedback" id="q-feedback"></div>
+    <button class="btn-prox" id="btn-prox" onclick="proxima()">Próxima →</button>
+  </div>
+
+  <div class="q-placar" id="q-placar" style="display:none;">
+    <div class="pl-item ac"><div class="pl-val" id="pl-ac">0</div><div class="pl-label">Acertos</div></div>
+    <div class="pl-item er"><div class="pl-val" id="pl-er">0</div><div class="pl-label">Erros</div></div>
+    <div class="pl-item pt"><div class="pl-val" id="pl-pt">0</div><div class="pl-label">Pontos</div></div>
+  </div>
+
+  <div class="tela-final" id="tela-final">
+    <div class="tf-top">
+      <div class="tf-emoji" id="tf-emoji">🎖️</div>
+      <div class="tf-titulo" id="tf-titulo">Quiz concluído!</div>
+      <div class="tf-sub" id="tf-sub">Veja seu resultado abaixo</div>
+    </div>
+    <div class="tf-body">
+      <div class="tf-avatar-wrap">
+        <img class="tf-avatar" id="tf-avatar" src="../assets/robo 1_transparente.png" alt="">
+      </div>
+      <div class="res-grid">
+        <div class="res-item rac"><div class="res-val" id="res-ac">0</div><div class="res-label">Acertos</div></div>
+        <div class="res-item rer"><div class="res-val" id="res-er">0</div><div class="res-label">Erros</div></div>
+        <div class="res-item rpt"><div class="res-val" id="res-pt">0</div><div class="res-label">Pontos</div></div>
+      </div>
+      <p class="res-msg" id="res-msg"></p>
+      <button class="btn-tentar" onclick="reiniciar()">🔄 Tentar Novamente</button>
+      <button class="btn-voltar" onclick="history.back()">← Voltar ao Card</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+    const app = initializeApp({
+      apiKey: "AIzaSyAndgQiwxpe6wyCF8aa5NqqdMuwLJfMIMM",
+      authDomain: "makerlab3d-4e455.firebaseapp.com",
+      projectId: "makerlab3d-4e455",
+      storageBucket: "makerlab3d-4e455.firebasestorage.app",
+      messagingSenderId: "495457985822",
+      appId: "1:495457985822:web:05efcebeed970ecb82150f"
+    });
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    const NIVEL_NOMES  = ['Explorador Iniciante','Curioso Digital','Aprendiz Maker','Construtor Criativo','Inventor em Ação','Programador Maker','Engenheiro Criativo','Inovador Maker','Mentor Maker','Mestre Maker'];
+    const NIVEL_PONTOS = [0,100,250,500,900,1400,2000,2700,3500,4500];
+
+    function getNivelIdx(pts) {
+      for (let i = NIVEL_PONTOS.length - 1; i >= 0; i--) {
+        if (pts >= NIVEL_PONTOS[i]) return i;
+      }
+      return 0;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const cardId = params.get('card');
+
+    let perguntas = [], atual = 0, acertos = 0, erros = 0, pontosGanhos = 0, respondida = false, cardData = null, avatarSrc = '../assets/robo 1_transparente.png';
+
+    async function init() {
+      if (!cardId) { erroLoad('Card não especificado.'); return; }
+
+      onAuthStateChanged(auth, async user => {
+        if (!user) { window.location.href = '../login.html'; return; }
+
+        try {
+          // Dados do aluno
+          const userSnap = await getDoc(doc(db, 'usuarios', user.uid));
+          if (userSnap.exists()) {
+            const u   = userSnap.data();
+            const pts = u.pontos_total || 0;
+            const idx = getNivelIdx(pts);
+            const num = idx + 1;
+            avatarSrc = '../assets/robo ' + num + '_transparente.png';
+
+            document.getElementById('player-nome').textContent  = u.nome || user.displayName || user.email.split('@')[0];
+            document.getElementById('player-nivel').textContent = 'Nível ' + num + ' — ' + NIVEL_NOMES[idx];
+            document.getElementById('player-pts').textContent   = pts;
+            document.getElementById('player-avatar').src        = avatarSrc;
+            document.getElementById('player-card').style.display = '';
+          }
+
+          // Dados do card
+          const cardSnap = await getDoc(doc(db, 'cards', cardId));
+          if (!cardSnap.exists()) { erroLoad('Card não encontrado.'); return; }
+          cardData = cardSnap.data();
+
+          document.getElementById('q-card-nome').textContent = cardData.nome || cardId;
+          document.title = 'Quiz — ' + (cardData.nome || cardId);
+
+          if (!cardData.quiz || cardData.quiz.length === 0) { erroLoad('Este card não tem quiz cadastrado.'); return; }
+
+          perguntas = [...cardData.quiz].sort(() => Math.random() - 0.5);
+          iniciarJogo();
+
+        } catch(e) { erroLoad('Erro: ' + e.message); }
+      });
+    }
+
+    function erroLoad(msg) {
+      document.getElementById('loading').innerHTML = '<p style="color:var(--vermelho);font-weight:700;">' + msg + '</p>';
+    }
+
+    function iniciarJogo() {
+      document.getElementById('loading').style.display   = 'none';
+      document.getElementById('q-prog-wrap').style.display = '';
+      document.getElementById('q-box').style.display      = '';
+      document.getElementById('q-placar').style.display   = '';
+      renderPergunta();
+    }
+
+    function renderPergunta() {
+      if (atual >= perguntas.length) { mostrarFinal(); return; }
+      respondida = false;
+      const q   = perguntas[atual];
+      const pct = Math.round((atual / perguntas.length) * 100);
+
+      document.getElementById('prog-txt').textContent    = 'Pergunta ' + (atual + 1) + ' de ' + perguntas.length;
+      document.getElementById('prog-pct').textContent    = pct + '%';
+      document.getElementById('prog-fill').style.width   = pct + '%';
+      document.getElementById('q-num').textContent       = 'Pergunta ' + (atual + 1);
+      document.getElementById('q-texto').textContent     = q.pergunta || '—';
+      const pts = parseFloat(q.pontos) || 1.0;
+      document.getElementById('q-pts-badge').textContent = '+' + (pts % 1 === 0 ? pts : pts.toFixed(1)) + ' pt' + (pts !== 1 ? 's' : '');
+
+      const altsEl = document.getElementById('q-alts');
+      altsEl.innerHTML = '';
+      const letras = ['A','B','C','D'];
+      (q.alternativas || []).forEach((alt, i) => {
+        if (!alt && alt !== 0) return;
+        const btn = document.createElement('button');
+        btn.className = 'q-alt';
+        btn.innerHTML = '<span class="q-alt-letra">' + letras[i] + '</span>' + alt;
+        btn.onclick = () => responder(i, q);
+        altsEl.appendChild(btn);
+      });
+
+      document.getElementById('q-feedback').style.display = 'none';
+      document.getElementById('btn-prox').style.display   = 'none';
+    }
+
+    window.responder = function(idx, q) {
+      if (respondida) return;
+      respondida = true;
+      const alts    = document.querySelectorAll('.q-alt');
+      const correta = q.correta;
+      const pts     = parseFloat(q.pontos) || 1.0;
+      const acertou = idx === correta;
+
+      alts.forEach(b => b.disabled = true);
+      alts[idx].classList.add(acertou ? 'correta' : 'errada');
+      if (!acertou && alts[correta]) alts[correta].classList.add('revelada');
+
+      if (acertou) { acertos++; pontosGanhos += pts; } else { erros++; }
+
+      document.getElementById('pl-ac').textContent = acertos;
+      document.getElementById('pl-er').textContent = erros;
+      document.getElementById('pl-pt').textContent = pontosGanhos % 1 === 0 ? pontosGanhos : pontosGanhos.toFixed(1);
+
+      const fb = document.getElementById('q-feedback');
+      fb.className    = 'q-feedback ' + (acertou ? 'acerto' : 'erro');
+      fb.textContent  = (acertou ? '✅ ' : '❌ ') + (q.feedback || (acertou ? 'Correto!' : 'Resposta incorreta.'));
+      fb.style.display = 'block';
+
+      const btnP = document.getElementById('btn-prox');
+      btnP.style.display = 'block';
+      btnP.textContent   = atual < perguntas.length - 1 ? 'Próxima →' : 'Ver Resultado 🎖️';
+    };
+
+    window.proxima = function() { atual++; renderPergunta(); };
+
+    function mostrarFinal() {
+      document.getElementById('q-prog-wrap').style.display = 'none';
+      document.getElementById('q-box').style.display       = 'none';
+      document.getElementById('q-placar').style.display    = 'none';
+
+      const total = perguntas.length;
+      const pct   = Math.round((acertos / total) * 100);
+
+      document.getElementById('res-ac').textContent = acertos;
+      document.getElementById('res-er').textContent = erros;
+      document.getElementById('res-pt').textContent = pontosGanhos % 1 === 0 ? pontosGanhos : pontosGanhos.toFixed(1);
+      document.getElementById('tf-avatar').src      = avatarSrc;
+
+      let emoji, titulo, msg;
+      if (pct === 100) {
+        emoji = '👑'; titulo = 'Perfeito!';
+        msg = 'Você acertou todas as ' + total + ' perguntas! Desempenho excepcional, Mestre Maker!';
+      } else if (pct >= 70) {
+        emoji = '🎖️'; titulo = 'Muito bem!';
+        msg = 'Você acertou ' + acertos + ' de ' + total + ' perguntas. Continue assim!';
+      } else if (pct >= 40) {
+        emoji = '💡'; titulo = 'Bom esforço!';
+        msg = 'Você acertou ' + acertos + ' de ' + total + ' perguntas. Revise o card e tente novamente!';
+      } else {
+        emoji = '🔄'; titulo = 'Não desista!';
+        msg = 'Você acertou ' + acertos + ' de ' + total + ' perguntas. Releia o conteúdo e tente de novo!';
+      }
+
+      document.getElementById('tf-emoji').textContent  = emoji;
+      document.getElementById('tf-titulo').textContent = titulo;
+      document.getElementById('tf-sub').textContent    = pct + '% de aproveitamento';
+      document.getElementById('res-msg').textContent   = msg;
+      document.getElementById('tela-final').style.display = '';
+    }
+
+    window.reiniciar = function() {
+      atual = 0; acertos = 0; erros = 0; pontosGanhos = 0; respondida = false;
+      perguntas = [...cardData.quiz].sort(() => Math.random() - 0.5);
+      document.getElementById('tela-final').style.display   = 'none';
+      document.getElementById('q-prog-wrap').style.display  = '';
+      document.getElementById('q-box').style.display        = '';
+      document.getElementById('q-placar').style.display     = '';
+      document.getElementById('pl-ac').textContent = '0';
+      document.getElementById('pl-er').textContent = '0';
+      document.getElementById('pl-pt').textContent = '0';
+      renderPergunta();
+    };
+
+    init();
+  </script>
+</body>
+</html>

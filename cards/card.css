@@ -932,3 +932,211 @@ body {
   height: 100%;
   display: block;
 }
+
+/* ---- Seção Jogo Quiz — Estilo RPG ---- */
+.section-quiz-jogo {
+  background: linear-gradient(135deg, #fffbea 0%, #fff8d0 100%);
+  border-radius: 20px;
+  border: 2px solid #C9A830;
+  box-shadow:
+    0 0 0 4px rgba(201,168,48,0.12),
+    0 8px 32px rgba(201,168,48,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+  padding: 0;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Estrelas decorativas */
+.section-quiz-jogo::before {
+  content: '✦  ✦  ✦';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #C9A830;
+  letter-spacing: 8px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.quiz-jogo-inner {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 28px 28px 24px;
+}
+
+/* Avatar do robô */
+.quiz-jogo-avatar {
+  flex-shrink: 0;
+  width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.quiz-jogo-avatar img {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(201,168,48,0.3));
+}
+
+.quiz-jogo-nivel-badge {
+  font-family: 'Nunito', sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #926d00;
+  background: rgba(201,168,48,0.2);
+  border: 1px solid rgba(201,168,48,0.4);
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.3;
+  max-width: 110px;
+}
+
+/* Divisor vertical */
+.quiz-jogo-divider {
+  width: 1px;
+  height: 100px;
+  background: linear-gradient(180deg, transparent, #C9A830, transparent);
+  margin: 0 24px;
+  flex-shrink: 0;
+}
+
+/* Centro — info */
+.quiz-jogo-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quiz-jogo-tag {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: #C9A830;
+}
+
+.quiz-jogo-titulo {
+  font-family: 'Nunito', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--azul-dark);
+  line-height: 1.2;
+}
+
+.quiz-jogo-stars {
+  display: flex;
+  gap: 3px;
+  font-size: 14px;
+}
+
+.quiz-jogo-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.quiz-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(201,168,48,0.1);
+  border: 1px solid rgba(201,168,48,0.3);
+  border-radius: 10px;
+  padding: 8px 14px;
+  gap: 2px;
+  min-width: 64px;
+}
+
+.quiz-stat-valor {
+  font-family: 'Nunito', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: #926d00;
+  line-height: 1;
+}
+
+.quiz-stat-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #b8910e;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Botão jogar */
+.quiz-jogo-btn-wrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.quiz-jogo-btn {
+  background: linear-gradient(135deg, #E5C84C, #C9A830);
+  color: var(--azul-dark);
+  border: none;
+  border-radius: 14px;
+  padding: 14px 24px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(201,168,48,0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+  letter-spacing: 0.5px;
+}
+
+.quiz-jogo-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(201,168,48,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+
+.quiz-jogo-login-aviso {
+  font-size: 10px;
+  color: #b8910e;
+  text-align: center;
+  opacity: 0.7;
+}
+
+@media (max-width: 600px) {
+  .quiz-jogo-inner { flex-direction: column; align-items: center; text-align: center; }
+  .quiz-jogo-divider { width: 80%; height: 1px; margin: 8px 0; }
+  .quiz-jogo-stats { justify-content: center; }
+  .quiz-jogo-avatar img { width: 80px; height: 80px; }
+}
+
+/* Pontos do aluno no quiz */
+.quiz-jogo-pontos-aluno {
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #926d00;
+  text-align: center;
+}
+
+.quiz-jogo-pontos-aluno strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+/* Nome do aluno no quiz */
+.quiz-jogo-aluno-nome {
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #b8910e;
+}

@@ -129,6 +129,7 @@ window.novoCard = function () {
 function renderForm(id, d) {
   imagemURL = d.imagem_url || '';
   atividadeImagemURL = d.atividade_imagem_url || '';
+  window.quizState = d.quiz ? JSON.parse(JSON.stringify(d.quiz)) : [];
   window.glossarioState = d.glossario ? JSON.parse(JSON.stringify(d.glossario)) : [];
   tagsState.links_desafios   = d.links_desafios   ? [...d.links_desafios]   : [];
   tagsState.links_componentes = d.links_componentes ? [...d.links_componentes] : [];
@@ -227,7 +228,7 @@ function renderForm(id, d) {
         </div>
         <div class="form-group">
           <label>Pontos</label>
-          <input type="number" id="f-pontos" value="${d.pontos || ''}" placeholder="10">
+          <input type="number" id="f-pontos" value="${d.pontos || 0}" readonly style="opacity:0.6; cursor:not-allowed;" title="Calculado automaticamente pelo Quiz">
         </div>
         <div class="form-group">
           <label>Kit Necessário</label>
@@ -408,6 +409,18 @@ function renderForm(id, d) {
       </div>
     </div>
 
+    <!-- Quiz -->
+    <div class="form-section form-section-quiz">
+      <div class="section-title-row">
+        <span class="section-title">🎯 Atividade Quiz</span>
+        <button class="vg-btn-add" onclick="adicionarPergunta()">+ Pergunta</button>
+      </div>
+      <span class="helper-text" style="display:block; margin-bottom:14px;">
+        Cadastre perguntas com até 4 alternativas. O aluno ganha pontos ao responder corretamente.
+      </span>
+      <div id="quiz-lista"></div>
+    </div>
+
     ${id ? `
     <div class="form-section">
       <div class="section-title">Link do Card</div>
@@ -419,6 +432,8 @@ function renderForm(id, d) {
   `;
 
   carregarCardsVinculados();
+  renderQuizLista();
+  recalcularPontos();
 }
 
 // ---- UPLOAD DE IMAGEM ----
@@ -651,7 +666,7 @@ window.salvarCard = async function (publicar) {
     definicao_titulo: document.getElementById('f-def-titulo')?.value?.trim() || '',
     definicao_texto:  document.getElementById('f-def-texto')?.value?.trim() || '',
     duracao:          document.getElementById('f-duracao')?.value?.trim() || '',
-    pontos:           parseInt(document.getElementById('f-pontos')?.value) || 0,
+    pontos:           (window.quizState || []).reduce((sum, q) => sum + (parseFloat(q.pontos) || 1.0), 0),
     kit:              document.getElementById('f-kit')?.value?.trim() || '',
     objetivo:         document.getElementById('f-objetivo')?.value?.trim() || '',
     tutorial_url:     document.getElementById('f-tutorial')?.value?.trim() || '',
@@ -666,6 +681,7 @@ window.salvarCard = async function (publicar) {
     glossario:            window.glossarioState.filter(g => g.codigo || g.descricao),
     avaliacao:        document.getElementById('f-avaliacao')?.value?.trim() || '',
     desafio_extra:    document.getElementById('f-desafio-extra')?.value?.trim() || '',
+    quiz:             window.quizState || [],
     video_url:        document.getElementById('f-video-url')?.value?.trim() || '',
     publicado:        publicar,
     atualizado_em:    new Date().toISOString()
@@ -788,3 +804,99 @@ window.copiarLink = function (url) {
 };
 
 listarCards();
+
+// ==============================
+// ---- QUIZ ----
+// ==============================
+
+window.quizState = [];
+
+function renderQuizLista() {
+  const lista = document.getElementById('quiz-lista');
+  if (!lista) return;
+
+  if (window.quizState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhuma pergunta cadastrada. Clique em + Pergunta para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = '';
+  window.quizState.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.innerHTML = `
+      <div class="quiz-card-header">
+        <span class="quiz-card-num">Pergunta ${qi + 1}</span>
+        <button class="quiz-btn-rem" onclick="removerPergunta(${qi})">× Remover</button>
+      </div>
+      <div class="form-group">
+        <label>Pergunta *</label>
+        <textarea class="quiz-pergunta-input" rows="2"
+          oninput="updateQuiz(${qi}, 'pergunta', this.value)"
+          placeholder="Ex: Qual é a função do resistor no circuito?">${q.pergunta || ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Pontos</label>
+        <input type="number" step="0.5" min="0.5" value="${q.pontos || 1.0}"
+          style="width:100px;"
+          oninput="updateQuiz(${qi}, 'pontos', parseFloat(this.value))">
+      </div>
+      <div class="quiz-alternativas">
+        <label>Alternativas</label>
+        ${[0,1,2,3].map(ai => `
+          <div class="quiz-alt-row ${q.correta === ai ? 'correta' : ''}">
+            <input type="radio" name="quiz-correta-${qi}" value="${ai}"
+              ${q.correta === ai ? 'checked' : ''}
+              onchange="updateQuiz(${qi}, 'correta', ${ai}); renderQuizLista();"
+              title="Marcar como correta">
+            <input type="text" class="quiz-alt-input"
+              value="${(q.alternativas && q.alternativas[ai]) || ''}"
+              oninput="updateQuizAlt(${qi}, ${ai}, this.value)"
+              placeholder="Alternativa ${String.fromCharCode(65+ai)}">
+          </div>`).join('')}
+      </div>
+      <div class="form-group" style="margin-top:10px;">
+        <label>Feedback (mostrado após responder)</label>
+        <input type="text" value="${q.feedback || ''}"
+          oninput="updateQuiz(${qi}, 'feedback', this.value)"
+          placeholder="Ex: Correto! O resistor limita a corrente elétrica.">
+      </div>
+    `;
+    lista.appendChild(card);
+  });
+}
+
+window.adicionarPergunta = function() {
+  window.quizState.push({
+    pergunta:     '',
+    alternativas: ['', '', '', ''],
+    correta:      0,
+    feedback:     '',
+    pontos:       1.0
+  });
+  renderQuizLista();
+  recalcularPontos();
+};
+
+window.removerPergunta = function(qi) {
+  window.quizState.splice(qi, 1);
+  renderQuizLista();
+  recalcularPontos();
+};
+
+window.updateQuiz = function(qi, field, value) {
+  if (window.quizState[qi]) window.quizState[qi][field] = value;
+  recalcularPontos();
+};
+
+function recalcularPontos() {
+  const total = (window.quizState || []).reduce((sum, q) => sum + (parseFloat(q.pontos) || 1.0), 0);
+  const el = document.getElementById('f-pontos');
+  if (el) el.value = total % 1 === 0 ? total : total.toFixed(1);
+}
+
+window.updateQuizAlt = function(qi, ai, value) {
+  if (!window.quizState[qi]) return;
+  if (!window.quizState[qi].alternativas) window.quizState[qi].alternativas = ['','','',''];
+  window.quizState[qi].alternativas[ai] = value;
+};

@@ -1,0 +1,1205 @@
+    .portal-page {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top right, rgba(245,196,0,0.08), transparent 40%),
+        radial-gradient(circle at bottom left, rgba(48,68,111,0.06), transparent 40%),
+        #f7f8fc;
+      padding-top: 80px;
+    }
+
+    /* Loading overlay */
+    .page-loading {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: rgba(247,248,252,0.95);
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .page-spinner {
+      width: 44px; height: 44px;
+      border: 3px solid #dbe2ef;
+      border-top-color: #f5c400;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .page-loading p {
+      color: #62708c;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Hero do portal */
+    .portal-hero {
+      background: linear-gradient(135deg, #23314d 0%, #30446f 100%);
+      padding: 60px 0 50px;
+      color: #fff;
+    }
+
+    .portal-hero-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+    }
+
+    .portal-hero-text h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800;
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+
+    .portal-hero-text h1 span { color: #f5c400; }
+
+    .portal-hero-text p {
+      color: rgba(255,255,255,0.7);
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 480px;
+    }
+
+    .portal-user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 12px 20px;
+      flex-shrink: 0;
+    }
+
+    .portal-user-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: #f5c400;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 800;
+      color: #23314d;
+      font-size: 1rem;
+      overflow: hidden;
+    }
+
+    .portal-user-avatar img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .portal-user-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .portal-user-email {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.55);
+    }
+
+    .portal-user-perfil {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: #f5c400;
+      color: #23314d;
+      padding: 3px 10px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-top: 5px;
+    }
+
+    .portal-user-escola {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 3px;
+    }
+
+    .btn-sair {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.8);
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-sair:hover {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+    }
+
+    /* Seletor de visualização (apenas gestor) */
+    .visualizar-como {
+      display: none;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 10px 16px;
+      margin-top: 14px;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .visualizar-como.visivel { display: flex; }
+
+    .visualizar-como-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.5);
+      white-space: nowrap;
+    }
+
+    .visualizar-como-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-visao {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.7);
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .btn-visao:hover {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    .btn-visao.ativo {
+      background: #f5c400;
+      border-color: #f5c400;
+      color: #23314d;
+    }
+
+    /* ── Sub-painéis do aluno ── */
+    .sub-painel {
+      background: #fff;
+      border: 1px solid #dbe2ef;
+      border-radius: 20px;
+      padding: 28px 28px 32px;
+      margin-bottom: 24px;
+    }
+
+    .sub-painel-titulo {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #23314d;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── RANKING ── */
+    .ranking-grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 28px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 900px) { .ranking-grid { grid-template-columns: 1fr; } }
+
+    .ranking-selo-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .selo-img-wrap {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(35,49,77,0.12);
+    }
+
+    #selo-canvas { display: none; }
+
+    /* Modal Saiba Mais Trilha */
+    .modal-trilha-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(35,49,77,0.55);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-trilha-box {
+      background: #fff;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 24px 80px rgba(35,49,77,0.2);
+    }
+
+    .modal-trilha-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: rgba(0,0,0,0.06);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      color: #62708c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      transition: background 0.2s;
+    }
+
+    .modal-trilha-close:hover { background: rgba(0,0,0,0.12); }
+
+    .modal-trilha-video {
+      aspect-ratio: 16/9;
+      border-radius: 24px 24px 0 0;
+      overflow: hidden;
+    }
+
+    .modal-trilha-video iframe { width: 100%; height: 100%; display: block; }
+
+    .modal-trilha-body { padding: 24px 28px 28px; }
+
+    .modal-trilha-tag {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #30446f;
+      margin-bottom: 8px;
+    }
+
+    .modal-trilha-nome {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #23314d;
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+
+    .modal-trilha-secao { margin-bottom: 16px; }
+
+    .modal-trilha-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #f5c400;
+      margin-bottom: 6px;
+    }
+
+    .modal-trilha-texto {
+      color: #62708c;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .btn-saiba-mais {
+      background: #f5c400;
+      color: #23314d;
+      border: none;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(245,196,0,0.3);
+    }
+
+    .btn-saiba-mais:hover {
+      background: #e6b800;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245,196,0,0.4);
+    }
+
+    .trilha-bloco-nome-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Avatar Robô */
+    .robo-avatar-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .robo-avatar-img {
+      width: 100%;
+      max-width: 320px;
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 24px rgba(48,68,111,0.18));
+      transition: all 0.4s ease;
+    }
+
+    .robo-avatar-img:hover {
+      transform: translateY(-4px) scale(1.04);
+    }
+
+    .ranking-user-nome {
+      text-align: center;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #23314d;
+      margin-top: 12px;
+      margin-bottom: 2px;
+    }
+
+    .ranking-user-escola {
+      text-align: center;
+      font-size: 0.78rem;
+      color: #62708c;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .selo-nivel-pts {
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #f5c400;
+      font-family: 'Poppins', sans-serif;
+      margin-top: 4px;
+    }
+
+    .selo-nivel-nome {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #23314d;
+    }
+
+    .selo-nivel-desc {
+      font-size: 0.82rem;
+      color: #62708c;
+      text-align: center;
+    }
+
+    .ranking-dados {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .ranking-pontos-box {
+      background: linear-gradient(135deg, #23314d, #30446f);
+      border-radius: 16px;
+      padding: 20px 22px;
+      color: #fff;
+    }
+
+    .ranking-pontos-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 4px;
+    }
+
+    .ranking-pontos-valor {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: #f5c400;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .ranking-pontos-next {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 2px;
+    }
+
+    .ranking-posicoes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .rank-pos-card {
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .rank-pos-card.escola { background: rgba(245,196,0,0.10); border: 1px solid rgba(245,196,0,0.25); }
+    .rank-pos-card.geral  { background: rgba(48,68,111,0.07); border: 1px solid rgba(48,68,111,0.15); }
+
+    .rank-pos-icone { font-size: 1.4rem; }
+
+    .rank-pos-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #62708c;
+    }
+
+    .rank-pos-valor {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #23314d;
+      line-height: 1.1;
+    }
+
+    .rank-pos-sub {
+      font-size: 0.72rem;
+      color: #62708c;
+    }
+
+    .ranking-niveis {
+      background: #f7f8fc;
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+
+    .ranking-niveis-titulo {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #62708c;
+      margin-bottom: 12px;
+    }
+
+    .niveis-lista { display: flex; flex-direction: column; gap: 6px; }
+
+    .nivel-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: #8a94ad;
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+
+    .nivel-item.conquistado { color: #23314d; background: rgba(39,174,96,0.07); }
+    .nivel-item.atual       { color: #23314d; background: rgba(245,196,0,0.12); font-weight: 700; }
+
+    .nivel-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #dbe2ef;
+      flex-shrink: 0;
+    }
+
+    .nivel-item.conquistado .nivel-dot { background: #27ae60; }
+    .nivel-item.atual       .nivel-dot { background: #f5c400; }
+
+    .nivel-pts { margin-left: auto; font-size: 0.75rem; font-weight: 600; }
+
+    .nivel-robo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      flex-shrink: 0;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+    }
+
+    .nivel-item.atual .nivel-robo,
+    .nivel-item.conquistado .nivel-robo {
+      opacity: 1;
+    }
+
+    .nivel-item:not(.atual):not(.conquistado) .nivel-robo {
+      opacity: 0.35;
+      filter: grayscale(1);
+    }
+
+    /* ── TRILHAS ── */
+    .trilha-loading {
+      color: #62708c;
+      font-size: 0.9rem;
+      padding: 20px 0;
+    }
+
+    .trilha-bloco {
+      margin-bottom: 28px;
+    }
+
+    .trilha-bloco-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .trilha-bloco-nome {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #23314d;
+    }
+
+    .trilha-bloco-prog {
+      font-size: 0.78rem;
+      color: #62708c;
+      font-weight: 600;
+    }
+
+    .trilha-progress-bar {
+      height: 4px;
+      background: #edf0f7;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .trilha-progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f5c400, #e6a800);
+    }
+
+    .trilha-cards-row {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: #dbe2ef transparent;
+    }
+
+    .trilha-card-item {
+      flex-shrink: 0;
+      width: 140px;
+      border-radius: 14px;
+      padding: 14px 12px;
+      border: 1.5px solid #dbe2ef;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.2s;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .trilha-card-item:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(35,49,77,0.08); }
+
+    .trilha-card-item.concluido {
+      border-color: #27ae60;
+      background: rgba(39,174,96,0.04);
+    }
+
+    .trilha-card-item.proximo {
+      border-color: #f5c400;
+      background: rgba(245,196,0,0.05);
+    }
+
+    .trilha-card-item.bloqueado {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .trilha-card-status {
+      position: absolute;
+      top: 8px; right: 8px;
+      font-size: 0.9rem;
+    }
+
+    .trilha-card-num {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #8a94ad;
+    }
+
+    .trilha-card-nome {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #23314d;
+      line-height: 1.3;
+    }
+
+    .trilha-card-pts {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #62708c;
+    }
+
+    /* ── PROGRESSO ── */
+    .progresso-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 600px) { .progresso-grid { grid-template-columns: repeat(2,1fr); } }
+
+    .prog-stat {
+      background: #f7f8fc;
+      border-radius: 14px;
+      padding: 18px 16px;
+      text-align: center;
+    }
+
+    .prog-stat-val {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #23314d;
+    }
+
+    .prog-stat-lab {
+      font-size: 0.75rem;
+      color: #62708c;
+      margin-top: 4px;
+    }
+
+    .prog-semanas-titulo {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #62708c;
+      margin-bottom: 12px;
+    }
+
+    .prog-semanas-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .semana-dot {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      cursor: default;
+    }
+
+    .semana-dot.ok      { background: #27ae60; color: #fff; }
+    .semana-dot.atual   { background: #f5c400; color: #23314d; }
+    .semana-dot.vazio   { background: #edf0f7; color: #8a94ad; }
+
+    /* ── GAMIFICAÇÃO ── */
+    .gamif-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .gamif-tab {
+      background: #f0f2f7;
+      border: none;
+      border-radius: 999px;
+      padding: 7px 18px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #62708c;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .gamif-tab.ativo {
+      background: #23314d;
+      color: #fff;
+    }
+
+    .gamif-lista { display: flex; flex-direction: column; gap: 8px; }
+
+    .gamif-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #f7f8fc;
+      border: 1px solid #edf0f7;
+    }
+
+    .gamif-item.destaque { background: #fff; border-color: #dbe2ef; }
+    .gamif-item.eu       { background: rgba(245,196,0,0.08); border-color: rgba(245,196,0,0.3); }
+
+    .gamif-pos { font-size: 1.1rem; width: 28px; text-align: center; font-weight: 800; color: #62708c; }
+
+    .gamif-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: #30446f;
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 800;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .gamif-avatar.eu-av { background: #f5c400; color: #23314d; }
+
+    .gamif-nome { font-size: 0.85rem; font-weight: 700; color: #23314d; }
+    .gamif-escola-tag { font-size: 0.72rem; color: #62708c; }
+    .gamif-pts { margin-left: auto; font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 0.88rem; color: #23314d; }
+
+    /* ── Painéis por perfil ── */
+    .painel-perfil {
+      display: none;
+      margin-bottom: 48px;
+    }
+    .painel-perfil.visivel { display: block; }
+
+    .painel-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .painel-header-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .painel-header-icon.aluno    { background: rgba(245,196,0,0.15); }
+    .painel-header-icon.prof     { background: rgba(48,68,111,0.12); }
+    .painel-header-icon.gestor   { background: rgba(39,174,96,0.12); }
+
+    /* Card em breve */
+    .acesso-card-em-breve {
+      opacity: 0.7;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .acesso-card-badge.em-breve {
+      background: rgba(150,150,150,0.12);
+      color: #999;
+    }
+
+    .acesso-card-icon.cinza {
+      background: rgba(150,150,150,0.12);
+      color: #999;
+    }
+
+    /* Seções do painel gestor */
+    .gestor-secao-titulo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0 14px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #23314d;
+    }
+
+    .gestor-secao-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #30446f, #465f94);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    /* Card com link */
+    .acesso-card-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .acesso-card-link:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(48,68,111,0.14);
+      border-color: #30446f;
+    }
+
+    /* Badge ativo */
+    .acesso-card-badge.ativo {
+      background: rgba(39,174,96,0.12);
+      color: #1e8449;
+      border: 1px solid rgba(39,174,96,0.25);
+    }
+
+    /* Ícone roxo */
+    .acesso-card-icon.roxo { background: rgba(142,68,173,0.12); }
+
+    .painel-header-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #23314d;
+    }
+
+    .painel-header-sub {
+      font-size: 0.8rem;
+      color: #62708c;
+      margin-top: 1px;
+    }
+
+    .painel-header::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #dbe2ef;
+    }
+
+    /* Cards compactos de acesso */
+    .acesso-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    @media (max-width: 900px) { .acesso-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .acesso-grid { grid-template-columns: 1fr; } }
+
+    .acesso-card {
+      background: #fff;
+      border: 1px solid #dbe2ef;
+      border-radius: 16px;
+      padding: 20px 18px;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.22s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .acesso-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 36px rgba(35,49,77,0.10);
+      border-color: #30446f;
+    }
+
+    .acesso-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .acesso-card-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .acesso-card-icon.amarelo { background: rgba(245,196,0,0.13); }
+    .acesso-card-icon.azul    { background: rgba(48,68,111,0.10); }
+    .acesso-card-icon.verde   { background: rgba(39,174,96,0.10); }
+    .acesso-card-icon.roxo    { background: rgba(142,68,173,0.10); }
+    .acesso-card-icon.laranja { background: rgba(230,126,34,0.10); }
+
+    .acesso-card-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .acesso-card-badge.em-breve {
+      background: #f0f2f7;
+      color: #8a94ad;
+    }
+
+    .acesso-card-badge.novo {
+      background: rgba(39,174,96,0.12);
+      color: #1a8a4a;
+    }
+
+    .acesso-card-badge.destaque {
+      background: rgba(245,196,0,0.18);
+      color: #926d00;
+    }
+
+    .acesso-card h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #23314d;
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .acesso-card p {
+      font-size: 0.78rem;
+      color: #62708c;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* Barra de progresso */
+    .acesso-card-progress {
+      margin-top: 4px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #62708c;
+      margin-bottom: 5px;
+    }
+
+    .progress-bar {
+      height: 5px;
+      background: #edf0f7;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f5c400, #e6a800);
+      transition: width 0.8s ease;
+    }
+
+    .progress-fill.verde { background: linear-gradient(90deg, #27ae60, #1e8449); }
+
+    /* Ranking mini */
+    .acesso-card-rank {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .rank-posicao {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #f5c400;
+      line-height: 1;
+    }
+
+    .rank-label {
+      font-size: 0.72rem;
+      color: #62708c;
+      line-height: 1.3;
+    }
+
+    /* Conteúdo principal */
+    .portal-main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .portal-section-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #23314d;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .portal-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #dbe2ef;
+    }
+
+    /* Cards de acesso rápido */
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+
+    .portal-card {
+      background: #fff;
+      border: 1px solid #dbe2ef;
+      border-radius: 20px;
+      padding: 28px 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: all 0.25s;
+      cursor: pointer;
+    }
+
+    .portal-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(35,49,77,0.10);
+      border-color: #30446f;
+    }
+
+    .portal-card-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+    }
+
+    .portal-card-icon.amarelo { background: rgba(245,196,0,0.12); }
+    .portal-card-icon.azul    { background: rgba(48,68,111,0.10); }
+    .portal-card-icon.verde   { background: rgba(39,174,96,0.10); }
+    .portal-card-icon.roxo    { background: rgba(142,68,173,0.10); }
+
+    .portal-card h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #23314d;
+      margin: 0;
+    }
+
+    .portal-card p {
+      font-size: 0.87rem;
+      color: #62708c;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .portal-card-arrow {
+      margin-top: auto;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #30446f;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Desafios recentes */
+    .portal-desafios {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .desafio-card {
+      background: #fff;
+      border: 1px solid #dbe2ef;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: box-shadow 0.2s;
+    }
+
+    .desafio-card:hover {
+      box-shadow: 0 8px 24px rgba(35,49,77,0.08);
+    }
+
+    .desafio-nivel {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .desafio-nivel.explorador { background: rgba(245,196,0,0.15); }
+    .desafio-nivel.criador    { background: rgba(48,68,111,0.12); }
+    .desafio-nivel.inovador   { background: rgba(231,76,60,0.10); }
+
+    .desafio-info h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #23314d;
+      margin: 0 0 4px;
+    }
+
+    .desafio-info p {
+      font-size: 0.8rem;
+      color: #62708c;
+      margin: 0;
+    }
+
+    .desafio-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-top: 6px;
+      display: inline-block;
+    }
+
+    .desafio-tag.explorador { background: rgba(245,196,0,0.15); color: #926d00; }
+    .desafio-tag.criador    { background: rgba(48,68,111,0.12); color: #30446f; }
+    .desafio-tag.inovador   { background: rgba(231,76,60,0.10); color: #c0392b; }
+
+    @media (max-width: 768px) {
+      .portal-hero-inner { flex-direction: column; align-items: flex-start; }
+      .portal-user-info  { width: 100%; }
+    }

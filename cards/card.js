@@ -2,6 +2,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAndgQiwxpe6wyCF8aa5NqqdMuwLJfMIMM",
@@ -225,6 +226,68 @@ async function carregarCard() {
     if (d.desafio_extra) {
       renderTextoLivre(d.desafio_extra, 'desafio-extra');
       show('sec-desafio-extra');
+    }
+
+    // ---- QUIZ JOGO ----
+    if ((d.quiz || []).length > 0) {
+      const totalPerguntas = d.quiz.length;
+      const totalPontos    = d.quiz.reduce((sum, q) => sum + (parseFloat(q.pontos) || 1.0), 0);
+      document.getElementById('quiz-total-perguntas').textContent = totalPerguntas;
+      document.getElementById('quiz-total-pontos').textContent    = totalPontos % 1 === 0 ? totalPontos : totalPontos.toFixed(1);
+      show('sec-quiz');
+      // Linkar botão jogar
+      const btnJogar = document.getElementById('quiz-jogar-btn');
+      if (btnJogar) btnJogar.onclick = () => {
+        window.location.href = '../jogos/quiz.html?card=' + cardId;
+      };
+
+      // Buscar dados do aluno logado
+      const auth = getAuth();
+      onAuthStateChanged(auth, async aluno => {
+        const nivelNomes = [
+          'Explorador Iniciante','Curioso Digital','Aprendiz Maker',
+          'Construtor Criativo','Inventor em Ação','Programador Maker',
+          'Engenheiro Criativo','Inovador Maker','Mentor Maker','Mestre Maker'
+        ];
+        const nivelPontos = [0,100,250,500,900,1400,2000,2700,3500,4500];
+
+        if (aluno) {
+          try {
+            const snap = await getDoc(doc(db, 'usuarios', aluno.uid));
+            if (snap.exists()) {
+              const pts = snap.data().pontos_total || 0;
+              // Calcular nível
+              let nivelIdx = 0;
+              for (let i = nivelPontos.length - 1; i >= 0; i--) {
+                if (pts >= nivelPontos[i]) { nivelIdx = i; break; }
+              }
+              const nivelNum = nivelIdx + 1;
+              // Atualizar avatar e badge
+              const roboImg = document.getElementById('quiz-robo-img');
+              const nivelEl = document.getElementById('quiz-nivel-nome');
+              if (roboImg) roboImg.src = '../assets/robo ' + nivelNum + '_transparente.png';
+              if (nivelEl) nivelEl.textContent = 'Nível ' + nivelNum + ' — ' + nivelNomes[nivelIdx];
+              const nomeAlunoEl = document.getElementById('quiz-aluno-nome');
+              if (nomeAlunoEl) {
+                const nomeAluno = snap.data().nome || aluno.displayName || aluno.email.split('@')[0];
+                nomeAlunoEl.textContent = 'Olá, ' + nomeAluno + '!';
+              }
+              const pontosEl    = document.getElementById('quiz-pontos-aluno');
+              const pontosValEl = document.getElementById('quiz-pts-val');
+              if (pontosEl && pontosValEl) {
+                pontosValEl.textContent = pts;
+                pontosEl.style.display = '';
+              }
+            }
+          } catch(e) { console.warn('Quiz perfil:', e); }
+        } else {
+          // Não logado — mostrar aviso
+          const btn   = document.getElementById('quiz-jogar-btn');
+          const aviso = document.getElementById('quiz-login-aviso');
+          if (btn)   { btn.textContent = '🔒 Fazer Login'; btn.onclick = () => window.location.href = '../login.html'; }
+          if (aviso) aviso.style.display = '';
+        }
+      });
     }
 
     // ---- CTA TUTORIAL ----

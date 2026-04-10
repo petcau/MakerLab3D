@@ -345,3 +345,14 @@ window.copiarLinkTrilha = function(url) {
 
 // Atualiza regras do Firestore para aceitar trilhas
 // (collection 'trilhas' precisa de allow read/write)
+
+// ---- ABRIR ABA PELO PORTAL ----
+(function() {
+  const aba = localStorage.getItem('admin_aba_destino');
+  if (aba) {
+    localStorage.removeItem('admin_aba_destino');
+    setTimeout(() => {
+      if (typeof window.switchTab === 'function') window.switchTab(aba);
+    }, 800);
+  }
+})();
