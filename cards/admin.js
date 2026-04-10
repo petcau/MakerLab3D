@@ -1162,10 +1162,11 @@ const COMPONENTES_LIST = [
   { id: 'potenciometro',      nome: 'Potenciômetro',        arquivo: 'potenciometro.png' },
   { id: 'ldr',                nome: 'LDR',                  arquivo: 'ldr.png' },
   { id: 'termistor',          nome: 'Termistor',            arquivo: 'termistor.png' },
-  { id: 'matriz-led',         nome: 'Matriz de LED 8x8',   arquivo: 'matriz-led.png' },
-  { id: 'sensor-som',         nome: 'Sensor de Som',        arquivo: 'sensor-som.png' },
-  { id: 'sensor-ultrassonico',nome: 'Sensor Ultrassônico',  arquivo: 'sensor-ultrassonico.png' },
-  { id: 'led-rgb',            nome: 'LED RGB',              arquivo: 'led-rgb.png' },
+  { id: 'matriz de led 8x8',         nome: 'Matriz de LED 8x8',   arquivo: 'matriz de led 8x8.png' },
+  { id: 'sensor de som',         nome: 'Sensor de Som',        arquivo: 'sensor de som.png' },
+  { id: 'sensor ultrassonico',nome: 'Sensor Ultrassônico',  arquivo: 'sensor ultrassonico.png' },
+  { id: 'led rgb',            nome: 'LED RGB',              arquivo: 'led rgb.png' },
+  { id: 'jumpers', nome: 'Jumpers', arquivo: 'jumpers.png' },
 ];
 
 window.compState = [];
