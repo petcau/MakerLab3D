@@ -176,17 +176,77 @@
               <div class="quiz-stat-valor" id="quiz-total-pontos">—</div>
               <div class="quiz-stat-label">Pontos</div>
             </div>
+            <div class="quiz-stat">
+              <div class="quiz-stat-valor" id="quiz-tentativas">—</div>
+              <div class="quiz-stat-label">Tentativas</div>
+            </div>
           </div>
         </div>
 
         <div class="quiz-jogo-divider"></div>
 
         <!-- Botão -->
-        <div class="quiz-jogo-btn-wrap">
+        <div class="quiz-jogo-btn-wrap" id="quiz-jogar-btn-wrap">
+          <div class="quiz-jogo-tentativas" id="quiz-jogo-tentativas" style="display:none;">
+            Tentativas <strong id="quiz-tent-usadas">0</strong> de <strong id="quiz-tent-total">3</strong>
+          </div>
           <button class="quiz-jogo-btn" id="quiz-jogar-btn">
             🎖️ Jogar Agora!
           </button>
           <div class="quiz-jogo-login-aviso" id="quiz-login-aviso" style="display:none;">
+            Faça login para jogar
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CAÇA AO BUG JOGO -->
+    <div class="section-bug-jogo" id="sec-bug" style="display:none;">
+      <div class="quiz-jogo-inner">
+
+        <!-- Avatar do Robô -->
+        <div class="quiz-jogo-avatar">
+          <img id="bug-robo-img" src="../assets/robo 1_transparente.png" alt="Nível">
+          <span class="quiz-jogo-nivel-badge" id="bug-nivel-nome">Explorador Iniciante</span>
+          <span class="quiz-jogo-pontos-aluno" id="bug-pontos-aluno" style="display:none;">⭐ <strong id="bug-pts-val">0</strong> pts</span>
+        </div>
+
+        <div class="quiz-jogo-divider"></div>
+
+        <!-- Info central -->
+        <div class="quiz-jogo-center">
+          <div class="quiz-jogo-aluno-nome" id="bug-aluno-nome"></div>
+          <div class="quiz-jogo-tag">🐛 Missão disponível</div>
+          <div class="quiz-jogo-titulo">Caça ao Bug</div>
+          <div class="quiz-jogo-stars">🐛🐛🐛</div>
+          <div class="quiz-jogo-stats">
+            <div class="quiz-stat">
+              <div class="quiz-stat-valor" id="bug-total-codigos">—</div>
+              <div class="quiz-stat-label">Códigos</div>
+            </div>
+            <div class="quiz-stat">
+              <div class="quiz-stat-valor" id="bug-total-pontos">—</div>
+              <div class="quiz-stat-label">Pontos</div>
+            </div>
+            <div class="quiz-stat">
+              <div class="quiz-stat-valor" id="bug-tentativas-stat">—</div>
+              <div class="quiz-stat-label">Tentativas</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="quiz-jogo-divider"></div>
+
+        <!-- Botão -->
+        <div class="quiz-jogo-btn-wrap" id="bug-jogar-btn-wrap">
+          <div class="quiz-jogo-tentativas" id="bug-jogo-tentativas" style="display:none;">
+            Tentativas <strong id="bug-tent-usadas">0</strong> de <strong id="bug-tent-total">3</strong>
+          </div>
+          <button class="bug-jogo-btn" id="bug-jogar-btn">
+            🐛 Caçar Bugs!
+          </button>
+          <div class="quiz-jogo-login-aviso" id="bug-login-aviso" style="display:none;">
             Faça login para jogar
           </div>
         </div>

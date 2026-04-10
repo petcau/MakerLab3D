@@ -127,6 +127,22 @@ async function carregarCard() {
       } catch(e) { /* ignora erro individual */ }
     }));
 
+    // Busca resultados do aluno logado para cards vinculados
+    const resultadosAluno = {};
+    try {
+      const userAtual = await new Promise(resolve => {
+        const unsub = onAuthStateChanged(getAuth(), user => { unsub(); resolve(user); });
+      });
+      if (userAtual) {
+        await Promise.all(todosIds.map(async id => {
+          try {
+            const rSnap = await getDoc(doc(db, 'resultados_quiz', userAtual.uid + '_' + id));
+            if (rSnap.exists()) resultadosAluno[id] = rSnap.data();
+          } catch(e) {}
+        }));
+      }
+    } catch(e) { console.warn('resultados vinculados:', e); }
+
     grupos.forEach(({ key, label, cor }) => {
       const ids = d[key] || [];
       if (ids.length === 0) return;
@@ -153,6 +169,12 @@ async function carregarCard() {
         card.className = `mini-card ${cor}`;
         card.href      = `card.html?id=${id}`;
         card.target    = '_blank';
+        const resultado = resultadosAluno[id];
+        const concluido = resultado && resultado.concluido;
+        const ptsGanhos = resultado ? resultado.melhor_pontos : null;
+
+        if (concluido) card.classList.add('mini-card-concluido');
+
         card.innerHTML = `
           <div class="mini-card-top">
             <span class="mini-card-num">${num || '—'}</span>
@@ -160,9 +182,11 @@ async function carregarCard() {
           </div>
           <div class="mini-card-nome">${nome}</div>
           ${tema ? `<div class="mini-card-tema">${tema}</div>` : ''}
+          ${concluido ? `<div class="mini-card-badge-concluido">✅ Concluído<span class="badge-pts">${ptsGanhos !== null ? (ptsGanhos % 1 === 0 ? ptsGanhos : ptsGanhos.toFixed(1)) + ' pts' : ''}</span></div>` : ''}
+          <div class="mini-card-spacer"></div>
           <div class="mini-card-footer">
             ${duracao ? `<span class="mini-stat">⏱ ${duracao}</span>` : ''}
-            ${pontos  ? `<span class="mini-stat">⭐ ${pontos} pts</span>` : ''}
+            ${!concluido && pontos ? `<span class="mini-stat">⭐ ${pontos} pts</span>` : ''}
             <span class="mini-card-arrow">→</span>
           </div>
         `;
@@ -229,63 +253,124 @@ async function carregarCard() {
     }
 
     // ---- QUIZ JOGO ----
-    if ((d.quiz || []).length > 0) {
+    const temQuiz = (d.quiz || []).length > 0;
+    const temBug  = (d.bug_codigos || []).length > 0;
+
+    if (temQuiz) {
       const totalPerguntas = d.quiz.length;
       const totalPontos    = d.quiz.reduce((sum, q) => sum + (parseFloat(q.pontos) || 1.0), 0);
       document.getElementById('quiz-total-perguntas').textContent = totalPerguntas;
       document.getElementById('quiz-total-pontos').textContent    = totalPontos % 1 === 0 ? totalPontos : totalPontos.toFixed(1);
+      document.getElementById('quiz-tentativas').textContent      = d.tentativas || 3;
       show('sec-quiz');
-      // Linkar botão jogar
       const btnJogar = document.getElementById('quiz-jogar-btn');
-      if (btnJogar) btnJogar.onclick = () => {
-        window.location.href = '../jogos/quiz.html?card=' + cardId;
-      };
+      if (btnJogar) btnJogar.onclick = () => window.open('../jogos/quiz.html?card=' + cardId, '_blank');
+    }
 
-      // Buscar dados do aluno logado
+    // ---- CAÇA AO BUG JOGO ----
+    if (temBug) {
+      const totalCodigos = d.bug_codigos.length;
+      const totalPontos  = d.bug_codigos.reduce((sum, b) => sum + (parseFloat(b.pontos) || 1.0), 0);
+      document.getElementById('bug-total-codigos').textContent   = totalCodigos;
+      document.getElementById('bug-total-pontos').textContent    = totalPontos % 1 === 0 ? totalPontos : totalPontos.toFixed(1);
+      document.getElementById('bug-tentativas-stat').textContent = d.bug_tentativas || 3;
+      show('sec-bug');
+      const btnBug = document.getElementById('bug-jogar-btn');
+      if (btnBug) btnBug.onclick = () => window.open('../jogos/caca-ao-bug.html?card=' + cardId, '_blank');
+    }
+
+    // ---- AUTH — atualiza quiz e bug juntos ----
+    if (temQuiz || temBug) {
+      const NIVEL_NOMES  = ['Explorador Iniciante','Curioso Digital','Aprendiz Maker','Construtor Criativo','Inventor em Ação','Programador Maker','Engenheiro Criativo','Inovador Maker','Mentor Maker','Mestre Maker'];
+      const NIVEL_PONTOS = [0,100,250,500,900,1400,2000,2700,3500,4500];
+      let alunoLogado = null;
+
+      async function atualizarDadosAluno() {
+        if (!alunoLogado) return;
+        try {
+          const snap = await getDoc(doc(db, 'usuarios', alunoLogado.uid));
+          if (!snap.exists()) return;
+          const dados  = snap.data();
+          const pts    = dados.pontos_total || 0;
+          let nivelIdx = 0;
+          for (let i = NIVEL_PONTOS.length - 1; i >= 0; i--) {
+            if (pts >= NIVEL_PONTOS[i]) { nivelIdx = i; break; }
+          }
+          const nivelNum   = nivelIdx + 1;
+          const nivelNome  = 'Nível ' + nivelNum + ' — ' + NIVEL_NOMES[nivelIdx];
+          const nomeAluno  = dados.nome || alunoLogado.displayName || alunoLogado.email.split('@')[0];
+          const avatarSrc  = '../assets/robo ' + nivelNum + '_transparente.png';
+
+          // Função auxiliar para preencher um bloco de jogo
+          async function preencherBloco(prefixo, cardCollecao, tentPermitidas) {
+            const roboImg = document.getElementById(prefixo + '-robo-img');
+            const nivelEl = document.getElementById(prefixo + '-nivel-nome');
+            const nomeEl  = document.getElementById(prefixo + '-aluno-nome');
+            const ptsEl   = document.getElementById(prefixo + '-pontos-aluno');
+            const ptsVal  = document.getElementById(prefixo + '-pts-val');
+
+            if (roboImg) roboImg.src = avatarSrc;
+            if (nivelEl) nivelEl.textContent = nivelNome;
+            if (nomeEl)  nomeEl.textContent  = 'Olá, ' + nomeAluno + '!';
+            if (ptsEl && ptsVal) { ptsVal.textContent = pts; ptsEl.style.display = ''; }
+
+            // Tentativas
+            const docId      = alunoLogado.uid + (prefixo === 'bug' ? '_bug_' : '_') + cardId;
+            const resultSnap = await getDoc(doc(db, cardCollecao, docId));
+            const usadas     = resultSnap.exists() ? (resultSnap.data().tentativas_usadas || 0) : 0;
+
+            const tentEl    = document.getElementById(prefixo + '-jogo-tentativas');
+            const tentUsEl  = document.getElementById(prefixo + '-tent-usadas');
+            const tentTotEl = document.getElementById(prefixo + '-tent-total');
+            if (tentEl && tentUsEl && tentTotEl) {
+              tentUsEl.textContent  = usadas;
+              tentTotEl.textContent = tentPermitidas;
+              tentEl.style.display  = '';
+            }
+
+            // Se esgotou tentativas
+            const btnWrap = document.getElementById(prefixo + '-jogar-btn-wrap');
+            if (btnWrap && usadas >= tentPermitidas && resultSnap.exists()) {
+              const r = resultSnap.data();
+              const melhorPts = (r.melhor_pontos || 0) % 1 === 0 ? (r.melhor_pontos || 0) : (r.melhor_pontos || 0).toFixed(1);
+              const totalItens = prefixo === 'bug' ? r.total_codigos : r.total_perguntas;
+              const labelItens = prefixo === 'bug' ? 'bugs encontrados' : 'perguntas';
+              btnWrap.innerHTML =
+                '<div class="quiz-encerrado-box">' +
+                  '<div class="quiz-encerrado-titulo">🔒 ' + (prefixo === 'bug' ? 'Caça encerrada' : 'Quiz encerrado') + '</div>' +
+                  '<div class="quiz-encerrado-sub">Você já usou todas as ' + tentPermitidas + ' tentativa' + (tentPermitidas !== 1 ? 's' : '') + '.</div>' +
+                  '<div class="quiz-encerrado-resultado">' +
+                    '<div class="quiz-encerrado-label">Seu resultado</div>' +
+                    '<div class="quiz-encerrado-perguntas">' + (r.melhor_acertos || 0) + '/' + (totalItens || '?') + ' ' + labelItens + '</div>' +
+                    '<div class="quiz-encerrado-pontos">' + melhorPts + ' pontos</div>' +
+                    (r.concluido ? '<div class="quiz-encerrado-concluido">✅ Desafio concluído!</div>' : '') +
+                  '</div>' +
+                '</div>';
+            }
+          }
+
+          if (temQuiz) await preencherBloco('quiz', 'resultados_quiz', d.tentativas || 3);
+          if (temBug)  await preencherBloco('bug',  'resultados_bug',  d.bug_tentativas || 3);
+
+        } catch(e) { console.warn('Auth jogos:', e); }
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') atualizarDadosAluno();
+      });
+
       const auth = getAuth();
       onAuthStateChanged(auth, async aluno => {
-        const nivelNomes = [
-          'Explorador Iniciante','Curioso Digital','Aprendiz Maker',
-          'Construtor Criativo','Inventor em Ação','Programador Maker',
-          'Engenheiro Criativo','Inovador Maker','Mentor Maker','Mestre Maker'
-        ];
-        const nivelPontos = [0,100,250,500,900,1400,2000,2700,3500,4500];
-
         if (aluno) {
-          try {
-            const snap = await getDoc(doc(db, 'usuarios', aluno.uid));
-            if (snap.exists()) {
-              const pts = snap.data().pontos_total || 0;
-              // Calcular nível
-              let nivelIdx = 0;
-              for (let i = nivelPontos.length - 1; i >= 0; i--) {
-                if (pts >= nivelPontos[i]) { nivelIdx = i; break; }
-              }
-              const nivelNum = nivelIdx + 1;
-              // Atualizar avatar e badge
-              const roboImg = document.getElementById('quiz-robo-img');
-              const nivelEl = document.getElementById('quiz-nivel-nome');
-              if (roboImg) roboImg.src = '../assets/robo ' + nivelNum + '_transparente.png';
-              if (nivelEl) nivelEl.textContent = 'Nível ' + nivelNum + ' — ' + nivelNomes[nivelIdx];
-              const nomeAlunoEl = document.getElementById('quiz-aluno-nome');
-              if (nomeAlunoEl) {
-                const nomeAluno = snap.data().nome || aluno.displayName || aluno.email.split('@')[0];
-                nomeAlunoEl.textContent = 'Olá, ' + nomeAluno + '!';
-              }
-              const pontosEl    = document.getElementById('quiz-pontos-aluno');
-              const pontosValEl = document.getElementById('quiz-pts-val');
-              if (pontosEl && pontosValEl) {
-                pontosValEl.textContent = pts;
-                pontosEl.style.display = '';
-              }
-            }
-          } catch(e) { console.warn('Quiz perfil:', e); }
+          alunoLogado = aluno;
+          await atualizarDadosAluno();
         } else {
-          // Não logado — mostrar aviso
-          const btn   = document.getElementById('quiz-jogar-btn');
-          const aviso = document.getElementById('quiz-login-aviso');
-          if (btn)   { btn.textContent = '🔒 Fazer Login'; btn.onclick = () => window.location.href = '../login.html'; }
-          if (aviso) aviso.style.display = '';
+          ['quiz', 'bug'].forEach(p => {
+            const btn   = document.getElementById(p + '-jogar-btn');
+            const aviso = document.getElementById(p + '-login-aviso');
+            if (btn)   { btn.textContent = '🔒 Fazer Login'; btn.onclick = () => window.location.href = '../login.html'; }
+            if (aviso) aviso.style.display = '';
+          });
         }
       });
     }

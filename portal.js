@@ -114,6 +114,23 @@ onAuthStateChanged(auth, async user => {
         carregarTrilhasProfessor();
       }
 
+      // Atualiza pontos reais do aluno
+      const ptsReais = dados.pontos_total || 0;
+      desenharSelo(ptsReais);
+
+      // Atualiza pontos na caixa de ranking
+      const rankPontosEl = document.getElementById('rank-pontos');
+      if (rankPontosEl) rankPontosEl.textContent = ptsReais;
+
+      // Calcular posição no ranking (escola e geral)
+      // Carregar ranking para todos os perfis
+      calcularPosicaoRanking(user.uid, ptsReais, dados.escola_id || '');
+
+      // Carregar progresso real do aluno
+      if (dados.perfil === 'aluno') {
+        carregarProgresso(user.uid, ptsReais);
+      }
+
       // Atualiza nome do aluno no ranking
       const nomeDisplay = user.displayName || user.email.split('@')[0];
       const gamifEuNome  = document.getElementById('gamif-eu-nome');
@@ -144,6 +161,149 @@ onAuthStateChanged(auth, async user => {
     console.warn('Erro ao buscar perfil:', e);
   }
 });
+
+// ── Ranking real ────────────────────────────────────────────────────────
+// ── Progresso real do aluno ────────────────────────────────────────────
+async function carregarProgresso(uid, ptsTotal) {
+  try {
+    // Buscar todos os resultados do aluno
+    const snap = await getDocs(collection(db, 'resultados_quiz'));
+    let concluidos = 0;
+    const cardsConcluidos = new Set();
+
+    snap.forEach(d => {
+      const r = d.data();
+      if (r.aluno_id === uid && r.concluido) {
+        concluidos++;
+        cardsConcluidos.add(r.card_id);
+      }
+    });
+
+    // Buscar total de cards publicados para taxa
+    const cardsSnap = await getDocs(collection(db, 'cards'));
+    let totalCards = 0;
+    cardsSnap.forEach(d => { if (d.data().publicado) totalCards++; });
+
+    const taxa = totalCards > 0 ? Math.round((concluidos / totalCards) * 100) : 0;
+
+    // Semana atual baseada na data (início do ano letivo = março)
+    const hoje     = new Date();
+    const inicioAno = new Date(hoje.getFullYear(), 2, 1); // 1 de março
+    const diffMs   = hoje - inicioAno;
+    const semana   = Math.max(1, Math.min(40, Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000)) + 1));
+
+    // Atualizar stats
+    const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+    el('prog-desafios', concluidos);
+    el('prog-semana',   semana);
+    el('prog-pontos',   ptsTotal);
+    el('prog-taxa',     taxa + '%');
+
+    // Renderizar grid de 40 semanas
+    const grid = document.getElementById('prog-semanas-grid');
+    if (grid) {
+      grid.innerHTML = '';
+      for (let s = 1; s <= 40; s++) {
+        const div = document.createElement('div');
+        div.className = 'semana-dot';
+        if (s < semana)        div.classList.add('ok');
+        else if (s === semana) div.classList.add('atual');
+        else                   div.classList.add('vazio');
+        div.textContent = s;
+        grid.appendChild(div);
+      }
+    }
+  } catch(e) { console.warn('Erro progresso:', e); }
+}
+
+async function calcularPosicaoRanking(meuUid, meusPontos, minhaEscolaId) {
+  try {
+    const snap = await getDocs(collection(db, 'usuarios'));
+    const alunos = [];
+    const escolasSnap = await getDocs(collection(db, 'escolas'));
+    const escolasMap = {};
+    escolasSnap.forEach(d => { escolasMap[d.id] = d.data().nome || d.id; });
+
+    snap.forEach(d => {
+      const u = d.data();
+      if (u.perfil === 'aluno') {
+        alunos.push({
+          uid:       d.id,
+          nome:      u.nome || '—',
+          pontos:    u.pontos_total || 0,
+          escola_id: u.escola_id || '',
+          escola:    escolasMap[u.escola_id] || u.escola_id || '—'
+        });
+      }
+    });
+
+    // Ordenar por pontos desc
+    alunos.sort((a, b) => b.pontos - a.pontos);
+
+    // Posição geral
+    const posGeral = alunos.findIndex(a => a.uid === meuUid) + 1;
+    const elGeral  = document.getElementById('rank-pos-geral');
+    if (elGeral) elGeral.textContent = posGeral > 0 ? '#' + posGeral + 'º' : '—';
+
+    // Posição na escola
+    const alunosEscola = alunos.filter(a => a.escola_id === minhaEscolaId);
+    const posEscola    = alunosEscola.findIndex(a => a.uid === meuUid) + 1;
+    const elEscola     = document.getElementById('rank-pos-escola');
+    if (elEscola) elEscola.textContent = posEscola > 0 ? '#' + posEscola + 'º' : '—';
+
+    // Renderizar listas de gamificação
+    renderGamifLista('gamif-lista-escola', alunosEscola, meuUid, true);
+    renderGamifLista('gamif-lista-geral',  alunos,       meuUid, false);
+
+  } catch(e) { console.warn('Erro ranking:', e); }
+}
+
+function renderGamifLista(containerId, lista, meuUid, mostrarEscola) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  const top = lista.slice(0, 10);
+  const medals = ['🥇','🥈','🥉'];
+  const euIdx  = lista.findIndex(a => a.uid === meuUid);
+  const euItem = lista[euIdx];
+
+  let html = '';
+  top.forEach((a, i) => {
+    const souEu   = a.uid === meuUid;
+    const pos     = medals[i] || (i + 1) + 'º';
+    const inicial = (a.nome || '?').charAt(0).toUpperCase();
+    const pts     = (a.pontos || 0).toLocaleString('pt-BR');
+    const escola  = mostrarEscola ? '' : `<div class="gamif-escola-tag">${a.escola}</div>`;
+    html += `
+      <div class="gamif-item ${i < 3 ? 'destaque' : ''} ${souEu ? 'eu' : ''}">
+        <div class="gamif-pos">${pos}</div>
+        <div class="gamif-avatar${souEu ? ' eu-av' : ''}">${inicial}</div>
+        <div class="gamif-info">
+          <div class="gamif-nome">${souEu ? 'Você' : a.nome}</div>
+          ${escola}
+        </div>
+        <div class="gamif-pts">${pts} pts</div>
+      </div>`;
+  });
+
+  // Se eu não estou no top 10, adicionar separado
+  if (euIdx >= 10 && euItem) {
+    const pts = (euItem.pontos || 0).toLocaleString('pt-BR');
+    html += `
+      <div class="gamif-item eu" style="margin-top:8px; border-top:1px dashed #dbe2ef; padding-top:8px;">
+        <div class="gamif-pos">${euIdx + 1}º</div>
+        <div class="gamif-avatar eu-av">${(euItem.nome || '?').charAt(0).toUpperCase()}</div>
+        <div class="gamif-info">
+          <div class="gamif-nome">Você</div>
+          ${mostrarEscola ? '' : `<div class="gamif-escola-tag">${euItem.escola}</div>`}
+        </div>
+        <div class="gamif-pts">${pts} pts</div>
+      </div>`;
+  }
+
+  if (!html) html = '<div style="text-align:center;color:#bbb;font-size:13px;padding:20px;">Nenhum aluno encontrado.</div>';
+  el.innerHTML = html;
+}
 
 // ── Painéis por visão ──────────────────────────────────────────────────
 const paineis = {
@@ -276,7 +436,7 @@ function desenharSelo(pts) {
 
   // Atualiza imagem do robô
   const roboImg = document.getElementById('robo-avatar');
-  if (roboImg) roboImg.src = 'assets/robo ' + (nivel.nivel || 1) + '.png';
+  if (roboImg) roboImg.src = 'assets/robo ' + (nivel.nivel || 1) + '_transparente.png';
 
   // Atualiza textos externos
   atualizarListaNiveis(pts);
@@ -302,8 +462,7 @@ function desenharSelo(pts) {
   }
 }
 
-// Simulação: 340 pontos → nível Explorador
-desenharSelo(340);
+// Selo será atualizado após login com pontos reais
 
 // ── Carregar trilhas do Firestore ──────────────────────────────────────
 async function carregarTrilhasAluno() {

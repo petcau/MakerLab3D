@@ -130,6 +130,7 @@ function renderForm(id, d) {
   imagemURL = d.imagem_url || '';
   atividadeImagemURL = d.atividade_imagem_url || '';
   window.quizState = d.quiz ? JSON.parse(JSON.stringify(d.quiz)) : [];
+  window.bugState  = d.bug_codigos ? JSON.parse(JSON.stringify(d.bug_codigos)) : [];
   window.glossarioState = d.glossario ? JSON.parse(JSON.stringify(d.glossario)) : [];
   tagsState.links_desafios   = d.links_desafios   ? [...d.links_desafios]   : [];
   tagsState.links_componentes = d.links_componentes ? [...d.links_componentes] : [];
@@ -228,7 +229,7 @@ function renderForm(id, d) {
         </div>
         <div class="form-group">
           <label>Pontos</label>
-          <input type="number" id="f-pontos" value="${d.pontos || 0}" readonly style="opacity:0.6; cursor:not-allowed;" title="Calculado automaticamente pelo Quiz">
+          <input type="number" id="f-pontos" value="${d.pontos || 0}" readonly style="opacity:0.6; cursor:not-allowed;" title="Calculado automaticamente (Quiz + Caça ao Bug)">
         </div>
         <div class="form-group">
           <label>Kit Necessário</label>
@@ -413,12 +414,52 @@ function renderForm(id, d) {
     <div class="form-section form-section-quiz">
       <div class="section-title-row">
         <span class="section-title">🎯 Atividade Quiz</span>
-        <button class="vg-btn-add" onclick="adicionarPergunta()">+ Pergunta</button>
+        <button class="btn-toggle-jogo" onclick="toggleQuiz()" id="btn-toggle-quiz">
+          ▼ Criar Jogo
+        </button>
       </div>
-      <span class="helper-text" style="display:block; margin-bottom:14px;">
-        Cadastre perguntas com até 4 alternativas. O aluno ganha pontos ao responder corretamente.
-      </span>
-      <div id="quiz-lista"></div>
+      <div id="quiz-body" style="display:none;">
+        <span class="helper-text" style="display:block; margin-bottom:14px; margin-top:12px;">
+          Cadastre perguntas com até 4 alternativas. O aluno ganha pontos ao responder corretamente.
+        </span>
+        <div class="form-row" style="margin-bottom:16px; align-items:flex-end;">
+          <div class="form-group" style="max-width:220px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-tentativas" min="1" max="10" value="${d.tentativas || 3}" placeholder="3">
+            <span class="helper-text">Número máximo de vezes que o aluno pode jogar este quiz.</span>
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarPergunta()">+ Pergunta</button>
+          </div>
+        </div>
+        <div id="quiz-lista"></div>
+      </div>
+    </div>
+
+    <!-- CAÇA AO BUG -->
+    <div class="form-section form-section-bug">
+      <div class="section-title-row">
+        <span class="section-title">🐛 Caça ao Bug</span>
+        <button class="btn-toggle-jogo" onclick="toggleBug()" id="btn-toggle-bug">
+          ▼ Criar Jogo
+        </button>
+      </div>
+      <div id="bug-body" style="display:none;">
+        <span class="helper-text" style="display:block; margin-bottom:8px; margin-top:12px;">
+          Cadastre códigos com erros. O aluno deve clicar nas linhas incorretas.
+        </span>
+        <div class="form-row" style="margin-bottom:16px; align-items:flex-end;">
+          <div class="form-group" style="max-width:220px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-bug-tentativas" min="1" max="10" value="${d.bug_tentativas || 3}">
+            <span class="helper-text">Máximo de jogadas no Caça ao Bug.</span>
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarBug()">+ Código</button>
+          </div>
+        </div>
+        <div id="bug-lista"></div>
+      </div>
     </div>
 
     ${id ? `
@@ -434,6 +475,9 @@ function renderForm(id, d) {
   carregarCardsVinculados();
   renderQuizLista();
   recalcularPontos();
+  renderBugLista();
+  atualizarBtnQuiz();
+  atualizarBtnBug();
 }
 
 // ---- UPLOAD DE IMAGEM ----
@@ -682,6 +726,9 @@ window.salvarCard = async function (publicar) {
     avaliacao:        document.getElementById('f-avaliacao')?.value?.trim() || '',
     desafio_extra:    document.getElementById('f-desafio-extra')?.value?.trim() || '',
     quiz:             window.quizState || [],
+    bug_codigos:      window.bugState || [],
+    bug_tentativas:   parseInt(document.getElementById('f-bug-tentativas')?.value) || 3,
+    tentativas:       parseInt(document.getElementById('f-tentativas')?.value) || 3,
     video_url:        document.getElementById('f-video-url')?.value?.trim() || '',
     publicado:        publicar,
     atualizado_em:    new Date().toISOString()
@@ -811,6 +858,18 @@ listarCards();
 
 window.quizState = [];
 
+window.toggleQuiz = function() {
+  const body = document.getElementById('quiz-body');
+  const btn  = document.getElementById('btn-toggle-quiz');
+  if (!body) return;
+  const aberto = body.style.display !== 'none';
+  body.style.display = aberto ? 'none' : 'block';
+  const n = window.quizState.length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▼ Editar Perguntas (' + n + ')' : '▼ Criar Jogo')
+    : (n > 0 ? '▲ Fechar (' + n + ' pergunta' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar');
+};
+
 function renderQuizLista() {
   const lista = document.getElementById('quiz-lista');
   if (!lista) return;
@@ -831,9 +890,10 @@ function renderQuizLista() {
       </div>
       <div class="form-group">
         <label>Pergunta *</label>
-        <textarea class="quiz-pergunta-input" rows="2"
+        <textarea class="quiz-pergunta-input" rows="3"
           oninput="updateQuiz(${qi}, 'pergunta', this.value)"
           placeholder="Ex: Qual é a função do resistor no circuito?">${q.pergunta || ''}</textarea>
+        <span class="helper-text">💡 Para incluir código, envolva com três crases antes e depois do código.</span>
       </div>
       <div class="form-group">
         <label>Pontos</label>
@@ -876,12 +936,16 @@ window.adicionarPergunta = function() {
   });
   renderQuizLista();
   recalcularPontos();
+  atualizarBtnQuiz();
+  atualizarBtnBug();
 };
 
 window.removerPergunta = function(qi) {
   window.quizState.splice(qi, 1);
   renderQuizLista();
   recalcularPontos();
+  atualizarBtnQuiz();
+  atualizarBtnBug();
 };
 
 window.updateQuiz = function(qi, field, value) {
@@ -889,8 +953,21 @@ window.updateQuiz = function(qi, field, value) {
   recalcularPontos();
 };
 
+function atualizarBtnQuiz() {
+  const btn  = document.getElementById('btn-toggle-quiz');
+  const body = document.getElementById('quiz-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = window.quizState.length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' pergunta' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Perguntas (' + n + ')' : '▼ Criar Jogo');
+}
+
 function recalcularPontos() {
-  const total = (window.quizState || []).reduce((sum, q) => sum + (parseFloat(q.pontos) || 1.0), 0);
+  const totalQuiz = (window.quizState || []).reduce((sum, q) => sum + (parseFloat(q.pontos) || 1.0), 0);
+  const totalBug  = (window.bugState  || []).reduce((sum, b) => sum + (parseFloat(b.pontos) || 1.0), 0);
+  const total     = totalQuiz + totalBug;
   const el = document.getElementById('f-pontos');
   if (el) el.value = total % 1 === 0 ? total : total.toFixed(1);
 }
@@ -899,4 +976,142 @@ window.updateQuizAlt = function(qi, ai, value) {
   if (!window.quizState[qi]) return;
   if (!window.quizState[qi].alternativas) window.quizState[qi].alternativas = ['','','',''];
   window.quizState[qi].alternativas[ai] = value;
+};
+
+// ==============================
+// ---- CAÇA AO BUG ----
+// ==============================
+
+window.bugState = [];
+
+window.toggleBug = function() {
+  const body = document.getElementById('bug-body');
+  const btn  = document.getElementById('btn-toggle-bug');
+  if (!body) return;
+  const aberto = body.style.display !== 'none';
+  body.style.display = aberto ? 'none' : 'block';
+  atualizarBtnBug();
+};
+
+function atualizarBtnBug() {
+  const btn  = document.getElementById('btn-toggle-bug');
+  const body = document.getElementById('bug-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = window.bugState.length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' código' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Códigos (' + n + ')' : '▼ Criar Jogo');
+}
+
+function renderBugLista() {
+  const lista = document.getElementById('bug-lista');
+  if (!lista) return;
+
+  if (window.bugState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhum código cadastrado. Clique em + Código para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = '';
+  window.bugState.forEach((b, bi) => {
+    const linhas = (b.codigo || '').split('\n');
+
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.innerHTML = `
+      <div class="quiz-card-header">
+        <span class="quiz-card-num">Código ${bi + 1}</span>
+        <button class="quiz-btn-rem" onclick="removerBug(${bi})">× Remover</button>
+      </div>
+      <div class="form-group">
+        <label>Pontos</label>
+        <input type="number" step="0.5" min="0.5" value="${b.pontos || 1.0}"
+          style="width:100px;"
+          oninput="updateBug(${bi}, 'pontos', parseFloat(this.value))">
+      </div>
+      <div class="form-group">
+        <label>Código — clique nas linhas que têm erro</label>
+        <div class="bug-code-editor" id="bug-editor-${bi}">
+          ${linhas.map((linha, li) => {
+            const errada = (b.linhas_erradas || []).includes(li);
+            return `<div class="bug-linha ${errada ? 'bug-linha-errada' : ''}"
+              onclick="toggleLinhaBug(${bi}, ${li})"
+              title="${errada ? 'Linha com erro (clique para desmarcar)' : 'Clique para marcar como erro'}">
+              <span class="bug-linha-num">${li + 1}</span>
+              <span class="bug-linha-code">${linha.replace(/</g,'&lt;')}</span>
+              ${errada ? '<span class="bug-linha-tag">BUG</span>' : ''}
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="bug-code-textarea-wrap">
+          <textarea class="bug-textarea" rows="8"
+            placeholder="void loop() {&#10;  digitWrite(13, HIGH);  // BUG: digitWrite&#10;  delay(1000)&#10;  digitalWrite(13, LOW);&#10;  delay(1000);&#10;}"
+            oninput="updateBugCodigo(${bi}, this.value)">${b.codigo || ''}</textarea>
+          <span class="helper-text">Cole ou digite o código. Depois clique nas linhas com erro no preview acima.</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Feedback</label>
+        <input type="text" value="${b.feedback || ''}"
+          oninput="updateBug(${bi}, 'feedback', this.value)"
+          placeholder="Ex: O erro estava na linha 2: 'digitWrite' deveria ser 'digitalWrite'">
+      </div>
+      <div class="form-group">
+        <label>Linhas com erro</label>
+        <div style="font-size:12px; color:#62708c; background:#f5f5f5; padding:8px 12px; border-radius:8px;">
+          ${(b.linhas_erradas || []).length > 0
+            ? 'Linhas marcadas: ' + (b.linhas_erradas || []).map(l => l + 1).join(', ')
+            : 'Nenhuma linha marcada como erro ainda.'}
+        </div>
+      </div>
+    `;
+    lista.appendChild(card);
+  });
+}
+
+window.adicionarBug = function() {
+  window.bugState.push({
+    codigo:        '',
+    linhas_erradas: [],
+    feedback:      '',
+    pontos:        1.0
+  });
+  renderBugLista();
+  recalcularPontos();
+  atualizarBtnBug();
+};
+
+window.removerBug = function(bi) {
+  window.bugState.splice(bi, 1);
+  renderBugLista();
+  recalcularPontos();
+  atualizarBtnBug();
+};
+
+window.updateBug = function(bi, field, value) {
+  if (window.bugState[bi]) window.bugState[bi][field] = value;
+  if (field === 'pontos') recalcularPontos();
+};
+
+window.updateBugCodigo = function(bi, valor) {
+  if (!window.bugState[bi]) return;
+  window.bugState[bi].codigo = valor;
+  // Limpar linhas erradas pois o código mudou
+  window.bugState[bi].linhas_erradas = [];
+  renderBugLista();
+};
+
+window.toggleLinhaBug = function(bi, li) {
+  if (!window.bugState[bi]) return;
+  const erradas = window.bugState[bi].linhas_erradas || [];
+  const idx = erradas.indexOf(li);
+  if (idx >= 0) {
+    erradas.splice(idx, 1);
+  } else {
+    erradas.push(li);
+    erradas.sort((a, b) => a - b);
+  }
+  window.bugState[bi].linhas_erradas = erradas;
+  renderBugLista();
 };

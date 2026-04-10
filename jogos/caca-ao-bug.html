@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quiz | MakerLab 3D</title>
+  <title>Caça ao Bug | MakerLab 3D</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="quiz.css">
+  <link rel="stylesheet" href="caca-ao-bug.css">
 </head>
 <body>
 
   <div class="q-header">
     <div class="q-logo">MAKER<span>LAB</span> 3D</div>
-    <div style="display:flex; align-items:center; gap:12px;">
+    <div style="display:flex;align-items:center;gap:12px;">
       <div class="q-card-nome" id="q-card-nome">Carregando...</div>
-      <button onclick="voltarCard()" style="background:var(--azul); color:#fff; border:none; border-radius:10px; padding:6px 14px; font-family:'Nunito',sans-serif; font-size:12px; font-weight:800; cursor:pointer;">← Voltar</button>
+      <button onclick="voltarCard()" class="btn-voltar-header">← Voltar</button>
     </div>
   </div>
 
+  <!-- Player card -->
   <div class="player-card" id="player-card" style="display:none;">
     <img class="player-avatar" id="player-avatar" src="../assets/robo 1_transparente.png" alt="Avatar">
     <div class="player-info">
@@ -29,46 +30,54 @@
     </div>
   </div>
 
+  <!-- Loading -->
   <div class="loading" id="loading">
     <div class="spinner"></div>
-    Carregando quiz...
+    Carregando Caça ao Bug...
   </div>
 
+  <!-- Progresso -->
   <div class="q-prog-wrap" id="q-prog-wrap" style="display:none;">
     <div class="q-prog-info">
-      <span id="prog-txt">Pergunta 1 de 5</span>
+      <span id="prog-txt">Código 1 de 3</span>
       <span id="prog-pct">0%</span>
     </div>
     <div class="q-prog-bar"><div class="q-prog-fill" id="prog-fill" style="width:0%"></div></div>
   </div>
 
-  <div class="q-box" id="q-box" style="display:none;">
-    <div class="q-box-top">
-      <div class="q-estrelas">★ ★ ★</div>
-      <div class="q-num" id="q-num">Pergunta 1</div>
-      <div class="q-texto" id="q-texto">—</div>
-      <div class="q-pts-badge" id="q-pts-badge">+1 pt</div>
+  <!-- Card do código -->
+  <div class="bug-box" id="bug-box" style="display:none;">
+    <div class="bug-box-top">
+      <div class="bug-estrelas">🐛 🐛 🐛</div>
+      <div class="bug-num" id="bug-num">Código 1</div>
+      <div class="bug-instrucao">Clique nas linhas que contêm <strong>erro</strong>!</div>
+      <div class="bug-pts-badge" id="bug-pts-badge">+1 pt</div>
     </div>
-    <div class="q-alts" id="q-alts"></div>
-    <div class="q-feedback" id="q-feedback"></div>
-    <button class="btn-prox" id="btn-prox" onclick="proxima()">Próxima →</button>
+    <div class="bug-tentativas-bar" id="bug-tentativas-bar"></div>
+    <div class="bug-code-wrap" id="bug-code-wrap"></div>
+    <div class="bug-feedback" id="bug-feedback"></div>
+    <button class="btn-verificar" id="btn-verificar" onclick="verificar()">🔍 Verificar</button>
+    <button class="btn-prox" id="btn-prox" style="display:none;" onclick="proxCodigo()">Próximo →</button>
   </div>
 
+  <!-- Placar -->
   <div class="q-placar" id="q-placar" style="display:none;">
     <div class="pl-item ac"><div class="pl-val" id="pl-ac">0</div><div class="pl-label">Acertos</div></div>
     <div class="pl-item er"><div class="pl-val" id="pl-er">0</div><div class="pl-label">Erros</div></div>
     <div class="pl-item pt"><div class="pl-val" id="pl-pt">0</div><div class="pl-label">Pontos</div></div>
   </div>
 
+  <!-- Tela Final -->
   <div class="tela-final" id="tela-final">
+    <div class="tela-final-box">
     <div class="tf-top">
-      <div class="tf-emoji" id="tf-emoji">🎖️</div>
-      <div class="tf-titulo" id="tf-titulo">Quiz concluído!</div>
+      <div class="tf-emoji" id="tf-emoji">🐛</div>
+      <div class="tf-titulo" id="tf-titulo">Missão concluída!</div>
       <div class="tf-sub" id="tf-sub">Veja seu resultado abaixo</div>
     </div>
     <div class="tf-body">
-      <div id="tf-badge-concluido" style="display:none; text-align:center; margin-bottom:16px;">
-        <span style="background:#f0fdf4; border:1.5px solid #a7f3d0; color:#15803d; font-family:'Nunito',sans-serif; font-size:13px; font-weight:800; padding:6px 18px; border-radius:20px;">✅ Desafio Concluído!</span>
+      <div id="tf-badge-concluido" style="display:none;text-align:center;margin-bottom:16px;">
+        <span style="background:#f0fdf4;border:1.5px solid #a7f3d0;color:#15803d;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;padding:6px 18px;border-radius:20px;">✅ Desafio Concluído!</span>
       </div>
       <div class="tf-avatar-wrap">
         <img class="tf-avatar" id="tf-avatar" src="../assets/robo 1_transparente.png" alt="">
@@ -79,13 +88,14 @@
         <div class="res-item rpt"><div class="res-val" id="res-pt">0</div><div class="res-label">Pontos</div></div>
       </div>
       <p class="res-msg" id="res-msg"></p>
-      <p style="text-align:center; font-size:13px; font-weight:700; margin-bottom:16px;" id="tf-tentativas-restantes"></p>
+      <p style="text-align:center;font-size:13px;font-weight:700;margin-bottom:16px;" id="tf-tent-rest"></p>
       <button class="btn-tentar" onclick="reiniciar()">🔄 Tentar Novamente</button>
       <div style="height:10px;"></div>
       <button class="btn-voltar" onclick="voltarCard()">← Voltar ao Card</button>
     </div>
+    </div>
   </div>
 
-  <script type="module" src="quiz.js"></script>
+  <script type="module" src="caca-ao-bug.js"></script>
 </body>
 </html>

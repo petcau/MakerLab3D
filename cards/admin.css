@@ -1365,3 +1365,93 @@ textarea { resize: vertical; min-height: 80px; }
   font-size: 13px !important;
   outline: none;
 }
+
+/* ---- Caça ao Bug ---- */
+.form-section-bug {
+  background: #f0f7f4;
+  border-color: #a8d5b5 !important;
+}
+
+.bug-code-editor {
+  background: #1e2235;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  user-select: none;
+}
+
+.bug-linha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 14px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.15s;
+  color: #e2e8f0;
+}
+
+.bug-linha:hover { background: rgba(255,255,255,0.06); }
+
+.bug-linha.bug-linha-errada {
+  background: rgba(231,76,60,0.18);
+  border-left-color: #e74c3c;
+}
+
+.bug-linha-num {
+  color: #666;
+  font-size: 11px;
+  min-width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.bug-linha-code {
+  flex: 1;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.bug-linha-tag {
+  background: #e74c3c;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.bug-textarea {
+  width: 100%;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: #f7f8fc;
+  border: 1.5px solid var(--borda);
+  border-radius: 8px;
+  padding: 10px 12px;
+  resize: vertical;
+  color: #23314d;
+}
+
+.bug-code-textarea-wrap { display: flex; flex-direction: column; gap: 6px; }
+
+/* Botão toggle de jogo */
+.btn-toggle-jogo {
+  background: #2F3447;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+
+.btn-toggle-jogo:hover { background: #3d4460; }
