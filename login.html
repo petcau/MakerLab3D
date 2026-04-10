@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Educacional | MakerLab3D</title>
+  <title>Acesso às Trilhas | MakerLab3D</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
@@ -294,7 +294,7 @@
           <li><a href="index.html#ecossistema">Soluções</a></li>
           <li><a href="index.html#metodo">Método</a></li>
           <li><a href="index.html#midia">Mídia</a></li>
-          <li><a href="portal_educacional.html" class="btn-nav">Portal Educacional</a></li>
+          <li><a href="login.html">Acesso Trilhas</a></li>
           <li><a href="index.html#contato" class="btn-nav">Contato</a></li>
         </ul>
       </nav>
@@ -328,7 +328,7 @@
       <div class="login-card">
         <div class="login-card-header">
           <div class="login-card-logo">Maker<span>Lab</span> 3D</div>
-          <div class="login-card-sub">Portal Educacional</div>
+          <div class="login-card-sub">Acesso às Trilhas</div>
         </div>
         <div class="login-card-body">
 
@@ -372,7 +372,7 @@
 
     const firebaseConfig = {
       apiKey: "AIzaSyAndgQiwxpe6wyCF8aa5NqqdMuwLJfMIMM",
-      authDomain: "makerlab3d-4e455.firebaseapp.com",
+      authDomain: "petcau.github.io",
       projectId: "makerlab3d-4e455",
       storageBucket: "makerlab3d-4e455.firebasestorage.app",
       messagingSenderId: "495457985822",
@@ -412,7 +412,7 @@
         }
         const perfil = snap.data().perfil;
         // Todos vão para trilhas.html
-        window.location.href = 'portal_educacional.html';
+        window.location.href = 'trilhas.html';
       } catch(err) {
         mostrarMsg('Erro ao verificar acesso: ' + err.message, 'erro');
         showLoading(false);
