@@ -255,6 +255,7 @@ async function carregarCard() {
     // ---- QUIZ JOGO ----
     const temQuiz = (d.quiz || []).length > 0;
     const temBug  = (d.bug_codigos || []).length > 0;
+    const temComp = (d.comp_perguntas || []).length > 0;
 
     if (temQuiz) {
       const totalPerguntas = d.quiz.length;
@@ -268,6 +269,17 @@ async function carregarCard() {
     }
 
     // ---- CAÇA AO BUG JOGO ----
+    if (temComp) {
+      const totalPerguntas = d.comp_perguntas.length;
+      const totalPontos    = d.comp_perguntas.reduce((sum, c) => sum + (parseFloat(c.pontos) || 1.0), 0);
+      document.getElementById('comp-total-perguntas').textContent = totalPerguntas;
+      document.getElementById('comp-total-pontos').textContent    = totalPontos % 1 === 0 ? totalPontos : totalPontos.toFixed(1);
+      document.getElementById('comp-tentativas-stat').textContent = d.comp_tentativas || 3;
+      show('sec-comp');
+      const btnComp = document.getElementById('comp-jogar-btn');
+      if (btnComp) btnComp.onclick = () => window.open('../jogos/qual-componente.html?card=' + cardId, '_blank');
+    }
+
     if (temBug) {
       const totalCodigos = d.bug_codigos.length;
       const totalPontos  = d.bug_codigos.reduce((sum, b) => sum + (parseFloat(b.pontos) || 1.0), 0);
@@ -280,7 +292,7 @@ async function carregarCard() {
     }
 
     // ---- AUTH — atualiza quiz e bug juntos ----
-    if (temQuiz || temBug) {
+    if (temQuiz || temBug || temComp) {
       const NIVEL_NOMES  = ['Explorador Iniciante','Curioso Digital','Aprendiz Maker','Construtor Criativo','Inventor em Ação','Programador Maker','Engenheiro Criativo','Inovador Maker','Mentor Maker','Mestre Maker'];
       const NIVEL_PONTOS = [0,100,250,500,900,1400,2000,2700,3500,4500];
       let alunoLogado = null;
@@ -315,7 +327,7 @@ async function carregarCard() {
             if (ptsEl && ptsVal) { ptsVal.textContent = pts; ptsEl.style.display = ''; }
 
             // Tentativas
-            const docId      = alunoLogado.uid + (prefixo === 'bug' ? '_bug_' : '_') + cardId;
+            const docId      = alunoLogado.uid + (prefixo === 'bug' ? '_bug_' : prefixo === 'comp' ? '_comp_' : '_') + cardId;
             const resultSnap = await getDoc(doc(db, cardCollecao, docId));
             const usadas     = resultSnap.exists() ? (resultSnap.data().tentativas_usadas || 0) : 0;
 
@@ -346,10 +358,10 @@ async function carregarCard() {
               const r = resultSnap.data();
               const melhorPts = (r.melhor_pontos || 0) % 1 === 0 ? (r.melhor_pontos || 0) : (r.melhor_pontos || 0).toFixed(1);
               const totalItens = prefixo === 'bug' ? r.total_codigos : r.total_perguntas;
-              const labelItens = prefixo === 'bug' ? 'bugs encontrados' : 'perguntas';
+              const labelItens = prefixo === 'bug' ? 'bugs encontrados' : 'perguntas corretas';
               btnWrap.innerHTML =
                 '<div class="quiz-encerrado-box">' +
-                  '<div class="quiz-encerrado-titulo">🔒 ' + (prefixo === 'bug' ? 'Caça encerrada' : 'Quiz encerrado') + '</div>' +
+                  '<div class="quiz-encerrado-titulo">🔒 ' + (prefixo === 'bug' ? 'Caça encerrada' : prefixo === 'comp' ? 'Jogo encerrado' : 'Quiz encerrado') + '</div>' +
                   '<div class="quiz-encerrado-sub">Você já usou todas as ' + tentPermitidas + ' tentativa' + (tentPermitidas !== 1 ? 's' : '') + '.</div>' +
                   '<div class="quiz-encerrado-resultado">' +
                     '<div class="quiz-encerrado-label">Seu resultado</div>' +
@@ -363,6 +375,7 @@ async function carregarCard() {
 
           if (temQuiz) await preencherBloco('quiz', 'resultados_quiz', d.tentativas || 3);
           if (temBug)  await preencherBloco('bug',  'resultados_bug',  d.bug_tentativas || 3);
+          if (temComp) await preencherBloco('comp', 'resultados_comp', d.comp_tentativas || 3);
 
         } catch(e) { console.warn('Auth jogos:', e); }
       }
@@ -377,7 +390,7 @@ async function carregarCard() {
           alunoLogado = aluno;
           await atualizarDadosAluno();
         } else {
-          ['quiz', 'bug'].forEach(p => {
+          ['quiz', 'bug', 'comp'].forEach(p => {
             const btn   = document.getElementById(p + '-jogar-btn');
             const aviso = document.getElementById(p + '-login-aviso');
             if (btn)   { btn.textContent = '🔒 Fazer Login'; btn.onclick = () => window.location.href = '../login.html'; }

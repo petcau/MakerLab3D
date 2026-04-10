@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qual Componente? | MakerLab 3D</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="qual-componente.css">
+</head>
+<body>
+
+  <div class="q-header">
+    <div class="q-logo">MAKER<span>LAB</span> 3D</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="q-card-nome" id="q-card-nome">Carregando...</div>
+      <button onclick="voltarCard()" class="btn-voltar-header">← Voltar</button>
+    </div>
+  </div>
+
+  <div class="player-card" id="player-card" style="display:none;">
+    <img class="player-avatar" id="player-avatar" src="../assets/robo 1_transparente.png" alt="Avatar">
+    <div class="player-info">
+      <div class="player-nome" id="player-nome">—</div>
+      <div class="player-nivel" id="player-nivel">Nível 1</div>
+    </div>
+    <div class="player-pts-box">
+      <div class="player-pts-val" id="player-pts">0</div>
+      <div class="player-pts-label">pontos</div>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    Carregando jogo...
+  </div>
+
+  <div class="q-prog-wrap" id="q-prog-wrap" style="display:none;">
+    <div class="q-prog-info">
+      <span id="prog-txt">Pergunta 1 de 3</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="q-prog-bar"><div class="q-prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Card da pergunta -->
+  <div class="comp-box" id="comp-box" style="display:none;">
+    <div class="comp-box-top">
+      <div class="comp-estrelas">🔌 🔌 🔌</div>
+      <div class="comp-num" id="comp-num">Pergunta 1</div>
+      <div class="comp-pergunta" id="comp-pergunta">—</div>
+      <div class="comp-pts-badge" id="comp-pts-badge">+1 pt</div>
+    </div>
+    <div class="comp-instrucao">Clique no(s) componente(s) correto(s)</div>
+    <div class="comp-grid-jogo" id="comp-grid-jogo"></div>
+    <div class="comp-feedback" id="comp-feedback" style="display:none;"></div>
+    <button class="btn-verificar" id="btn-verificar" onclick="verificar()">✔ Verificar</button>
+    <button class="btn-prox" id="btn-prox" style="display:none;" onclick="proxPergunta()">Próxima →</button>
+  </div>
+
+  <div class="q-placar" id="q-placar" style="display:none;">
+    <div class="pl-item ac"><div class="pl-val" id="pl-ac">0</div><div class="pl-label">Acertos</div></div>
+    <div class="pl-item er"><div class="pl-val" id="pl-er">0</div><div class="pl-label">Erros</div></div>
+    <div class="pl-item pt"><div class="pl-val" id="pl-pt">0</div><div class="pl-label">Pontos</div></div>
+  </div>
+
+  <!-- Modal Final -->
+  <div class="tela-final" id="tela-final">
+    <div class="tela-final-box">
+      <div class="tf-top">
+        <div class="tf-top-row">
+          <div class="tf-emoji" id="tf-emoji">🔌</div>
+          <div class="tf-top-text">
+            <div class="tf-titulo" id="tf-titulo">Jogo concluído!</div>
+            <div class="tf-sub" id="tf-sub">Veja seu resultado</div>
+          </div>
+        </div>
+      </div>
+      <div class="tf-body">
+        <div id="tf-badge-concluido" style="display:none;text-align:center;margin-bottom:12px;">
+          <span style="background:#f0fdf4;border:1.5px solid #a7f3d0;color:#15803d;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;padding:6px 18px;border-radius:20px;">✅ Desafio Concluído!</span>
+        </div>
+        <div class="tf-avatar-wrap">
+          <img class="tf-avatar" id="tf-avatar" src="../assets/robo 1_transparente.png" alt="">
+        </div>
+        <div class="res-grid">
+          <div class="res-item rac"><div class="res-val" id="res-ac">0</div><div class="res-label">Acertos</div></div>
+          <div class="res-item rer"><div class="res-val" id="res-er">0</div><div class="res-label">Erros</div></div>
+          <div class="res-item rpt"><div class="res-val" id="res-pt">0</div><div class="res-label">Pontos</div></div>
+        </div>
+        <p class="res-msg" id="res-msg"></p>
+        <p style="text-align:center;font-size:13px;font-weight:700;margin-bottom:12px;" id="tf-tent-rest"></p>
+        <button class="btn-tentar" onclick="reiniciar()">🔄 Tentar Novamente</button>
+        <div style="height:8px;"></div>
+        <button class="btn-voltar" onclick="voltarCard()">← Voltar ao Card</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="qual-componente.js"></script>
+</body>
+</html>

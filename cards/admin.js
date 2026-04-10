@@ -131,6 +131,7 @@ function renderForm(id, d) {
   atividadeImagemURL = d.atividade_imagem_url || '';
   window.quizState = d.quiz ? JSON.parse(JSON.stringify(d.quiz)) : [];
   window.bugState  = d.bug_codigos ? JSON.parse(JSON.stringify(d.bug_codigos)) : [];
+  window.compState = d.comp_perguntas ? JSON.parse(JSON.stringify(d.comp_perguntas)) : [];
   window.glossarioState = d.glossario ? JSON.parse(JSON.stringify(d.glossario)) : [];
   tagsState.links_desafios   = d.links_desafios   ? [...d.links_desafios]   : [];
   tagsState.links_componentes = d.links_componentes ? [...d.links_componentes] : [];
@@ -462,6 +463,29 @@ function renderForm(id, d) {
       </div>
     </div>
 
+    <!-- QUAL COMPONENTE -->
+    <div class="form-section form-section-comp">
+      <div class="section-title-row">
+        <span class="section-title">🔌 Qual Componente?</span>
+        <button class="btn-toggle-jogo" onclick="toggleComp()" id="btn-toggle-comp">▼ Criar Jogo</button>
+      </div>
+      <div id="comp-body" style="display:none;">
+        <span class="helper-text" style="display:block;margin-bottom:8px;margin-top:12px;">
+          Crie perguntas com imagens de componentes. O aluno clica nos componentes corretos.
+        </span>
+        <div class="form-row" style="margin-bottom:16px;align-items:flex-end;">
+          <div class="form-group" style="max-width:220px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-comp-tentativas" min="1" max="10" value="${d.comp_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarComp()">+ Pergunta</button>
+          </div>
+        </div>
+        <div id="comp-lista"></div>
+      </div>
+    </div>
+
     ${id ? `
     <div class="form-section">
       <div class="section-title">Link do Card</div>
@@ -478,6 +502,8 @@ function renderForm(id, d) {
   renderBugLista();
   atualizarBtnQuiz();
   atualizarBtnBug();
+  renderCompLista();
+  atualizarBtnComp();
 }
 
 // ---- UPLOAD DE IMAGEM ----
@@ -728,6 +754,8 @@ window.salvarCard = async function (publicar) {
     quiz:             window.quizState || [],
     bug_codigos:      window.bugState || [],
     bug_tentativas:   parseInt(document.getElementById('f-bug-tentativas')?.value) || 3,
+    comp_perguntas:   window.compState || [],
+    comp_tentativas:  parseInt(document.getElementById('f-comp-tentativas')?.value) || 3,
     tentativas:       parseInt(document.getElementById('f-tentativas')?.value) || 3,
     video_url:        document.getElementById('f-video-url')?.value?.trim() || '',
     publicado:        publicar,
@@ -938,6 +966,8 @@ window.adicionarPergunta = function() {
   recalcularPontos();
   atualizarBtnQuiz();
   atualizarBtnBug();
+  renderCompLista();
+  atualizarBtnComp();
 };
 
 window.removerPergunta = function(qi) {
@@ -946,6 +976,8 @@ window.removerPergunta = function(qi) {
   recalcularPontos();
   atualizarBtnQuiz();
   atualizarBtnBug();
+  renderCompLista();
+  atualizarBtnComp();
 };
 
 window.updateQuiz = function(qi, field, value) {
@@ -965,9 +997,10 @@ function atualizarBtnQuiz() {
 }
 
 function recalcularPontos() {
-  const totalQuiz = (window.quizState || []).reduce((sum, q) => sum + (parseFloat(q.pontos) || 1.0), 0);
-  const totalBug  = (window.bugState  || []).reduce((sum, b) => sum + (parseFloat(b.pontos) || 1.0), 0);
-  const total     = totalQuiz + totalBug;
+  const totalQuiz = (window.quizState  || []).reduce((sum, q) => sum + (parseFloat(q.pontos) || 1.0), 0);
+  const totalBug  = (window.bugState   || []).reduce((sum, b) => sum + (parseFloat(b.pontos) || 1.0), 0);
+  const totalComp = (window.compState  || []).reduce((sum, c) => sum + (parseFloat(c.pontos) || 1.0), 0);
+  const total     = totalQuiz + totalBug + totalComp;
   const el = document.getElementById('f-pontos');
   if (el) el.value = total % 1 === 0 ? total : total.toFixed(1);
 }
@@ -1114,4 +1147,131 @@ window.toggleLinhaBug = function(bi, li) {
   }
   window.bugState[bi].linhas_erradas = erradas;
   renderBugLista();
+};
+
+// ==============================
+// ---- QUAL COMPONENTE ----
+// ==============================
+
+const COMPONENTES_LIST = [
+  { id: 'arduino',            nome: 'Arduino',              arquivo: 'arduino.png' },
+  { id: 'protoboard',         nome: 'Protoboard',           arquivo: 'protoboard.png' },
+  { id: 'led',                nome: 'LED',                  arquivo: 'led.png' },
+  { id: 'botao',              nome: 'Botão',                arquivo: 'botao.png' },
+  { id: 'resistor',           nome: 'Resistor',             arquivo: 'resistor.png' },
+  { id: 'potenciometro',      nome: 'Potenciômetro',        arquivo: 'potenciometro.png' },
+  { id: 'ldr',                nome: 'LDR',                  arquivo: 'ldr.png' },
+  { id: 'termistor',          nome: 'Termistor',            arquivo: 'termistor.png' },
+  { id: 'matriz-led',         nome: 'Matriz de LED 8x8',   arquivo: 'matriz-led.png' },
+  { id: 'sensor-som',         nome: 'Sensor de Som',        arquivo: 'sensor-som.png' },
+  { id: 'sensor-ultrassonico',nome: 'Sensor Ultrassônico',  arquivo: 'sensor-ultrassonico.png' },
+  { id: 'led-rgb',            nome: 'LED RGB',              arquivo: 'led-rgb.png' },
+];
+
+window.compState = [];
+
+window.toggleComp = function() {
+  const body = document.getElementById('comp-body');
+  const btn  = document.getElementById('btn-toggle-comp');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnComp();
+};
+
+function atualizarBtnComp() {
+  const btn  = document.getElementById('btn-toggle-comp');
+  const body = document.getElementById('comp-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = window.compState.length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' pergunta' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Perguntas (' + n + ')' : '▼ Criar Jogo');
+}
+
+function renderCompLista() {
+  const lista = document.getElementById('comp-lista');
+  if (!lista) return;
+
+  if (window.compState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhuma pergunta cadastrada. Clique em + Pergunta para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = '';
+  window.compState.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+
+    // Grid de componentes — seleção múltipla para corretos
+    const gridHTML = COMPONENTES_LIST.map(c => {
+      const correto = (q.corretos || []).includes(c.id);
+      return `
+        <div class="comp-opcao ${correto ? 'comp-correto' : ''}" onclick="toggleCompCorreto(${qi}, '${c.id}')">
+          <img src="../assets/eletronicos/${c.arquivo}" alt="${c.nome}" class="comp-opcao-img"
+            onerror="this.style.opacity='0.3'">
+          <div class="comp-opcao-nome">${c.nome}</div>
+          ${correto ? '<div class="comp-opcao-check">✓</div>' : ''}
+        </div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="quiz-card-header">
+        <span class="quiz-card-num">Pergunta ${qi + 1}</span>
+        <button class="quiz-btn-rem" onclick="removerComp(${qi})">× Remover</button>
+      </div>
+      <div class="form-group">
+        <label>Pergunta *</label>
+        <input type="text" value="${q.pergunta || ''}"
+          oninput="updateComp(${qi}, 'pergunta', this.value)"
+          placeholder="Ex: Qual componente acende luz?">
+      </div>
+      <div class="form-group">
+        <label>Pontos</label>
+        <input type="number" step="0.5" min="0.5" value="${q.pontos || 1.0}"
+          style="width:100px;"
+          oninput="updateComp(${qi}, 'pontos', parseFloat(this.value)); recalcularPontos();">
+      </div>
+      <div class="form-group">
+        <label>Componentes — clique nos <strong>corretos</strong> (pode marcar mais de um)</label>
+        <div class="comp-grid">${gridHTML}</div>
+        <span class="helper-text">Marcados: ${(q.corretos || []).length > 0 ? (q.corretos || []).map(id => COMPONENTES_LIST.find(c => c.id === id)?.nome || id).join(', ') : 'Nenhum'}</span>
+      </div>
+      <div class="form-group">
+        <label>Feedback</label>
+        <input type="text" value="${q.feedback || ''}"
+          oninput="updateComp(${qi}, 'feedback', this.value)"
+          placeholder="Ex: O LED é o componente que emite luz!">
+      </div>
+    `;
+    lista.appendChild(card);
+  });
+}
+
+window.adicionarComp = function() {
+  window.compState.push({ pergunta: '', corretos: [], feedback: '', pontos: 1.0 });
+  renderCompLista();
+  recalcularPontos();
+  atualizarBtnComp();
+};
+
+window.removerComp = function(qi) {
+  window.compState.splice(qi, 1);
+  renderCompLista();
+  recalcularPontos();
+  atualizarBtnComp();
+};
+
+window.updateComp = function(qi, field, value) {
+  if (window.compState[qi]) window.compState[qi][field] = value;
+};
+
+window.toggleCompCorreto = function(qi, compId) {
+  if (!window.compState[qi]) return;
+  const corretos = window.compState[qi].corretos || [];
+  const idx = corretos.indexOf(compId);
+  if (idx >= 0) corretos.splice(idx, 1);
+  else corretos.push(compId);
+  window.compState[qi].corretos = corretos;
+  renderCompLista();
 };

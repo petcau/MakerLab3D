@@ -1342,3 +1342,59 @@ body {
 /* Pontos aluno verde */
 .section-bug-jogo .quiz-jogo-pontos-aluno { color: #1a7a40; }
 .section-bug-jogo .quiz-jogo-aluno-nome   { color: #1a7a40; }
+
+/* ---- Seção Jogo Qual Componente ---- */
+.section-comp-jogo {
+  background: linear-gradient(135deg, #f8eefe 0%, #f0e6fa 100%);
+  border-radius: 20px;
+  border: 2px solid #9b59b6;
+  box-shadow: 0 0 0 4px rgba(108,52,131,0.08), 0 8px 32px rgba(108,52,131,0.12);
+  margin-bottom: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.section-comp-jogo::before {
+  content: '🔌  🔌  🔌';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #6c3483;
+  letter-spacing: 8px;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.comp-jogo-btn {
+  background: linear-gradient(135deg, #4a235a, #6c3483);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 24px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(108,52,131,0.35);
+}
+
+.comp-jogo-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(108,52,131,0.5);
+}
+
+.section-comp-jogo .quiz-stat {
+  background: rgba(108,52,131,0.1);
+  border: 1px solid rgba(108,52,131,0.3);
+}
+
+.section-comp-jogo .quiz-stat-valor { color: #4a235a; }
+.section-comp-jogo .quiz-jogo-divider { background: linear-gradient(180deg, transparent, #9b59b6, transparent); }
+.section-comp-jogo .quiz-jogo-tag { color: #6c3483; }
+.section-comp-jogo .quiz-jogo-nivel-badge { color: #4a235a; background: rgba(108,52,131,0.12); border: 1px solid rgba(108,52,131,0.3); }
+.section-comp-jogo .quiz-jogo-pontos-aluno { color: #4a235a; }
+.section-comp-jogo .quiz-jogo-aluno-nome   { color: #4a235a; }
