@@ -328,6 +328,18 @@ async function carregarCard() {
               tentEl.style.display  = '';
             }
 
+            // Mostrar pontos da última tentativa (se já jogou)
+            if (resultSnap.exists() && usadas > 0) {
+              const r = resultSnap.data();
+              const ultPts = (r.melhor_pontos || 0) % 1 === 0 ? (r.melhor_pontos || 0) : (r.melhor_pontos || 0).toFixed(1);
+              const tentEl2 = document.getElementById(prefixo + '-jogo-tentativas');
+              if (tentEl2) {
+                tentEl2.innerHTML =
+                  'Tentativas <strong>' + usadas + '</strong> de <strong>' + tentPermitidas + '</strong>' +
+                  ' &nbsp;·&nbsp; Última: <strong style="color:var(--ouro-esc);">' + ultPts + ' pts</strong>';
+              }
+            }
+
             // Se esgotou tentativas
             const btnWrap = document.getElementById(prefixo + '-jogar-btn-wrap');
             if (btnWrap && usadas >= tentPermitidas && resultSnap.exists()) {

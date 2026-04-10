@@ -216,8 +216,13 @@ window.verificar = function() {
     fb.textContent = '✅ Perfeito! ' + (b.feedback || 'Você encontrou todos os bugs!');
     fb.style.display = 'block';
     document.getElementById('btn-verificar').style.display = 'none';
-    document.getElementById('btn-prox').style.display = '';
-    document.getElementById('btn-prox').textContent = atual < codigos.length - 1 ? 'Próximo →' : 'Ver Resultado 🐛';
+    if (atual >= codigos.length - 1) {
+      // Último código — vai automaticamente pro resultado após 1.5s
+      setTimeout(mostrarFinal, 1500);
+    } else {
+      document.getElementById('btn-prox').style.display = '';
+      document.getElementById('btn-prox').textContent = 'Próximo →';
+    }
 
   } else if (tentativasNesteCodigo >= MAX_TENT_CODIGO) {
     // Esgotou tentativas neste código
@@ -230,8 +235,12 @@ window.verificar = function() {
     fb.textContent = '❌ ' + (b.feedback || 'Os bugs estão nas linhas marcadas em verde.');
     fb.style.display = 'block';
     document.getElementById('btn-verificar').style.display = 'none';
-    document.getElementById('btn-prox').style.display = '';
-    document.getElementById('btn-prox').textContent = atual < codigos.length - 1 ? 'Próximo →' : 'Ver Resultado 🐛';
+    if (atual >= codigos.length - 1) {
+      setTimeout(mostrarFinal, 1500);
+    } else {
+      document.getElementById('btn-prox').style.display = '';
+      document.getElementById('btn-prox').textContent = 'Próximo →';
+    }
 
   } else {
     // Parcial — ainda tem tentativas

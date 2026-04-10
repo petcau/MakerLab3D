@@ -279,7 +279,7 @@ function mostrarFinal() {
   const btnTentar = document.querySelector('.btn-tentar');
   if (btnTentar) btnTentar.style.display = restantes > 0 ? '' : 'none';
 
-  document.getElementById('tela-final').style.display = '';
+  document.getElementById('tela-final').style.display = 'flex';
 
   // Salva resultado em background (não bloqueia a UI)
   salvarResultado(acertos, pontosGanhos, total).catch(e => console.warn('Erro ao salvar:', e));
@@ -301,7 +301,7 @@ window.reiniciar = function() {
   tentativaRegistrada = false;
   atual = 0; acertos = 0; erros = 0; pontosGanhos = 0; respondida = false;
   perguntas = [...cardData.quiz].sort(() => Math.random() - 0.5);
-  document.getElementById('tela-final').style.display   = 'none';
+  document.getElementById('tela-final').style.display = 'none';
   document.getElementById('q-prog-wrap').style.display  = '';
   document.getElementById('q-box').style.display        = '';
   document.getElementById('q-placar').style.display     = '';
