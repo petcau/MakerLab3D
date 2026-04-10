@@ -241,9 +241,9 @@ function mostrarFinal() {
 
   let emoji, titulo, msg;
   if (pct === 100)    { emoji = '🏆'; titulo = 'Expert em Componentes!'; msg = 'Perfeito! Você reconheceu todos os componentes corretamente!'; }
-  else if (pct >= 70) { emoji = '🔌'; titulo = 'Muito bem!'; msg = 'Você acertou ' + acertos + ' de ' + total + '. Continue explorando!'; }
-  else if (pct >= 40) { emoji = '💡'; titulo = 'Bom esforço!'; msg = 'Você acertou ' + acertos + ' de ' + total + '. Estude os componentes e tente de novo!'; }
-  else                { emoji = '🔍'; titulo = 'Precisa praticar!'; msg = 'Revise os componentes do card e tente novamente!'; }
+  else if (pct >= 70) { emoji = '🔋'; titulo = 'Muito bem!'; msg = 'Você acertou ' + acertos + ' de ' + total + '. Continue explorando!'; }
+  else if (pct >= 40) { emoji = '🔋'; titulo = 'Bom esforço!'; msg = 'Você acertou ' + acertos + ' de ' + total + '. Estude os componentes e tente de novo!'; }
+  else                { emoji = '🔋'; titulo = 'Precisa praticar!'; msg = 'Revise os componentes do card e tente novamente!'; }
 
   document.getElementById('tf-emoji').textContent  = emoji;
   document.getElementById('tf-titulo').textContent = titulo;
