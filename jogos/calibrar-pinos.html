@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Calibrar Pinos BOX</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1a1a2e; color: #eee; font-family: monospace; display: flex; gap: 0; height: 100vh; overflow: hidden; }
+
+  #painel { width: 280px; min-width: 280px; background: #16213e; padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+  #painel h2 { font-size: 14px; color: #f39c12; margin-bottom: 4px; }
+
+  #lista-pinos { display: flex; flex-direction: column; gap: 3px; flex: 1; overflow-y: auto; }
+  .pino-item { padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px; border: 1.5px solid transparent; }
+  .pino-item:hover { background: #0f3460; }
+  .pino-item.ativo { background: #f39c12; color: #000; border-color: #e67e22; }
+  .pino-item.feito { border-color: #27ae60; }
+  .pino-item .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .pino-item .coords { margin-left: auto; font-size: 10px; color: #aaa; }
+  .pino-item.ativo .coords { color: #333; }
+
+  #btn-exportar { background: #27ae60; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
+  #btn-exportar:hover { background: #229954; }
+  #btn-limpar { background: #c0392b; color: #fff; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+
+  #saida { background: #0d1117; border: 1px solid #333; border-radius: 4px; padding: 8px; font-size: 10px; color: #7ee787; max-height: 140px; overflow-y: auto; white-space: pre; display: none; }
+
+  #area-img { flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #0a0a1a; }
+  #box-img { max-width: 100%; max-height: 100%; display: block; cursor: crosshair; user-select: none; }
+  #img-wrap { position: relative; display: inline-block; }
+
+  .pin-marca { position: absolute; width: 18px; height: 18px; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: #fff; cursor: pointer; pointer-events: none; text-shadow: 0 0 2px #000; }
+  .pin-marca.ativo-marca { border-color: #f1c40f; box-shadow: 0 0 0 3px rgba(241,196,15,0.5); z-index: 10; }
+
+  #info-topo { background: #0f3460; padding: 8px 12px; font-size: 12px; color: #74b9ff; border-bottom: 1px solid #333; }
+  #instrucao { color: #f39c12; font-weight: bold; }
+
+  .grupo-header { font-size: 10px; color: #888; padding: 6px 4px 2px; text-transform: uppercase; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+<div id="painel">
+  <h2>🎯 Calibrar Pinos BOX</h2>
+  <p style="font-size:11px;color:#aaa;line-height:1.4">Clique em cada pino na imagem para definir sua posição. Use os botões abaixo para navegar.</p>
+
+  <div style="display:flex;gap:6px;margin-top:4px;">
+    <button onclick="pinoAnterior()" style="flex:1;background:#2c3e50;color:#eee;border:none;padding:7px;border-radius:4px;cursor:pointer;font-size:12px;">◀ Anterior</button>
+    <button onclick="pinoProximo()" style="flex:1;background:#2c3e50;color:#eee;border:none;padding:7px;border-radius:4px;cursor:pointer;font-size:12px;">Próximo ▶</button>
+  </div>
+
+  <div id="lista-pinos"></div>
+
+  <button id="btn-exportar" onclick="exportar()">📋 Copiar Coordenadas JS</button>
+  <button id="btn-limpar" onclick="limparTudo()">🗑 Limpar Tudo</button>
+  <div id="saida"></div>
+</div>
+
+<div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+  <div id="info-topo">
+    <span id="instrucao">Selecione um pino na lista e clique na imagem</span>
+    <span id="coords-live" style="float:right;color:#aaa;"></span>
+  </div>
+  <div id="area-img">
+    <div id="img-wrap">
+      <img id="box-img" src="../assets/box_cima.png" alt="BOX" draggable="false">
+      <div id="marcas-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PINOS_DEF = [
+  // LEDS
+  { id:'1',  label:'1',       grupo:'LEDS',          cor:'#e74c3c' },
+  { id:'2',  label:'2',       grupo:'LEDS',          cor:'#e74c3c' },
+  { id:'3',  label:'3',       grupo:'LEDS',          cor:'#e74c3c' },
+  { id:'4',  label:'4',       grupo:'LEDS',          cor:'#e74c3c' },
+  { id:'5',  label:'5',       grupo:'LEDS',          cor:'#e74c3c' },
+  { id:'6',  label:'6',       grupo:'LEDS',          cor:'#e74c3c' },
+  // RGB
+  { id:'7',  label:'7 −',     grupo:'RGB',           cor:'#9b59b6' },
+  { id:'8',  label:'8 R',     grupo:'RGB',           cor:'#9b59b6' },
+  { id:'9',  label:'9 B',     grupo:'RGB',           cor:'#9b59b6' },
+  { id:'10', label:'10 G',    grupo:'RGB',           cor:'#9b59b6' },
+  // BUTTON
+  { id:'11', label:'B1',      grupo:'BUTTON',        cor:'#3498db' },
+  { id:'12', label:'B2',      grupo:'BUTTON',        cor:'#3498db' },
+  // RESISTORS topo
+  { id:'15', label:'15',      grupo:'RESISTORS',     cor:'#f39c12' },
+  { id:'17', label:'17',      grupo:'RESISTORS',     cor:'#f39c12' },
+  { id:'19', label:'19',      grupo:'RESISTORS',     cor:'#f39c12' },
+  { id:'21', label:'21',      grupo:'RESISTORS',     cor:'#f39c12' },
+  { id:'23', label:'23',      grupo:'RESISTORS',     cor:'#f39c12' },
+  // RESISTORS base
+  { id:'16', label:'16',      grupo:'RESISTORS',     cor:'#f39c12' },
+  { id:'18', label:'18',      grupo:'RESISTORS',     cor:'#f39c12' },
+  { id:'20', label:'20',      grupo:'RESISTORS',     cor:'#f39c12' },
+  { id:'22', label:'22',      grupo:'RESISTORS',     cor:'#f39c12' },
+  { id:'24', label:'24',      grupo:'RESISTORS',     cor:'#f39c12' },
+  // POTENTIOMETER
+  { id:'31', label:'31 GND',  grupo:'POTENCIÔMETRO', cor:'#16a085' },
+  { id:'32', label:'32 AN',   grupo:'POTENCIÔMETRO', cor:'#16a085' },
+  { id:'33', label:'33 5V',   grupo:'POTENCIÔMETRO', cor:'#16a085' },
+  // BEEP
+  { id:'34', label:'34 LOG',  grupo:'BEEP',          cor:'#e67e22' },
+  { id:'35', label:'35 GND',  grupo:'BEEP',          cor:'#e67e22' },
+  // SENSOR
+  { id:'36', label:'36',      grupo:'SENSOR',        cor:'#27ae60' },
+  { id:'37', label:'37',      grupo:'SENSOR',        cor:'#27ae60' },
+  { id:'38', label:'38',      grupo:'SENSOR',        cor:'#27ae60' },
+  { id:'39', label:'39',      grupo:'SENSOR',        cor:'#27ae60' },
+  // PROTOBOARD A
+  { id:'61', label:'61',      grupo:'PROTOBOARD-A',  cor:'#27ae60' },
+  { id:'62', label:'62',      grupo:'PROTOBOARD-A',  cor:'#27ae60' },
+  { id:'63', label:'63',      grupo:'PROTOBOARD-A',  cor:'#27ae60' },
+  { id:'64', label:'64',      grupo:'PROTOBOARD-A',  cor:'#27ae60' },
+  { id:'65', label:'65',      grupo:'PROTOBOARD-A',  cor:'#27ae60' },
+  // PROTOBOARD B
+  { id:'66', label:'66',      grupo:'PROTOBOARD-B',  cor:'#e67e22' },
+  { id:'67', label:'67',      grupo:'PROTOBOARD-B',  cor:'#e67e22' },
+  { id:'68', label:'68',      grupo:'PROTOBOARD-B',  cor:'#e67e22' },
+  { id:'69', label:'69',      grupo:'PROTOBOARD-B',  cor:'#e67e22' },
+  { id:'70', label:'70',      grupo:'PROTOBOARD-B',  cor:'#e67e22' },
+  // LOGIC GATES
+  { id:'L02',label:'L02',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  { id:'L03',label:'L03',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  { id:'L04',label:'L04',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  { id:'L05',label:'L05',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  { id:'L06',label:'L06',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  { id:'L07',label:'L07',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  { id:'L08',label:'L08',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  { id:'L09',label:'L09',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  { id:'L10',label:'L10',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  { id:'L11',label:'L11',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  { id:'L12',label:'L12',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  { id:'L13',label:'L13',     grupo:'LOGIC GATES',   cor:'#f1c40f' },
+  // TEST
+  { id:'T2', label:'T2',      grupo:'TEST',          cor:'#95a5a6' },
+  { id:'T1', label:'T1',      grupo:'TEST',          cor:'#95a5a6' },
+  // ANALOG
+  { id:'A2', label:'A2',      grupo:'ANALOG',        cor:'#8e44ad' },
+  { id:'A5', label:'A5',      grupo:'ANALOG',        cor:'#8e44ad' },
+  { id:'A1', label:'A1',      grupo:'ANALOG',        cor:'#8e44ad' },
+  { id:'A4', label:'A4',      grupo:'ANALOG',        cor:'#8e44ad' },
+  { id:'A0', label:'A0',      grupo:'ANALOG',        cor:'#8e44ad' },
+  { id:'A3', label:'A3',      grupo:'ANALOG',        cor:'#8e44ad' },
+  // TX/RX
+  { id:'TX', label:'TX',      grupo:'TX/RX',         cor:'#d35400' },
+  { id:'L1', label:'L1',      grupo:'TX/RX',         cor:'#d35400' },
+  { id:'RX', label:'RX',      grupo:'TX/RX',         cor:'#d35400' },
+  { id:'L0', label:'L0',      grupo:'TX/RX',         cor:'#d35400' },
+  // POWER
+  { id:'86', label:'86 5V',   grupo:'POWER',         cor:'#c0392b' },
+  { id:'85', label:'85 3.3V', grupo:'POWER',         cor:'#c0392b' },
+  { id:'84', label:'84 GND',  grupo:'POWER',         cor:'#c0392b' },
+  { id:'83', label:'83 GND',  grupo:'POWER',         cor:'#c0392b' },
+];
+
+let coords = {};   // { id: {x, y} }
+let ativoPinoId = null;
+
+// Carrega do localStorage se existir
+const STORAGE_KEY = 'box_calibracao';
+try { coords = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) {}
+
+function renderLista() {
+  const lista = document.getElementById('lista-pinos');
+  lista.innerHTML = '';
+  let grupoAtual = '';
+  PINOS_DEF.forEach(p => {
+    if (p.grupo !== grupoAtual) {
+      grupoAtual = p.grupo;
+      const h = document.createElement('div');
+      h.className = 'grupo-header';
+      h.textContent = p.grupo;
+      lista.appendChild(h);
+    }
+    const item = document.createElement('div');
+    item.className = 'pino-item' + (p.id === ativoPinoId ? ' ativo' : '') + (coords[p.id] ? ' feito' : '');
+    item.dataset.id = p.id;
+    item.innerHTML = `<span class="dot" style="background:${p.cor}"></span>
+      <span>${p.label}</span>
+      <span class="coords">${coords[p.id] ? coords[p.id].x.toFixed(1)+'%, '+coords[p.id].y.toFixed(1)+'%' : '—'}</span>`;
+    item.onclick = () => selecionarPino(p.id);
+    lista.appendChild(item);
+  });
+}
+
+function renderMarcas() {
+  const wrap = document.getElementById('marcas-wrap');
+  const img  = document.getElementById('box-img');
+  wrap.innerHTML = '';
+  wrap.style.position = 'absolute';
+  wrap.style.top = '0'; wrap.style.left = '0';
+  wrap.style.width = img.offsetWidth + 'px';
+  wrap.style.height = img.offsetHeight + 'px';
+  wrap.style.pointerEvents = 'none';
+
+  PINOS_DEF.forEach(p => {
+    if (!coords[p.id]) return;
+    const c = coords[p.id];
+    const marca = document.createElement('div');
+    marca.className = 'pin-marca' + (p.id === ativoPinoId ? ' ativo-marca' : '');
+    marca.style.left = c.x + '%';
+    marca.style.top  = c.y + '%';
+    marca.style.background = p.cor;
+    marca.textContent = p.label;
+    wrap.appendChild(marca);
+  });
+}
+
+function selecionarPino(id) {
+  ativoPinoId = id;
+  const p = PINOS_DEF.find(p => p.id === id);
+  document.getElementById('instrucao').textContent = `Clique na imagem para posicionar: ${p.label} (${p.grupo})`;
+  renderLista();
+  renderMarcas();
+  // Scroll para o item na lista
+  const el = document.querySelector(`.pino-item.ativo`);
+  if (el) el.scrollIntoView({ block: 'nearest' });
+}
+
+function pinoProximo() {
+  const idx = PINOS_DEF.findIndex(p => p.id === ativoPinoId);
+  const next = PINOS_DEF[idx + 1];
+  if (next) selecionarPino(next.id);
+}
+function pinoAnterior() {
+  const idx = PINOS_DEF.findIndex(p => p.id === ativoPinoId);
+  const prev = PINOS_DEF[idx - 1];
+  if (prev) selecionarPino(prev.id);
+}
+
+document.getElementById('box-img').addEventListener('click', function(e) {
+  if (!ativoPinoId) { alert('Selecione um pino na lista primeiro!'); return; }
+  const rect = this.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width  * 100);
+  const y = ((e.clientY - rect.top)  / rect.height * 100);
+  coords[ativoPinoId] = { x: parseFloat(x.toFixed(2)), y: parseFloat(y.toFixed(2)) };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(coords));
+  renderLista();
+  renderMarcas();
+  // Vai para o próximo automaticamente
+  pinoProximo();
+});
+
+document.getElementById('box-img').addEventListener('mousemove', function(e) {
+  const rect = this.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1);
+  const y = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1);
+  document.getElementById('coords-live').textContent = `x:${x}% y:${y}%`;
+});
+
+function exportar() {
+  let out = 'const PINOS_BOX = {\n';
+  let grupoAtual = '';
+  PINOS_DEF.forEach(p => {
+    if (p.grupo !== grupoAtual) {
+      grupoAtual = p.grupo;
+      out += `  // ---- ${p.grupo} ----\n`;
+    }
+    const c = coords[p.id] || { x: 0, y: 0 };
+    const id = p.id.length <= 2 ? `'${p.id}': ` : `'${p.id}':`;
+    out += `  '${p.id}': { label: '${p.label}', grupo: '${p.grupo}', x: ${c.x.toFixed(1)}, y: ${c.y.toFixed(1)}, cor: '${p.cor}' },\n`;
+  });
+  out += '};';
+
+  navigator.clipboard.writeText(out).then(() => {
+    const saida = document.getElementById('saida');
+    saida.style.display = 'block';
+    saida.textContent = '✅ Copiado! Cole no simulador-box.js\n\n' + out;
+  });
+}
+
+function limparTudo() {
+  if (!confirm('Limpar todas as coordenadas?')) return;
+  coords = {};
+  localStorage.removeItem(STORAGE_KEY);
+  renderLista();
+  renderMarcas();
+}
+
+// Recalcula marcas quando imagem carrega ou janela redimensiona
+document.getElementById('box-img').onload = () => { renderLista(); renderMarcas(); };
+window.addEventListener('resize', renderMarcas);
+
+// Atalhos de teclado
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'Enter') pinoProximo();
+  if (e.key === 'ArrowLeft') pinoAnterior();
+});
+
+// Init
+selecionarPino(PINOS_DEF[0].id);
+</script>
+</body>
+</html>

@@ -259,6 +259,7 @@ async function carregarCard() {
     const temOrdena   = (d.ordena_desafios   || []).length > 0;
     const temComplete = (d.complete_desafios || []).length > 0;
     const temConecta  = (d.conecta_desafios  || []).length > 0;
+    const temBox      = (d.box_desafios      || []).length > 0;
 
     if (temQuiz) {
       const totalPerguntas = d.quiz.length;
@@ -327,8 +328,19 @@ async function carregarCard() {
       if (btnConecta) btnConecta.onclick = () => window.open('../jogos/conecta-pontos.html?card=' + cardId, '_blank');
     }
 
+    if (temBox) {
+      const totalDesafios = d.box_desafios.length;
+      const totalPontos   = d.box_desafios.reduce((sum, b) => sum + (parseFloat(b.pontos) || 2.0), 0);
+      document.getElementById('box-total-desafios').textContent  = totalDesafios;
+      document.getElementById('box-total-pontos').textContent    = totalPontos % 1 === 0 ? totalPontos : totalPontos.toFixed(1);
+      document.getElementById('box-tentativas-stat').textContent = d.box_tentativas || 3;
+      show('sec-box');
+      const btnBox = document.getElementById('box-jogar-btn');
+      if (btnBox) btnBox.onclick = () => window.open('../jogos/simulador-box.html?card=' + cardId, '_blank');
+    }
+
     // ---- AUTH — atualiza quiz e bug juntos ----
-    if (temQuiz || temBug || temComp || temOrdena || temComplete || temConecta) {
+    if (temQuiz || temBug || temComp || temOrdena || temComplete || temConecta || temBox) {
       const NIVEL_NOMES  = ['Explorador Iniciante','Curioso Digital','Aprendiz Maker','Construtor Criativo','Inventor em Ação','Programador Maker','Engenheiro Criativo','Inovador Maker','Mentor Maker','Mestre Maker'];
       const NIVEL_PONTOS = [0,100,250,500,900,1400,2000,2700,3500,4500];
       let alunoLogado = null;
@@ -363,7 +375,7 @@ async function carregarCard() {
             if (ptsEl && ptsVal) { ptsVal.textContent = pts; ptsEl.style.display = ''; }
 
             // Tentativas
-            const docId      = alunoLogado.uid + (prefixo === 'bug' ? '_bug_' : prefixo === 'comp' ? '_comp_' : prefixo === 'ordena' ? '_ordena_' : prefixo === 'complete' ? '_complete_' : prefixo === 'conecta' ? '_conecta_' : '_') + cardId;
+            const docId      = alunoLogado.uid + (prefixo === 'bug' ? '_bug_' : prefixo === 'comp' ? '_comp_' : prefixo === 'ordena' ? '_ordena_' : prefixo === 'complete' ? '_complete_' : prefixo === 'conecta' ? '_conecta_' : prefixo === 'box' ? '_box_' : '_') + cardId;
             const resultSnap = await getDoc(doc(db, cardCollecao, docId));
             const usadas     = resultSnap.exists() ? (resultSnap.data().tentativas_usadas || 0) : 0;
 
@@ -393,8 +405,8 @@ async function carregarCard() {
             if (btnWrap && usadas >= tentPermitidas && resultSnap.exists()) {
               const r = resultSnap.data();
               const melhorPts = (r.melhor_pontos || 0) % 1 === 0 ? (r.melhor_pontos || 0) : (r.melhor_pontos || 0).toFixed(1);
-              const totalItens = prefixo === 'bug' ? r.total_codigos : (prefixo === 'ordena' || prefixo === 'complete' || prefixo === 'conecta') ? r.total_desafios : r.total_perguntas;
-              const labelItens = prefixo === 'bug' ? 'bugs encontrados' : (prefixo === 'ordena' || prefixo === 'complete' || prefixo === 'conecta') ? 'desafios' : 'perguntas corretas';
+              const totalItens = prefixo === 'bug' ? r.total_codigos : (prefixo === 'ordena' || prefixo === 'complete' || prefixo === 'conecta' || prefixo === 'box') ? r.total_desafios : r.total_perguntas;
+              const labelItens = prefixo === 'bug' ? 'bugs encontrados' : (prefixo === 'ordena' || prefixo === 'complete' || prefixo === 'conecta' || prefixo === 'box') ? 'desafios' : 'perguntas corretas';
               btnWrap.innerHTML =
                 '<div class="quiz-encerrado-box">' +
                   '<div class="quiz-encerrado-titulo">🔒 ' + (prefixo === 'bug' ? 'Caça encerrada' : prefixo === 'comp' ? 'Jogo encerrado' : prefixo === 'ordena' ? 'Jogo encerrado' : prefixo === 'conecta' ? 'Jogo encerrado' : 'Quiz encerrado') + '</div>' +
@@ -415,6 +427,7 @@ async function carregarCard() {
           if (temOrdena)   await preencherBloco('ordena',   'resultados_ordena',   d.ordena_tentativas   || 3);
           if (temComplete) await preencherBloco('complete', 'resultados_complete', d.complete_tentativas || 3);
           if (temConecta)  await preencherBloco('conecta',  'resultados_conecta',  d.conecta_tentativas  || 3);
+          if (temBox)      await preencherBloco('box',      'resultados_box',      d.box_tentativas      || 3);
 
           // ---- PONTOS CONQUISTADOS (soma de todos os jogos deste card) ----
           const uid = alunoLogado.uid;
@@ -425,6 +438,7 @@ async function carregarCard() {
             getDoc(doc(db, 'resultados_ordena',   uid + '_ordena_' + cardId)),
             getDoc(doc(db, 'resultados_complete', uid + '_complete_' + cardId)),
             getDoc(doc(db, 'resultados_conecta',  uid + '_conecta_' + cardId)),
+            getDoc(doc(db, 'resultados_box',      uid + '_box_' + cardId)),
           ]);
           const totalConquistado = resultDocs.reduce((sum, s) => sum + (s.exists() ? (parseFloat(s.data().melhor_pontos) || 0) : 0), 0);
           if (totalConquistado > 0) {
@@ -446,7 +460,7 @@ async function carregarCard() {
           alunoLogado = aluno;
           await atualizarDadosAluno();
         } else {
-          ['quiz', 'bug', 'comp', 'ordena', 'complete', 'conecta'].forEach(p => {
+          ['quiz', 'bug', 'comp', 'ordena', 'complete', 'conecta', 'box'].forEach(p => {
             const btn   = document.getElementById(p + '-jogar-btn');
             const aviso = document.getElementById(p + '-login-aviso');
             if (btn)   { btn.textContent = '🔒 Fazer Login'; btn.onclick = () => window.location.href = '../login.html'; }

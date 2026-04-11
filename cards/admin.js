@@ -135,6 +135,7 @@ function renderForm(id, d) {
   window.ordenaState   = d.ordena_desafios   ? JSON.parse(JSON.stringify(d.ordena_desafios))   : [];
   window.completeState = d.complete_desafios ? JSON.parse(JSON.stringify(d.complete_desafios)) : [];
   window.conectaState  = d.conecta_desafios  ? JSON.parse(JSON.stringify(d.conecta_desafios))  : [];
+  window.boxState      = d.box_desafios      ? JSON.parse(JSON.stringify(d.box_desafios))      : [];
   window.glossarioState = d.glossario ? JSON.parse(JSON.stringify(d.glossario)) : [];
   tagsState.links_desafios   = d.links_desafios   ? [...d.links_desafios]   : [];
   tagsState.links_componentes = d.links_componentes ? [...d.links_componentes] : [];
@@ -558,6 +559,30 @@ function renderForm(id, d) {
       </div>
     </div>
 
+    <!-- SIMULADOR BOX -->
+    <div class="form-section form-section-box">
+      <div class="section-title-row">
+        <span class="section-title">🔌 Simulador BOX</span>
+        <button class="btn-toggle-jogo" onclick="toggleBox()" id="btn-toggle-box">▼ Criar Jogo</button>
+      </div>
+      <div id="box-body" style="display:none;">
+        <span class="helper-text" style="display:block;margin-bottom:8px;margin-top:12px;">
+          Crie desafios de montagem de circuito no BOX físico. Selecione os pinos que devem ser conectados.
+        </span>
+
+        <div class="form-row" style="margin-bottom:16px;align-items:flex-end;">
+          <div class="form-group" style="max-width:220px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-box-tentativas" min="1" max="10" value="${d.box_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarBoxDesafio()" id="btn-add-box">+ Desafio</button>
+          </div>
+        </div>
+        <div id="box-lista"></div>
+      </div>
+    </div>
+
     ${id ? `
     <div class="form-section">
       <div class="section-title">Link do Card</div>
@@ -582,6 +607,8 @@ function renderForm(id, d) {
   atualizarBtnComplete();
   renderConectaLista();
   atualizarBtnConecta();
+  renderBoxLista();
+  atualizarBtnBox();
 }
 
 // ---- UPLOAD DE IMAGEM ----
@@ -840,6 +867,8 @@ window.salvarCard = async function (publicar) {
     complete_tentativas: parseInt(document.getElementById('f-complete-tentativas')?.value) || 3,
     conecta_desafios:   window.conectaState  || [],
     conecta_tentativas: parseInt(document.getElementById('f-conecta-tentativas')?.value) || 3,
+    box_desafios:       window.boxState      || [],
+    box_tentativas:     parseInt(document.getElementById('f-box-tentativas')?.value) || 3,
     tentativas:       parseInt(document.getElementById('f-tentativas')?.value) || 3,
     video_url:        document.getElementById('f-video-url')?.value?.trim() || '',
     publicado:        publicar,
@@ -1058,6 +1087,8 @@ window.adicionarPergunta = function() {
   atualizarBtnComplete();
   renderConectaLista();
   atualizarBtnConecta();
+  renderBoxLista();
+  atualizarBtnBox();
 };
 
 window.removerPergunta = function(qi) {
@@ -1074,6 +1105,8 @@ window.removerPergunta = function(qi) {
   atualizarBtnComplete();
   renderConectaLista();
   atualizarBtnConecta();
+  renderBoxLista();
+  atualizarBtnBox();
 };
 
 window.updateQuiz = function(qi, field, value) {
@@ -1099,7 +1132,8 @@ function recalcularPontos() {
   const totalOrdena   = (window.ordenaState   || []).reduce((sum, o) => sum + (parseFloat(o.pontos) || 1.0), 0);
   const totalComplete = (window.completeState || []).reduce((sum, c) => sum + (parseFloat(c.pontos) || 1.0), 0);
   const totalConecta  = (window.conectaState  || []).reduce((sum, c) => sum + (parseFloat(c.pontos) || 2.0), 0);
-  const total         = totalQuiz + totalBug + totalComp + totalOrdena + totalComplete + totalConecta;
+  const totalBox      = (window.boxState      || []).reduce((sum, b) => sum + (parseFloat(b.pontos) || 2.0), 0);
+  const total         = totalQuiz + totalBug + totalComp + totalOrdena + totalComplete + totalConecta + totalBox;
   const el = document.getElementById('f-pontos');
   if (el) el.value = total % 1 === 0 ? total : total.toFixed(1);
 }
@@ -1914,6 +1948,241 @@ function renderConectaLista() {
           </select>
           <button onclick="adicionarConexaoConecta(${di})" style="background:#00b894;color:#fff;border:none;border-radius:6px;padding:5px 14px;cursor:pointer;font-weight:700;white-space:nowrap;">+ Conexão</button>
         </div>` : `<div style="color:#aaa;font-size:12px;margin-top:6px;padding:8px;background:#f9f9f9;border-radius:6px;">Adicione componentes com pelo menos 2 pinos para definir conexões.</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// =====================================================================
+// ---- SIMULADOR BOX ----
+// =====================================================================
+
+// Todos os pinos do BOX para os selects do admin
+const PINOS_BOX_ADM = {
+  '1':'1 (LED −)',   '2':'2 (LED +)',   '3':'3 (LED −)',   '4':'4 (LED +)',   '5':'5 (LED −)',   '6':'6 (LED +)',
+  '7':'7 RGB −',     '8':'8 RGB R',     '9':'9 RGB B',     '10':'10 RGB G',
+  '11':'11 B1',      '12':'12 B2',
+  '15':'15 Res.',    '16':'16 Res.',    '17':'17 Res.',    '18':'18 Res.',    '19':'19 Res.',
+  '20':'20 Res.',    '21':'21 Res.',    '22':'22 Res.',    '23':'23 Res.',    '24':'24 Res.',
+  '31':'31 Pot.GND', '32':'32 Pot.AN',  '33':'33 Pot.5V',
+  '34':'34 Beep LOG','35':'35 Beep GND',
+  '36':'36 Sensor',  '37':'37 Sensor',  '38':'38 Sensor',  '39':'39 Sensor',
+  '61':'61 Proto.A', '62':'62 Proto.A', '63':'63 Proto.A', '64':'64 Proto.A', '65':'65 Proto.A',
+  '66':'66 Proto.B', '67':'67 Proto.B', '68':'68 Proto.B', '69':'69 Proto.B', '70':'70 Proto.B',
+  'L02':'L02','L03':'L03','L04':'L04','L05':'L05','L06':'L06','L07':'L07',
+  'L08':'L08','L09':'L09','L10':'L10','L11':'L11','L12':'L12','L13':'L13',
+  'T1':'T1','T2':'T2',
+  'A0':'A0','A1':'A1','A2':'A2','A3':'A3','A4':'A4','A5':'A5',
+  'TX':'TX','RX':'RX','L1':'L1','L0':'L0',
+  '83':'83 GND','84':'84 GND','85':'85 3.3V','86':'86 5V',
+};
+
+window.toggleBox = function() {
+  const body = document.getElementById('box-body');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnBox();
+};
+
+function atualizarBtnBox() {
+  const btn  = document.getElementById('btn-toggle-box');
+  const body = document.getElementById('box-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = (window.boxState || []).length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' desafio' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Desafios (' + n + ')' : '▼ Criar Jogo');
+}
+
+window.adicionarBoxDesafio = function() {
+  if (!window.boxState) window.boxState = [];
+  if (window.boxState.length >= 10) return;
+  window.boxState.push({ descricao: '', conexoes_corretas: [], feedback_erro: '', pontos: 2.0 });
+  renderBoxLista();
+  recalcularPontos();
+  atualizarBtnBox();
+};
+
+window.removerBoxDesafio = function(di) {
+  window.boxState.splice(di, 1);
+  renderBoxLista();
+  recalcularPontos();
+  atualizarBtnBox();
+};
+
+window.updateBox = function(di, field, value) {
+  if (!window.boxState[di]) return;
+  window.boxState[di][field] = value;
+  if (field === 'pontos') recalcularPontos();
+};
+
+window.adicionarConexaoBox = function(di) {
+  if (!window.boxState[di]) return;
+  const selA = document.getElementById('box-conn-a-' + di);
+  const selB = document.getElementById('box-conn-b-' + di);
+  if (!selA || !selB) return;
+  const a = selA.value, b = selB.value;
+  if (!a || !b) { showToast('Selecione os dois pinos.', 'error'); return; }
+  if (a === b) { showToast('Selecione pinos diferentes.', 'error'); return; }
+  const par = [a, b].sort().join('-');
+  if (!window.boxState[di].conexoes_corretas) window.boxState[di].conexoes_corretas = [];
+  if (!window.boxState[di].conexoes_corretas.includes(par)) {
+    window.boxState[di].conexoes_corretas.push(par);
+  }
+  renderBoxLista();
+};
+
+window.removerConexaoBox = function(di, conn) {
+  if (!window.boxState[di]) return;
+  window.boxState[di].conexoes_corretas = window.boxState[di].conexoes_corretas.filter(c => c !== conn);
+  renderBoxLista();
+};
+
+function gerarMapaBoxHTML(conns) {
+  const linhas = (conns || []).map(conn => {
+    const sep = conn.indexOf('-');
+    const aId = conn.slice(0, sep), bId = conn.slice(sep + 1);
+    const a = PINOS_BOX_COORDS[aId], b = PINOS_BOX_COORDS[bId];
+    if (!a || !b) return '';
+    return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#ffd700" stroke-width="1.2" stroke-linecap="round" opacity="0.9"/>`;
+  }).join('');
+
+  const pontos = (conns || []).flatMap(conn => {
+    const sep = conn.indexOf('-');
+    return [conn.slice(0, sep), conn.slice(sep + 1)];
+  }).filter((v, i, arr) => arr.indexOf(v) === i).map(id => {
+    const p = PINOS_BOX_COORDS[id];
+    if (!p) return '';
+    return `<div class="mapa-pino" style="left:${p.x}%;top:${p.y}%;--pino-cor:${p.cor};">
+      <div class="mapa-pino-circulo"></div>
+      <div class="mapa-pino-label">${id}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="mapa-box-area">
+    <img src="../assets/box_cima.png" class="mapa-box-img" alt="BOX">
+    <svg class="mapa-box-svg" viewBox="0 0 100 100" preserveAspectRatio="none">${linhas}</svg>
+    <div class="mapa-box-pinos">${pontos}</div>
+  </div>`;
+}
+
+// Coordenadas para o mapa admin (espelha PINOS_BOX do simulador)
+const PINOS_BOX_COORDS = {
+  '1':   { x: 6.5,  y: 11.0, cor: '#e74c3c' }, '2':   { x: 25.4, y: 10.7, cor: '#e74c3c' },
+  '3':   { x: 6.8,  y: 19.2, cor: '#e74c3c' }, '4':   { x: 25.4, y: 19.0, cor: '#e74c3c' },
+  '5':   { x: 6.8,  y: 27.8, cor: '#e74c3c' }, '6':   { x: 25.2, y: 27.8, cor: '#e74c3c' },
+  '7':   { x: 6.8,  y: 39.2, cor: '#9b59b6' }, '8':   { x: 25.2, y: 39.4, cor: '#9b59b6' },
+  '9':   { x: 6.7,  y: 49.6, cor: '#9b59b6' }, '10':  { x: 25.3, y: 49.3, cor: '#9b59b6' },
+  '11':  { x: 34.8, y: 11.5, cor: '#3498db' }, '12':  { x: 52.8, y: 11.6, cor: '#3498db' },
+  '15':  { x: 32.7, y: 25.8, cor: '#f39c12' }, '17':  { x: 38.7, y: 26.1, cor: '#f39c12' },
+  '19':  { x: 44.4, y: 25.8, cor: '#f39c12' }, '21':  { x: 49.8, y: 25.8, cor: '#f39c12' },
+  '23':  { x: 55.5, y: 25.8, cor: '#f39c12' }, '16':  { x: 32.8, y: 49.0, cor: '#f39c12' },
+  '18':  { x: 39.0, y: 48.7, cor: '#f39c12' }, '20':  { x: 44.5, y: 48.7, cor: '#f39c12' },
+  '22':  { x: 50.3, y: 49.0, cor: '#f39c12' }, '24':  { x: 56.0, y: 48.7, cor: '#f39c12' },
+  '31':  { x: 64.8, y: 29.1, cor: '#16a085' }, '32':  { x: 70.3, y: 29.0, cor: '#16a085' },
+  '33':  { x: 76.0, y: 29.3, cor: '#16a085' }, '34':  { x: 65.1, y: 60.3, cor: '#e67e22' },
+  '35':  { x: 74.6, y: 60.3, cor: '#e67e22' }, '36':  { x: 62.9, y: 77.9, cor: '#27ae60' },
+  '37':  { x: 67.5, y: 78.2, cor: '#27ae60' }, '38':  { x: 72.2, y: 78.1, cor: '#27ae60' },
+  '39':  { x: 76.8, y: 77.8, cor: '#27ae60' }, '61':  { x: 7.8,  y: 63.8, cor: '#27ae60' },
+  '62':  { x: 12.7, y: 63.8, cor: '#27ae60' }, '63':  { x: 18.1, y: 63.9, cor: '#27ae60' },
+  '64':  { x: 23.4, y: 64.1, cor: '#27ae60' }, '65':  { x: 27.8, y: 64.1, cor: '#27ae60' },
+  '66':  { x: 34.5, y: 63.9, cor: '#e67e22' }, '67':  { x: 39.3, y: 64.1, cor: '#e67e22' },
+  '68':  { x: 44.7, y: 64.2, cor: '#e67e22' }, '69':  { x: 50.1, y: 64.4, cor: '#e67e22' },
+  '70':  { x: 54.5, y: 64.4, cor: '#e67e22' }, 'L02': { x: 8.0,  y: 84.3, cor: '#f1c40f' },
+  'L03': { x: 12.1, y: 84.1, cor: '#f1c40f' }, 'L04': { x: 16.3, y: 84.3, cor: '#f1c40f' },
+  'L05': { x: 20.8, y: 84.1, cor: '#f1c40f' }, 'L06': { x: 25.3, y: 84.4, cor: '#f1c40f' },
+  'L07': { x: 29.6, y: 84.0, cor: '#f1c40f' }, 'L08': { x: 34.1, y: 84.1, cor: '#f1c40f' },
+  'L09': { x: 38.3, y: 84.1, cor: '#f1c40f' }, 'L10': { x: 43.3, y: 84.1, cor: '#f1c40f' },
+  'L11': { x: 47.4, y: 84.1, cor: '#f1c40f' }, 'L12': { x: 51.7, y: 84.1, cor: '#f1c40f' },
+  'L13': { x: 56.2, y: 84.6, cor: '#f1c40f' }, 'T2':  { x: 91.4, y: 8.5,  cor: '#95a5a6' },
+  'T1':  { x: 91.6, y: 18.1, cor: '#95a5a6' }, 'A2':  { x: 84.4, y: 27.0, cor: '#8e44ad' },
+  'A5':  { x: 91.2, y: 27.0, cor: '#8e44ad' }, 'A1':  { x: 84.6, y: 33.9, cor: '#8e44ad' },
+  'A4':  { x: 91.1, y: 33.6, cor: '#8e44ad' }, 'A0':  { x: 84.7, y: 40.8, cor: '#8e44ad' },
+  'A3':  { x: 91.2, y: 40.5, cor: '#8e44ad' }, 'TX':  { x: 88.8, y: 50.2, cor: '#d35400' },
+  'L1':  { x: 88.6, y: 50.4, cor: '#d35400' }, 'RX':  { x: 88.8, y: 57.2, cor: '#d35400' },
+  'L0':  { x: 88.8, y: 57.1, cor: '#d35400' }, '86':  { x: 88.6, y: 67.4, cor: '#c0392b' },
+  '85':  { x: 89.0, y: 74.9, cor: '#c0392b' }, '84':  { x: 88.6, y: 82.0, cor: '#c0392b' },
+  '83':  { x: 88.6, y: 89.8, cor: '#c0392b' },
+};
+
+function renderBoxLista() {
+  const lista = document.getElementById('box-lista');
+  if (!lista) return;
+  if (!window.boxState) window.boxState = [];
+
+  if (window.boxState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhum desafio cadastrado. Clique em + Desafio para começar.</div>';
+    return;
+  }
+
+  const pinoOpts = Object.entries(PINOS_BOX_ADM).map(([k, v]) =>
+    `<option value="${k}">${v}</option>`
+  ).join('');
+
+  lista.innerHTML = window.boxState.map((d, di) => {
+    const conns = d.conexoes_corretas || [];
+    const connsHTML = conns.length === 0
+      ? '<div style="color:#aaa;font-size:12px;">Nenhuma conexão definida.</div>'
+      : conns.map(conn => {
+          const sep = conn.indexOf('-');
+          const aId = conn.slice(0, sep), bId = conn.slice(sep + 1);
+          const aLabel = PINOS_BOX_ADM[aId] || aId;
+          const bLabel = PINOS_BOX_ADM[bId] || bId;
+          return `<div class="conecta-conn-item">
+            <span>⚡ ${aLabel} ↔ ${bLabel}</span>
+            <button onclick="removerConexaoBox(${di},'${conn}')" style="background:#e74c3c;color:#fff;border:none;border-radius:6px;padding:2px 6px;cursor:pointer;font-size:11px;">✕</button>
+          </div>`;
+        }).join('');
+
+    return `
+    <div class="quiz-card">
+      <div class="quiz-card-header">
+        <strong>Desafio ${di + 1}</strong>
+        <button onclick="removerBoxDesafio(${di})" class="btn-rem-quiz">✕ Remover</button>
+      </div>
+      <div class="quiz-card-body">
+        <label>Descrição / Instrução</label>
+        <input type="text" value="${(d.descricao||'').replace(/"/g,'&quot;')}" oninput="updateBox(${di},'descricao',this.value)" placeholder="Ex: Conecte o LED vermelho ao resistor 220Ω">
+
+        <div style="display:flex;gap:14px;margin-top:10px;align-items:flex-start;">
+
+          <!-- Coluna esquerda: campos + conexões -->
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;gap:12px;margin-bottom:8px;">
+              <div style="flex:1;">
+                <label style="font-size:11px;">Pontos</label>
+                <input type="number" min="0.5" max="10" step="0.5" value="${d.pontos||2}" oninput="updateBox(${di},'pontos',parseFloat(this.value)||2)" style="width:80px;display:block;">
+              </div>
+              <div style="flex:3;">
+                <label style="font-size:11px;">Feedback de erro</label>
+                <input type="text" value="${(d.feedback_erro||'').replace(/"/g,'&quot;')}" oninput="updateBox(${di},'feedback_erro',this.value)" placeholder="Dica para o aluno..." style="display:block;width:100%;">
+              </div>
+            </div>
+
+            <div class="conecta-section-label">
+              Conexões Corretas
+              <span style="color:#888;font-weight:400;font-size:10px;"> — pares de pinos que devem ser ligados</span>
+            </div>
+            <div class="conecta-conns-lista">${connsHTML}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;background:#fff8ec;border-radius:8px;padding:8px;border:1px solid #fde8c0;">
+              <select id="box-conn-a-${di}" style="flex:1;padding:4px 6px;border-radius:6px;border:1px solid #ccc;font-size:11px;min-width:100px;">
+                <option value="">Pino A...</option>${pinoOpts}
+              </select>
+              <span style="font-weight:900;color:#e67e22;">↔</span>
+              <select id="box-conn-b-${di}" style="flex:1;padding:4px 6px;border-radius:6px;border:1px solid #ccc;font-size:11px;min-width:100px;">
+                <option value="">Pino B...</option>${pinoOpts}
+              </select>
+              <button onclick="adicionarConexaoBox(${di})" style="background:#e67e22;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-weight:700;white-space:nowrap;font-size:12px;">+ Conexão</button>
+            </div>
+          </div>
+
+          <!-- Coluna direita: mini mapa -->
+          <div style="width:320px;flex-shrink:0;">
+            ${gerarMapaBoxHTML(conns)}
+          </div>
+
+        </div>
       </div>
     </div>`;
   }).join('');
