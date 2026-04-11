@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MakerLab 3D • Monte o Circuito</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --line: #d9dfeb;
+      --text: #28314a;
+      --muted: #6b7694;
+      --primary: #2d4c9c;
+      --accent: #f2c94c;
+      --success: #1e9e5a;
+      --danger: #d64545;
+      --slot: #eef3ff;
+      --shadow: 0 12px 30px rgba(32, 52, 102, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(242, 201, 76, 0.15), transparent 24%),
+        radial-gradient(circle at top right, rgba(45, 76, 156, 0.12), transparent 20%),
+        var(--bg);
+    }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #243a74, #324f9f);
+      color: white;
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    .hero small {
+      display: inline-block;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      color: rgba(255,255,255,0.88);
+      font-size: 16px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 24px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      padding: 20px;
+      position: sticky;
+      top: 24px;
+      height: fit-content;
+    }
+
+    .sidebar h2,
+    .game-area h2 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .sub {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .components {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .component {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      background: #fbfcff;
+      cursor: grab;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      text-align: center;
+    }
+
+    .component:hover {
+      transform: translateY(-2px);
+      border-color: #c8d4f5;
+      box-shadow: 0 8px 20px rgba(45, 76, 156, 0.08);
+    }
+
+    .component.dragging { opacity: 0.5; }
+
+    .component img {
+      width: 96px;
+      height: 96px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 8px;
+      pointer-events: none;
+    }
+
+    .component strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .component span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .game-area {
+      padding: 20px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      border: 1px solid #ead38d;
+      background: #fff8dd;
+      color: #8b6a06;
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, opacity 0.18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .secondary {
+      background: #edf2ff;
+      color: var(--primary);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 12px;
+    }
+
+    .board,
+    .rules,
+    .feedback {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: #fcfdff;
+    }
+
+    .board {
+      padding: 20px;
+    }
+
+    .board h3,
+    .rules h3,
+    .feedback h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .circuit {
+      min-height: 540px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      border: 1px dashed #bfd0f8;
+      position: relative;
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .arduino-board {
+      position: absolute;
+      left: 28px;
+      bottom: 28px;
+      width: 220px;
+      opacity: 0.95;
+      filter: drop-shadow(0 10px 20px rgba(17, 33, 74, 0.14));
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .slots {
+      position: absolute;
+      inset: 0;
+    }
+
+    .slot {
+      position: absolute;
+      width: 120px;
+      min-height: 110px;
+      background: var(--slot);
+      border: 2px dashed #abc0f5;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      text-align: center;
+      color: #4962a3;
+      font-weight: 700;
+      transition: background 0.18s ease, border-color 0.18s ease;
+    }
+
+    .slot small {
+      display: block;
+      font-weight: 500;
+      color: #6c7fb5;
+      margin-top: 4px;
+      font-size: 12px;
+    }
+
+    .slot.hover {
+      background: #e2ebff;
+      border-color: var(--primary);
+    }
+
+    .slot.correct {
+      background: #e7f8ef;
+      border-color: #7ac79a;
+      color: #167548;
+    }
+
+    .slot img {
+      max-width: 92px;
+      max-height: 86px;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .led-effect {
+      position: absolute;
+      right: 52px;
+      top: 86px;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 70, 70, 0.8) 0%, rgba(255, 70, 70, 0.4) 35%, rgba(255, 70, 70, 0.08) 65%, transparent 74%);
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+    }
+
+    .led-effect.on {
+      opacity: 1;
+      transform: scale(1.2);
+      animation: pulse 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1.15); }
+      50% { transform: scale(1.28); }
+    }
+
+    .rules, .feedback {
+      padding: 18px;
+    }
+
+    .rules ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .feedback {
+      margin-top: 18px;
+      background: #fffefa;
+    }
+
+    .message {
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 15px;
+      line-height: 1.5;
+      border: 1px solid #eadfbe;
+      background: #fff7e2;
+      color: #7c5b05;
+    }
+
+    .message.success {
+      background: #eaf8ef;
+      border-color: #b9e0c7;
+      color: #16643c;
+    }
+
+    .status-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f7f9fe;
+      border: 1px solid var(--line);
+      font-size: 14px;
+    }
+
+    .status-item b {
+      color: var(--text);
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #edf1fa;
+      color: #60708f;
+    }
+
+    .pill.ok {
+      background: #def4e6;
+      color: #187447;
+    }
+
+    @media (max-width: 1100px) {
+      .layout, .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .page { padding: 16px; }
+      .hero, .sidebar, .game-area { padding: 18px; }
+      .arduino-board { width: 160px; }
+      .slot {
+        width: 100px;
+        min-height: 96px;
+        font-size: 13px;
+      }
+      .slot img {
+        max-width: 72px;
+        max-height: 66px;
+      }
+      .circuit { min-height: 600px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <small>MakerLab 3D • Card Interativo</small>
+      <h1>Monte o Circuito do LED</h1>
+      <p>Arraste os componentes corretos para os lugares certos e teste o circuito. Quando tudo estiver certo, o LED vai acender.</p>
+    </section>
+
+    <main class="layout">
+      <aside class="panel sidebar">
+        <h2>Componentes</h2>
+        <p class="sub">Arraste os itens para a área de montagem. Neste teste, o Arduino já está fixo na mesa.</p>
+
+        <div class="components">
+          <div class="component" draggable="true" data-type="led">
+            <img src="led.png" alt="LED vermelho" />
+            <strong>LED</strong>
+            <span>Saída de luz</span>
+          </div>
+
+          <div class="component" draggable="true" data-type="resistor">
+            <img src="resistor.png" alt="Resistor" />
+            <strong>Resistor</strong>
+            <span>Protege o LED</span>
+          </div>
+
+          <div class="component" draggable="true" data-type="jumper-positivo">
+            <div style="width:96px;height:96px;margin:0 auto 8px;border-radius:16px;background:linear-gradient(135deg,#ff7272,#d64545);display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:28px;">+</div>
+            <strong>Jumper positivo</strong>
+            <span>Leva energia</span>
+          </div>
+
+          <div class="component" draggable="true" data-type="jumper-negativo">
+            <div style="width:96px;height:96px;margin:0 auto 8px;border-radius:16px;background:linear-gradient(135deg,#4a4a4a,#1f1f1f);display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:28px;">−</div>
+            <strong>Jumper GND</strong>
+            <span>Retorno do circuito</span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel game-area">
+        <div class="topbar">
+          <div>
+            <div class="badge">⚡ Missão disponível</div>
+            <h2>Desafio 01 — Pisca-Pisca</h2>
+            <p class="sub">Monte o circuito básico: energia → resistor → LED → GND.</p>
+          </div>
+
+          <div class="actions">
+            <button class="secondary" id="resetBtn">Limpar</button>
+            <button class="primary" id="testBtn">Testar circuito</button>
+          </div>
+        </div>
+
+        <div class="workspace">
+          <div class="board">
+            <h3>Área de montagem</h3>
+            <div class="circuit">
+              <img class="arduino-board" src="arduino.png" alt="Arduino UNO" />
+              <div class="led-effect" id="ledEffect"></div>
+
+              <div class="slots">
+                <div class="slot" data-accept="jumper-positivo" data-name="slot_positivo" style="left: 260px; bottom: 54px;">
+                  <div>Jumper +<small>5V do Arduino</small></div>
+                </div>
+
+                <div class="slot" data-accept="resistor" data-name="slot_resistor" style="left: 360px; top: 180px;">
+                  <div>Resistor<small>Entre 5V e LED</small></div>
+                </div>
+
+                <div class="slot" data-accept="led" data-name="slot_led" style="right: 52px; top: 120px;">
+                  <div>LED<small>Ânodo e cátodo</small></div>
+                </div>
+
+                <div class="slot" data-accept="jumper-negativo" data-name="slot_negativo" style="right: 82px; bottom: 54px;">
+                  <div>Jumper GND<small>Retorno</small></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="rules">
+              <h3>Como vencer</h3>
+              <ul>
+                <li>Coloque cada componente no lugar correto.</li>
+                <li>O resistor deve proteger o LED.</li>
+                <li>O circuito precisa sair do 5V e voltar para o GND.</li>
+                <li>Depois clique em <b>Testar circuito</b>.</li>
+              </ul>
+            </div>
+
+            <div class="feedback">
+              <h3>Feedback</h3>
+              <div id="message" class="message">
+                Monte o circuito e clique em <b>Testar circuito</b>.
+              </div>
+
+              <div class="status-list">
+                <div class="status-item"><b>Jumper positivo</b><span class="pill" id="status-slot_positivo">Pendente</span></div>
+                <div class="status-item"><b>Resistor</b><span class="pill" id="status-slot_resistor">Pendente</span></div>
+                <div class="status-item"><b>LED</b><span class="pill" id="status-slot_led">Pendente</span></div>
+                <div class="status-item"><b>Jumper GND</b><span class="pill" id="status-slot_negativo">Pendente</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const components = document.querySelectorAll('.component');
+    const slots = document.querySelectorAll('.slot');
+    const message = document.getElementById('message');
+    const ledEffect = document.getElementById('ledEffect');
+    const testBtn = document.getElementById('testBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const slotState = {};
+    let draggedType = null;
+    let draggedElement = null;
+
+    components.forEach(component => {
+      component.addEventListener('dragstart', () => {
+        draggedType = component.dataset.type;
+        draggedElement = component;
+        component.classList.add('dragging');
+      });
+
+      component.addEventListener('dragend', () => {
+        component.classList.remove('dragging');
+      });
+    });
+
+    slots.forEach(slot => {
+      slot.addEventListener('dragover', e => {
+        e.preventDefault();
+        slot.classList.add('hover');
+      });
+
+      slot.addEventListener('dragleave', () => {
+        slot.classList.remove('hover');
+      });
+
+      slot.addEventListener('drop', e => {
+        e.preventDefault();
+        slot.classList.remove('hover');
+
+        if (!draggedType || !draggedElement) return;
+
+        slotState[slot.dataset.name] = draggedType;
+        renderSlot(slot, draggedElement);
+        updateStatusIndicators();
+        ledEffect.classList.remove('on');
+        setMessage('Componente posicionado. Continue a montagem e depois teste o circuito.', false);
+      });
+    });
+
+    function renderSlot(slot, sourceElement) {
+      slot.innerHTML = '';
+      const img = sourceElement.querySelector('img');
+
+      if (img) {
+        const clone = img.cloneNode(true);
+        slot.appendChild(clone);
+      } else {
+        const visual = sourceElement.querySelector('div');
+        const clone = visual.cloneNode(true);
+        clone.style.width = '72px';
+        clone.style.height = '72px';
+        clone.style.margin = '0';
+        slot.appendChild(clone);
+      }
+    }
+
+    function updateStatusIndicators() {
+      slots.forEach(slot => {
+        const slotName = slot.dataset.name;
+        const expected = slot.dataset.accept;
+        const current = slotState[slotName];
+        const pill = document.getElementById(`status-${slotName}`);
+
+        if (!current) {
+          pill.textContent = 'Pendente';
+          pill.className = 'pill';
+          slot.classList.remove('correct');
+          return;
+        }
+
+        if (current === expected) {
+          pill.textContent = 'Correto';
+          pill.className = 'pill ok';
+          slot.classList.add('correct');
+        } else {
+          pill.textContent = 'Verifique';
+          pill.className = 'pill';
+          slot.classList.remove('correct');
+        }
+      });
+    }
+
+    function setMessage(text, success = false) {
+      message.innerHTML = text;
+      message.className = success ? 'message success' : 'message';
+    }
+
+    function validateCircuit() {
+      let allCorrect = true;
+      let missing = [];
+      let wrong = [];
+
+      slots.forEach(slot => {
+        const current = slotState[slot.dataset.name];
+        const expected = slot.dataset.accept;
+        const label = slot.dataset.name.replace('slot_', '').replace('_', ' ');
+
+        if (!current) {
+          allCorrect = false;
+          missing.push(label);
+        } else if (current !== expected) {
+          allCorrect = false;
+          wrong.push(label);
+        }
+      });
+
+      if (allCorrect) {
+        ledEffect.classList.add('on');
+        setMessage('🎉 <b>Circuito funcionando!</b> O LED acendeu porque a energia saiu do 5V, passou pelo resistor, chegou ao LED e voltou para o GND.', true);
+        return;
+      }
+
+      ledEffect.classList.remove('on');
+
+      let tips = [];
+      if (missing.length) tips.push(`Faltam componentes em: <b>${missing.join(', ')}</b>.`);
+      if (wrong.length) tips.push(`Verifique os itens posicionados em: <b>${wrong.join(', ')}</b>.`);
+      tips.push('Dica: o resistor protege o LED e o circuito precisa voltar para o GND.');
+      setMessage(`👀 <b>Ainda não funcionou.</b><br>${tips.join('<br>')}`);
+    }
+
+    function resetGame() {
+      Object.keys(slotState).forEach(key => delete slotState[key]);
+      slots.forEach(slot => {
+        slot.classList.remove('correct');
+
+        const labels = {
+          slot_positivo: ['Jumper +', '5V do Arduino'],
+          slot_resistor: ['Resistor', 'Entre 5V e LED'],
+          slot_led: ['LED', 'Ânodo e cátodo'],
+          slot_negativo: ['Jumper GND', 'Retorno']
+        };
+
+        const [title, subtitle] = labels[slot.dataset.name];
+        slot.innerHTML = `<div>${title}<small>${subtitle}</small></div>`;
+      });
+
+      updateStatusIndicators();
+      ledEffect.classList.remove('on');
+      setMessage('Monte o circuito e clique em <b>Testar circuito</b>.');
+    }
+
+    testBtn.addEventListener('click', validateCircuit);
+    resetBtn.addEventListener('click', resetGame);
+
+    resetGame();
+  </script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+:root {
+  --azul-c: #0984e3; --azul-c-esc: #0652b3; --azul-c-bg: #e8f4fd;
+  --teal: #00b894;   --teal-esc: #00816a;   --teal-bg: #e8f8f5;
+  --ouro: #E5C84C;   --ouro-esc: #C9A830;
+  --azul: #2F3447;   --azul-med: #5F6480;
+  --borda: #DDD8CC;  --verde: #27ae60; --vermelho: #e74c3c; --bg: #ECEAE4;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Nunito Sans', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 60px;
+}
+
+/* ---- Header ---- */
+.q-header { width: 100%; max-width: 760px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.q-logo { font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 900; color: var(--azul); }
+.q-logo span { color: var(--ouro-esc); }
+.q-card-nome { font-size: 13px; font-weight: 700; color: var(--azul-med); }
+.btn-voltar-header { background: var(--azul); color: #fff; border: none; border-radius: 10px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 800; cursor: pointer; }
+
+/* ---- Player card ---- */
+.player-card { width: 100%; max-width: 760px; background: linear-gradient(135deg,#eaf4fe,#d6eeff); border: 2px solid var(--azul-c); border-radius: 20px; padding: 14px 20px; display: flex; align-items: center; gap: 14px; margin-bottom: 18px; box-shadow: 0 0 0 4px rgba(9,132,227,0.08); }
+.player-avatar { width: 68px; height: 68px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 8px rgba(9,132,227,0.25)); }
+.player-info { flex: 1; }
+.player-nome  { font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 900; color: var(--azul); }
+.player-nivel { font-size: 11px; font-weight: 700; color: var(--azul-c); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.player-pts-box { display: flex; flex-direction: column; align-items: center; background: rgba(9,132,227,0.10); border: 1px solid rgba(9,132,227,0.25); border-radius: 12px; padding: 8px 16px; }
+.player-pts-val { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900; color: var(--azul-c); line-height: 1; }
+.player-pts-label { font-size: 10px; font-weight: 700; color: var(--azul-c-esc); text-transform: uppercase; letter-spacing: 1px; }
+
+/* ---- Loading ---- */
+.loading { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 60px; color: var(--azul-med); font-weight: 700; }
+.spinner { width: 40px; height: 40px; border: 4px solid var(--borda); border-top-color: var(--azul-c); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- Progress ---- */
+.q-prog-wrap { width: 100%; max-width: 760px; margin-bottom: 14px; }
+.q-prog-info  { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--azul-med); margin-bottom: 6px; }
+.q-prog-bar   { height: 8px; background: var(--borda); border-radius: 999px; overflow: hidden; }
+.q-prog-fill  { height: 100%; background: linear-gradient(90deg, var(--azul-c), var(--teal)); border-radius: 999px; transition: width 0.4s ease; }
+
+/* ---- Challenge box ---- */
+.conect-box { width: 100%; max-width: 760px; background: #fff; border: 1.5px solid var(--borda); border-radius: 24px; overflow: hidden; box-shadow: 0 4px 24px rgba(47,52,71,0.08); }
+
+.conect-box-top { background: linear-gradient(135deg, #0652b3, #0984e3); padding: 20px 28px 16px; position: relative; }
+.comp-estrelas  { font-size: 14px; letter-spacing: 6px; margin-bottom: 8px; opacity: 0.7; }
+.comp-num       { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.45); margin-bottom: 6px; }
+.comp-descricao { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900; color: #fff; line-height: 1.3; }
+.comp-pts-badge { position: absolute; top: 18px; right: 22px; background: var(--ouro); color: var(--azul); font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900; padding: 4px 12px; border-radius: 20px; }
+
+.conect-instrucao { text-align: center; font-size: 13px; font-weight: 700; color: var(--azul-c); padding: 12px 22px 0; min-height: 32px; }
+
+/* ---- Circuit Area (PCB style) ---- */
+.circuito-area {
+  position: relative;
+  margin: 12px 22px 0;
+  width: calc(100% - 44px);
+  height: 380px;
+  background-color: #0d1b2a;
+  background-image: radial-gradient(circle, #1a3a5c 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid #1e3a5f;
+  cursor: default;
+  user-select: none;
+}
+
+/* SVG overlay */
+.circuito-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* SVG lines */
+.circuito-linha { stroke-linecap: round; stroke-linejoin: round; }
+.linha-temp      { stroke: #64ffda; stroke-width: 2; stroke-dasharray: 8 4; opacity: 0.75; }
+.linha-pendente  { stroke: #ffa502; stroke-width: 3; }
+.linha-correta   { stroke: #2ecc71; stroke-width: 4; filter: drop-shadow(0 0 4px #2ecc7180); }
+.linha-incorreta { stroke: #ff4757; stroke-width: 4; }
+
+/* ---- Componentes ---- */
+.componentes-wrap { position: absolute; inset: 0; z-index: 2; }
+
+/* Card do componente — imagem + nome + pinos */
+.comp-card {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(10, 26, 45, 0.88);
+  border: 2px solid var(--comp-cor, #8892b0);
+  border-radius: 14px;
+  padding: 8px 10px 8px;
+  min-width: 80px;
+  max-width: 110px;
+  box-shadow: 0 0 16px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+  transition: box-shadow 0.2s;
+  cursor: default;
+}
+.comp-card:hover {
+  box-shadow: 0 0 20px rgba(0,0,0,0.7), 0 0 8px var(--comp-cor, #8892b0);
+}
+
+/* Parte visual (imagem + nome) — não é clicável */
+.comp-card-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  margin-bottom: 6px;
+}
+
+.comp-card-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #0d1b2a;
+  border: 2.5px solid var(--comp-cor, #8892b0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.comp-card-img { width: 34px; height: 34px; object-fit: contain; }
+.comp-card-sym {
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.comp-card-nome {
+  font-size: 9px;
+  font-weight: 800;
+  color: #ccd6f6;
+  text-align: center;
+  font-family: 'Nunito', sans-serif;
+  max-width: 86px;
+  line-height: 1.2;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+}
+
+/* Linha divisória entre imagem e pinos */
+.comp-pinos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 6px;
+  width: 100%;
+}
+
+.comp-sem-pinos {
+  font-size: 8px;
+  color: rgba(255,255,255,0.2);
+  font-style: italic;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 4px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Pino individual */
+.pino-dot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 3px 4px;
+  border-radius: 7px;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pino-dot:hover {
+  background: rgba(100, 255, 218, 0.12);
+}
+.pino-dot:active {
+  background: rgba(100, 255, 218, 0.22);
+}
+
+/* Círculo do pino */
+.pino-circulo {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--comp-cor, #8892b0);
+  background: #0d1b2a;
+  margin-bottom: 3px;
+  transition: all 0.15s;
+  box-shadow: 0 0 0 0 transparent;
+}
+
+/* Rótulo do pino */
+.pino-label {
+  font-size: 8px;
+  font-weight: 800;
+  color: rgba(204, 214, 246, 0.7);
+  font-family: 'Nunito', sans-serif;
+  text-align: center;
+  max-width: 38px;
+  line-height: 1.1;
+  pointer-events: none;
+}
+
+/* Estado: pino selecionado */
+.pino-dot.selecionado .pino-circulo {
+  border-color: #64ffda;
+  background: rgba(100, 255, 218, 0.2);
+  box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.3), 0 0 10px #64ffda;
+  transform: scale(1.2);
+}
+.pino-dot.selecionado .pino-label { color: #64ffda; }
+
+/* Estado: tem conexão pendente */
+.pino-dot.tem-conexao .pino-circulo {
+  border-color: #ffa502;
+  background: rgba(255, 165, 2, 0.18);
+  box-shadow: 0 0 6px rgba(255,165,2,0.4);
+}
+.pino-dot.tem-conexao .pino-label { color: #ffa502; }
+
+/* Estado: conexão correta */
+.pino-dot.conexao-correta .pino-circulo {
+  border-color: #2ecc71;
+  background: rgba(46, 204, 113, 0.2);
+  box-shadow: 0 0 8px rgba(46,204,113,0.5);
+}
+.pino-dot.conexao-correta .pino-label { color: #2ecc71; }
+
+/* Estado: conexão errada */
+.pino-dot.conexao-errada .pino-circulo {
+  border-color: #ff4757;
+  background: rgba(255, 71, 87, 0.18);
+}
+.pino-dot.conexao-errada .pino-label { color: #ff4757; }
+
+/* LED blink no acerto */
+@keyframes pisca-led {
+  0%, 100% { filter: drop-shadow(0 0 12px #FFD700) brightness(1.5); }
+  50%       { filter: none; }
+}
+.led-animado .comp-card-circle { animation: pisca-led 0.55s ease-in-out infinite; }
+.led-animado { box-shadow: 0 0 20px rgba(255,215,0,0.6), 0 0 0 2px #FFD700 !important; }
+
+/* ---- Controls ---- */
+.conect-controles {
+  display: flex;
+  gap: 10px;
+  padding: 14px 22px 0;
+  flex-wrap: wrap;
+}
+.btn-ctrl {
+  background: #f5f5f5;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--azul-med);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-ctrl:hover { background: #eee; border-color: #bbb; }
+
+.btn-testar {
+  margin-left: auto;
+  background: linear-gradient(135deg, #0652b3, #0984e3);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 24px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+.btn-testar:hover { transform: translateY(-2px); opacity: 0.9; }
+.btn-testar:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+/* ---- Feedback ---- */
+.conect-feedback { display: none; margin: 14px 22px 0; padding: 13px 18px; border-radius: 12px; font-size: 14px; font-weight: 600; line-height: 1.5; }
+.conect-feedback.acerto { background: #f0fdf4; border: 1.5px solid #a7f3d0; color: #15803d; }
+.conect-feedback.erro   { background: #fdf2f2; border: 1.5px solid #f5c6c6; color: #b91c1c; }
+
+.btn-prox { display: none; width: calc(100% - 44px); margin: 14px 22px 22px; background: linear-gradient(135deg, var(--ouro), var(--ouro-esc)); color: var(--azul); border: none; border-radius: 14px; padding: 14px; font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 900; cursor: pointer; transition: all 0.2s; }
+.btn-prox:hover { transform: translateY(-2px); }
+
+.conect-box .btn-ctrl { margin-bottom: 22px; }
+
+/* ---- Scoreboard ---- */
+.q-placar { width: 100%; max-width: 760px; display: flex; gap: 10px; margin-top: 14px; }
+.pl-item  { flex: 1; background: #fff; border: 1.5px solid var(--borda); border-radius: 14px; padding: 12px; text-align: center; }
+.pl-item.ac { border-color: #a7f3d0; background: #f0fdf4; }
+.pl-item.er { border-color: #f5c6c6; background: #fdf2f2; }
+.pl-item.pt { border-color: var(--azul-c); background: var(--azul-c-bg); }
+.pl-val     { font-family: 'Nunito', sans-serif; font-size: 28px; font-weight: 900; line-height: 1; }
+.ac .pl-val { color: var(--verde); } .er .pl-val { color: var(--vermelho); } .pt .pl-val { color: var(--azul-c); }
+.pl-label   { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--azul-med); margin-top: 4px; }
+
+/* ---- Final screen ---- */
+.tela-final     { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 20px; }
+.tela-final-box { background: #fff; border-radius: 24px; width: 100%; max-width: 420px; overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes popIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.tf-top     { background: linear-gradient(135deg, #0652b3, #0984e3); padding: 20px 24px 18px; }
+.tf-top-row { display: flex; align-items: center; gap: 14px; }
+.tf-emoji   { font-size: 36px; flex-shrink: 0; }
+.tf-titulo  { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900; color: #fff; }
+.tf-sub     { font-size: 13px; color: rgba(255,255,255,0.75); font-weight: 600; margin-top: 2px; }
+
+.tf-body        { padding: 22px 24px 28px; }
+.tf-avatar-wrap { text-align: center; margin-bottom: 14px; }
+.tf-avatar      { width: 80px; height: 80px; object-fit: contain; }
+
+.res-grid  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.res-item  { background: #f8f9fa; border-radius: 12px; padding: 12px 8px; text-align: center; border: 1.5px solid var(--borda); }
+.rac       { border-color: #a7f3d0; background: #f0fdf4; }
+.rer       { border-color: #f5c6c6; background: #fdf2f2; }
+.rpt       { border-color: var(--azul-c); background: var(--azul-c-bg); }
+.res-val   { font-family: 'Nunito', sans-serif; font-size: 26px; font-weight: 900; line-height: 1; }
+.rac .res-val { color: var(--verde); } .rer .res-val { color: var(--vermelho); } .rpt .res-val { color: var(--azul-c); }
+.res-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--azul-med); margin-top: 4px; }
+
+.res-msg   { text-align: center; font-size: 14px; color: var(--azul-med); line-height: 1.5; margin-bottom: 16px; }
+
+.btn-tentar { display: block; width: 100%; background: linear-gradient(135deg, #0652b3, #0984e3); color: #fff; border: none; border-radius: 14px; padding: 13px; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900; cursor: pointer; transition: all 0.2s; }
+.btn-tentar:hover { opacity: 0.9; }
+.btn-voltar { display: block; width: 100%; background: #f5f5f5; color: var(--azul); border: 1.5px solid var(--borda); border-radius: 14px; padding: 13px; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900; cursor: pointer; transition: all 0.2s; text-align: center; }
+.btn-voltar:hover { background: #eee; }
+
+/* ---- Responsive ---- */
+@media (max-width: 600px) {
+  .circuito-area { height: 300px; margin: 12px 14px 0; width: calc(100% - 28px); background-size: 20px 20px; }
+  .comp-card { min-width: 70px; max-width: 96px; padding: 6px 8px 6px; }
+  .comp-card-circle { width: 44px; height: 44px; }
+  .comp-card-img { width: 28px; height: 28px; }
+  .comp-card-nome { font-size: 8px; }
+  .pino-circulo { width: 12px; height: 12px; }
+  .pino-label { font-size: 7px; max-width: 32px; }
+  .conect-controles { padding: 10px 14px 0; }
+  .conect-box-top { padding: 16px 20px 14px; }
+  .comp-descricao { font-size: 18px; }
+}

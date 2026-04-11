@@ -21,6 +21,34 @@ function getNivelIdx(pts) {
   return 0;
 }
 
+// ============================================================
+// SONS SINTÉTICOS — Web Audio API
+// ============================================================
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function nota(ctx, freq, tipo, inicio, duracao, vol = 0.28) {
+  const osc = ctx.createOscillator(), gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = tipo;
+  osc.frequency.setValueAtTime(freq, ctx.currentTime + inicio);
+  gain.gain.setValueAtTime(0, ctx.currentTime + inicio);
+  gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + inicio + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + inicio + duracao);
+  osc.start(ctx.currentTime + inicio);
+  osc.stop(ctx.currentTime + inicio + duracao + 0.02);
+}
+function somEntrada() { try { const ctx = getAudioCtx(); [262,330,392,523].forEach((f,i) => nota(ctx,f,'triangle',i*0.10,0.18,0.22)); nota(ctx,523,'sine',0.44,0.5,0.15); } catch(e) {} }
+function somAcerto()  { try { const ctx = getAudioCtx(); nota(ctx,587,'sine',0,0.12,0.30); nota(ctx,784,'sine',0.13,0.22,0.25); } catch(e) {} }
+function somErro()    { try { const ctx = getAudioCtx(); nota(ctx,330,'triangle',0,0.14,0.22); nota(ctx,220,'triangle',0.14,0.28,0.18); } catch(e) {} }
+function somFinalBom(){ try { const ctx = getAudioCtx(); [262,330,392,523,659].forEach((f,i) => nota(ctx,f,'triangle',i*0.07,0.14,0.20)); [523,659,784].forEach(f => nota(ctx,f,'sine',0.42,0.8,0.13)); } catch(e) {} }
+function somFinalRuim(){ try { const ctx = getAudioCtx(); nota(ctx,392,'triangle',0,0.22,0.20); nota(ctx,330,'triangle',0.20,0.22,0.18); nota(ctx,262,'triangle',0.40,0.40,0.16); } catch(e) {} }
+document.addEventListener('click', () => { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
+// ============================================================
+
 const params  = new URLSearchParams(window.location.search);
 const cardId  = params.get('card');
 
@@ -91,6 +119,7 @@ function iniciarJogo() {
   document.getElementById('q-prog-wrap').style.display = '';
   document.getElementById('bug-box').style.display     = '';
   document.getElementById('q-placar').style.display    = '';
+  somEntrada();
   renderCodigo();
 }
 
@@ -208,6 +237,7 @@ window.verificar = function() {
     codigoRespondido = true;
     acertos++;
     pontosGanhos += pts;
+    somAcerto();
     document.getElementById('pl-ac').textContent = acertos;
     document.getElementById('pl-pt').textContent = pontosGanhos % 1 === 0 ? pontosGanhos : pontosGanhos.toFixed(1);
 
@@ -220,7 +250,7 @@ window.verificar = function() {
       // Último código — vai automaticamente pro resultado após 1.5s
       setTimeout(mostrarFinal, 1500);
     } else {
-      document.getElementById('btn-prox').style.display = '';
+      document.getElementById('btn-prox').style.display = 'block';
       document.getElementById('btn-prox').textContent = 'Próximo →';
     }
 
@@ -228,6 +258,7 @@ window.verificar = function() {
     // Esgotou tentativas neste código
     codigoRespondido = true;
     erros++;
+    somErro();
     document.getElementById('pl-er').textContent = erros;
 
     renderCodigoLinhas(b, true);
@@ -238,7 +269,7 @@ window.verificar = function() {
     if (atual >= codigos.length - 1) {
       setTimeout(mostrarFinal, 1500);
     } else {
-      document.getElementById('btn-prox').style.display = '';
+      document.getElementById('btn-prox').style.display = 'block';
       document.getElementById('btn-prox').textContent = 'Próximo →';
     }
 
@@ -290,6 +321,7 @@ function mostrarFinal() {
   const btnTentar = document.querySelector('.btn-tentar');
   if (btnTentar) btnTentar.style.display = restantes > 0 ? '' : 'none';
 
+  concluido ? somFinalBom() : somFinalRuim();
   document.getElementById('tela-final').style.display = 'flex';
   salvarResultado(acertos, pontosGanhos, total, concluido).catch(e => console.warn(e));
 }

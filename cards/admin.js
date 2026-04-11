@@ -131,7 +131,10 @@ function renderForm(id, d) {
   atividadeImagemURL = d.atividade_imagem_url || '';
   window.quizState = d.quiz ? JSON.parse(JSON.stringify(d.quiz)) : [];
   window.bugState  = d.bug_codigos ? JSON.parse(JSON.stringify(d.bug_codigos)) : [];
-  window.compState = d.comp_perguntas ? JSON.parse(JSON.stringify(d.comp_perguntas)) : [];
+  window.compState  = d.comp_perguntas ? JSON.parse(JSON.stringify(d.comp_perguntas)) : [];
+  window.ordenaState   = d.ordena_desafios   ? JSON.parse(JSON.stringify(d.ordena_desafios))   : [];
+  window.completeState = d.complete_desafios ? JSON.parse(JSON.stringify(d.complete_desafios)) : [];
+  window.conectaState  = d.conecta_desafios  ? JSON.parse(JSON.stringify(d.conecta_desafios))  : [];
   window.glossarioState = d.glossario ? JSON.parse(JSON.stringify(d.glossario)) : [];
   tagsState.links_desafios   = d.links_desafios   ? [...d.links_desafios]   : [];
   tagsState.links_componentes = d.links_componentes ? [...d.links_componentes] : [];
@@ -486,6 +489,75 @@ function renderForm(id, d) {
       </div>
     </div>
 
+    <!-- ORDENA O CÓDIGO -->
+    <div class="form-section form-section-ordena">
+      <div class="section-title-row">
+        <span class="section-title">🔀 Ordene o Código</span>
+        <button class="btn-toggle-jogo" onclick="toggleOrdena()" id="btn-toggle-ordena">▼ Criar Jogo</button>
+      </div>
+      <div id="ordena-body" style="display:none;">
+        <span class="helper-text" style="display:block;margin-bottom:8px;margin-top:12px;">
+          Cole o código correto. Marque as linhas fixas (que não serão embaralhadas). O aluno arrasta para ordenar.
+        </span>
+        <div class="form-row" style="margin-bottom:16px;align-items:flex-end;">
+          <div class="form-group" style="max-width:220px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-ordena-tentativas" min="1" max="10" value="${d.ordena_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarOrdena()">+ Desafio</button>
+          </div>
+        </div>
+        <div id="ordena-lista"></div>
+      </div>
+    </div>
+
+    <!-- COMPLETE O CÓDIGO -->
+    <div class="form-section form-section-complete">
+      <div class="section-title-row">
+        <span class="section-title">📝 Complete o Código</span>
+        <button class="btn-toggle-jogo" onclick="toggleComplete()" id="btn-toggle-complete">▼ Criar Jogo</button>
+      </div>
+      <div id="complete-body" style="display:none;">
+        <span class="helper-text" style="display:block;margin-bottom:8px;margin-top:12px;">
+          Cole o código usando <strong>___</strong> para marcar as lacunas. Defina 4 opções e qual é a correta para cada lacuna.
+        </span>
+        <div class="form-row" style="margin-bottom:16px;align-items:flex-end;">
+          <div class="form-group" style="max-width:220px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-complete-tentativas" min="1" max="10" value="${d.complete_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarComplete()">+ Desafio</button>
+          </div>
+        </div>
+        <div id="complete-lista"></div>
+      </div>
+    </div>
+
+    <!-- CONECTA OS PONTOS -->
+    <div class="form-section form-section-conecta">
+      <div class="section-title-row">
+        <span class="section-title">🔌 Conecta os Pontos</span>
+        <button class="btn-toggle-jogo" onclick="toggleConecta()" id="btn-toggle-conecta">▼ Criar Jogo</button>
+      </div>
+      <div id="conecta-body" style="display:none;">
+        <span class="helper-text" style="display:block;margin-bottom:8px;margin-top:12px;">
+          Monte o circuito: adicione os componentes e defina quais devem ser conectados entre si.
+        </span>
+        <div class="form-row" style="margin-bottom:16px;align-items:flex-end;">
+          <div class="form-group" style="max-width:220px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-conecta-tentativas" min="1" max="10" value="${d.conecta_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarConecta()">+ Desafio</button>
+          </div>
+        </div>
+        <div id="conecta-lista"></div>
+      </div>
+    </div>
+
     ${id ? `
     <div class="form-section">
       <div class="section-title">Link do Card</div>
@@ -504,6 +576,12 @@ function renderForm(id, d) {
   atualizarBtnBug();
   renderCompLista();
   atualizarBtnComp();
+  renderOrdenaLista();
+  atualizarBtnOrdena();
+  renderCompleteLista();
+  atualizarBtnComplete();
+  renderConectaLista();
+  atualizarBtnConecta();
 }
 
 // ---- UPLOAD DE IMAGEM ----
@@ -736,7 +814,7 @@ window.salvarCard = async function (publicar) {
     definicao_titulo: document.getElementById('f-def-titulo')?.value?.trim() || '',
     definicao_texto:  document.getElementById('f-def-texto')?.value?.trim() || '',
     duracao:          document.getElementById('f-duracao')?.value?.trim() || '',
-    pontos:           (window.quizState || []).reduce((sum, q) => sum + (parseFloat(q.pontos) || 1.0), 0),
+    pontos:           parseFloat(document.getElementById('f-pontos')?.value) || 0,
     kit:              document.getElementById('f-kit')?.value?.trim() || '',
     objetivo:         document.getElementById('f-objetivo')?.value?.trim() || '',
     tutorial_url:     document.getElementById('f-tutorial')?.value?.trim() || '',
@@ -756,6 +834,12 @@ window.salvarCard = async function (publicar) {
     bug_tentativas:   parseInt(document.getElementById('f-bug-tentativas')?.value) || 3,
     comp_perguntas:   window.compState || [],
     comp_tentativas:  parseInt(document.getElementById('f-comp-tentativas')?.value) || 3,
+    ordena_desafios:  window.ordenaState || [],
+    ordena_tentativas: parseInt(document.getElementById('f-ordena-tentativas')?.value) || 3,
+    complete_desafios:  window.completeState || [],
+    complete_tentativas: parseInt(document.getElementById('f-complete-tentativas')?.value) || 3,
+    conecta_desafios:   window.conectaState  || [],
+    conecta_tentativas: parseInt(document.getElementById('f-conecta-tentativas')?.value) || 3,
     tentativas:       parseInt(document.getElementById('f-tentativas')?.value) || 3,
     video_url:        document.getElementById('f-video-url')?.value?.trim() || '',
     publicado:        publicar,
@@ -968,6 +1052,12 @@ window.adicionarPergunta = function() {
   atualizarBtnBug();
   renderCompLista();
   atualizarBtnComp();
+  renderOrdenaLista();
+  atualizarBtnOrdena();
+  renderCompleteLista();
+  atualizarBtnComplete();
+  renderConectaLista();
+  atualizarBtnConecta();
 };
 
 window.removerPergunta = function(qi) {
@@ -978,6 +1068,12 @@ window.removerPergunta = function(qi) {
   atualizarBtnBug();
   renderCompLista();
   atualizarBtnComp();
+  renderOrdenaLista();
+  atualizarBtnOrdena();
+  renderCompleteLista();
+  atualizarBtnComplete();
+  renderConectaLista();
+  atualizarBtnConecta();
 };
 
 window.updateQuiz = function(qi, field, value) {
@@ -999,8 +1095,11 @@ function atualizarBtnQuiz() {
 function recalcularPontos() {
   const totalQuiz = (window.quizState  || []).reduce((sum, q) => sum + (parseFloat(q.pontos) || 1.0), 0);
   const totalBug  = (window.bugState   || []).reduce((sum, b) => sum + (parseFloat(b.pontos) || 1.0), 0);
-  const totalComp = (window.compState  || []).reduce((sum, c) => sum + (parseFloat(c.pontos) || 1.0), 0);
-  const total     = totalQuiz + totalBug + totalComp;
+  const totalComp   = (window.compState   || []).reduce((sum, c) => sum + (parseFloat(c.pontos) || 1.0), 0);
+  const totalOrdena   = (window.ordenaState   || []).reduce((sum, o) => sum + (parseFloat(o.pontos) || 1.0), 0);
+  const totalComplete = (window.completeState || []).reduce((sum, c) => sum + (parseFloat(c.pontos) || 1.0), 0);
+  const totalConecta  = (window.conectaState  || []).reduce((sum, c) => sum + (parseFloat(c.pontos) || 2.0), 0);
+  const total         = totalQuiz + totalBug + totalComp + totalOrdena + totalComplete + totalConecta;
   const el = document.getElementById('f-pontos');
   if (el) el.value = total % 1 === 0 ? total : total.toFixed(1);
 }
@@ -1276,3 +1375,546 @@ window.toggleCompCorreto = function(qi, compId) {
   window.compState[qi].corretos = corretos;
   renderCompLista();
 };
+
+// ==============================
+// ---- ORDENA O CÓDIGO ----
+// ==============================
+
+window.ordenaState = [];
+
+window.toggleOrdena = function() {
+  const body = document.getElementById('ordena-body');
+  const btn  = document.getElementById('btn-toggle-ordena');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnOrdena();
+};
+
+function atualizarBtnOrdena() {
+  const btn  = document.getElementById('btn-toggle-ordena');
+  const body = document.getElementById('ordena-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = window.ordenaState.length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' desafio' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Desafios (' + n + ')' : '▼ Criar Jogo');
+}
+
+function renderOrdenaLista() {
+  const lista = document.getElementById('ordena-lista');
+  if (!lista) return;
+
+  if (window.ordenaState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhum desafio cadastrado. Clique em + Desafio para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = '';
+  window.ordenaState.forEach((d, di) => {
+    const linhas = (d.codigo || '').split('\n');
+    const fixas  = d.linhas_fixas || [];
+
+    const linhasHTML = linhas.map((linha, li) => {
+      const fixo = fixas.includes(li);
+      return `<div class="ordena-linha ${fixo ? 'ordena-linha-fixa' : ''}" onclick="toggleLinhaFixa(${di}, ${li})">
+        <span class="ordena-linha-num">${li + 1}</span>
+        <span class="ordena-linha-code">${linha.replace(/</g, '&lt;')}</span>
+        <span class="ordena-linha-tag">${fixo ? '🔒 Fixo' : 'Clique para fixar'}</span>
+      </div>`;
+    }).join('');
+
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.innerHTML = `
+      <div class="quiz-card-header">
+        <span class="quiz-card-num">Desafio ${di + 1}</span>
+        <button class="quiz-btn-rem" onclick="removerOrdena(${di})">× Remover</button>
+      </div>
+      <div class="form-group">
+        <label>Descrição</label>
+        <input type="text" value="${d.descricao || ''}"
+          oninput="updateOrdena(${di}, 'descricao', this.value)"
+          placeholder="Ex: Ordene o código para piscar o LED">
+      </div>
+      <div class="form-group">
+        <label>Pontos</label>
+        <input type="number" step="0.5" min="0.5" value="${d.pontos || 1.0}"
+          style="width:100px;"
+          oninput="updateOrdena(${di}, 'pontos', parseFloat(this.value)); recalcularPontos();">
+      </div>
+      <div class="form-group">
+        <label>Código correto</label>
+        <textarea class="bug-textarea" rows="8"
+          placeholder="void loop() {\n  digitalWrite(13, HIGH);\n  delay(1000);\n  digitalWrite(13, LOW);\n  delay(1000);\n}"
+          oninput="updateOrdenaCodigo(${di}, this.value)">${d.codigo || ''}</textarea>
+        <span class="helper-text">Cole o código na ordem CORRETA. Depois clique nas linhas que devem ser <strong>fixas</strong> (não embaralhadas).</span>
+      </div>
+      ${d.codigo ? `
+      <div class="form-group">
+        <label>Preview — clique nas linhas para fixar</label>
+        <div class="ordena-preview">${linhasHTML}</div>
+        <span class="helper-text">Fixas (🔒): ${fixas.length > 0 ? fixas.map(i => i+1).join(', ') : 'Nenhuma'}</span>
+      </div>` : ''}
+      <div class="form-group">
+        <label>Feedback</label>
+        <input type="text" value="${d.feedback || ''}"
+          oninput="updateOrdena(${di}, 'feedback', this.value)"
+          placeholder="Ex: Lembre-se: primeiro liga, espera, depois desliga!">
+      </div>
+    `;
+    lista.appendChild(card);
+  });
+}
+
+window.adicionarOrdena = function() {
+  window.ordenaState.push({ descricao: '', codigo: '', linhas_fixas: [], feedback: '', pontos: 1.0 });
+  renderOrdenaLista();
+  recalcularPontos();
+  atualizarBtnOrdena();
+};
+
+window.removerOrdena = function(di) {
+  window.ordenaState.splice(di, 1);
+  renderOrdenaLista();
+  recalcularPontos();
+  atualizarBtnOrdena();
+};
+
+window.updateOrdena = function(di, field, value) {
+  if (window.ordenaState[di]) window.ordenaState[di][field] = value;
+};
+
+window.updateOrdenaCodigo = function(di, valor) {
+  if (!window.ordenaState[di]) return;
+  window.ordenaState[di].codigo = valor;
+  window.ordenaState[di].linhas_fixas = [];
+  renderOrdenaLista();
+};
+
+window.toggleLinhaFixa = function(di, li) {
+  if (!window.ordenaState[di]) return;
+  const fixas = window.ordenaState[di].linhas_fixas || [];
+  const idx = fixas.indexOf(li);
+  if (idx >= 0) fixas.splice(idx, 1);
+  else fixas.push(li);
+  window.ordenaState[di].linhas_fixas = fixas;
+  renderOrdenaLista();
+};
+
+// ==============================
+// ---- COMPLETE O CÓDIGO ----
+// ==============================
+
+window.completeState = [];
+
+window.toggleComplete = function() {
+  const body = document.getElementById('complete-body');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnComplete();
+};
+
+function atualizarBtnComplete() {
+  const btn  = document.getElementById('btn-toggle-complete');
+  const body = document.getElementById('complete-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = window.completeState.length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' desafio' + (n!==1?'s':'') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Desafios (' + n + ')' : '▼ Criar Jogo');
+}
+
+function contarLacunas(codigo) {
+  return (codigo.match(/___/g) || []).length;
+}
+
+function renderCompleteLista() {
+  const lista = document.getElementById('complete-lista');
+  if (!lista) return;
+
+  if (window.completeState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhum desafio cadastrado. Clique em + Desafio para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = '';
+  window.completeState.forEach((d, di) => {
+    const nLacunas = contarLacunas(d.codigo || '');
+    const lacunas  = d.lacunas || [];
+
+    // Gerar campos para cada lacuna
+    let lacunasHTML = '';
+    for (let li = 0; li < nLacunas; li++) {
+      const lac = lacunas[li] || { opcoes: ['','','',''], correta: '' };
+      lacunasHTML += `
+        <div class="complete-lacuna-card">
+          <div class="complete-lacuna-titulo">Lacuna ${li+1}</div>
+          <div class="form-group">
+            <label>Opções (4) — marque a correta</label>
+            <div class="complete-opcao-row">
+              <input type="radio" name="correta-${di}-${li}" value="0" ${lac.correta === (lac.opcoes[0]||'') && lac.correta !== '' ? 'checked' : ''} onchange="setCorreta(${di},${li},0)">
+              <input type="text" class="complete-opcao-input" value="${lac.opcoes[0]||''}" placeholder="Opção 1" oninput="updateOpcao(${di},${li},0,this.value)">
+            </div>
+            <div class="complete-opcao-row">
+              <input type="radio" name="correta-${di}-${li}" value="1" ${lac.correta === (lac.opcoes[1]||'') && lac.correta !== '' ? 'checked' : ''} onchange="setCorreta(${di},${li},1)">
+              <input type="text" class="complete-opcao-input" value="${lac.opcoes[1]||''}" placeholder="Opção 2" oninput="updateOpcao(${di},${li},1,this.value)">
+            </div>
+            <div class="complete-opcao-row">
+              <input type="radio" name="correta-${di}-${li}" value="2" ${lac.correta === (lac.opcoes[2]||'') && lac.correta !== '' ? 'checked' : ''} onchange="setCorreta(${di},${li},2)">
+              <input type="text" class="complete-opcao-input" value="${lac.opcoes[2]||''}" placeholder="Opção 3" oninput="updateOpcao(${di},${li},2,this.value)">
+            </div>
+            <div class="complete-opcao-row">
+              <input type="radio" name="correta-${di}-${li}" value="3" ${lac.correta === (lac.opcoes[3]||'') && lac.correta !== '' ? 'checked' : ''} onchange="setCorreta(${di},${li},3)">
+              <input type="text" class="complete-opcao-input" value="${lac.opcoes[3]||''}" placeholder="Opção 4" oninput="updateOpcao(${di},${li},3,this.value)">
+            </div>
+          </div>
+        </div>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.innerHTML = `
+      <div class="quiz-card-header">
+        <span class="quiz-card-num">Desafio ${di+1}</span>
+        <button class="quiz-btn-rem" onclick="removerComplete(${di})">× Remover</button>
+      </div>
+      <div class="form-group">
+        <label>Descrição</label>
+        <input type="text" value="${d.descricao||''}"
+          oninput="updateComplete(${di},'descricao',this.value)"
+          placeholder="Ex: Complete o código do pisca-pisca">
+      </div>
+      <div class="form-group">
+        <label>Pontos</label>
+        <input type="number" step="0.5" min="0.5" value="${d.pontos||1.0}" style="width:100px;"
+          oninput="updateComplete(${di},'pontos',parseFloat(this.value));recalcularPontos();">
+      </div>
+      <div class="form-group">
+        <label>Código — use <strong>___</strong> para cada lacuna</label>
+        <textarea class="bug-textarea" rows="8"
+          placeholder="void loop() {\n  ___(13, HIGH);\n  delay(___);\n  digitalWrite(13, LOW);\n  delay(1000);\n}"
+          oninput="updateCompleteCodigo(${di},this.value)">${d.codigo||''}</textarea>
+        <span class="helper-text">Lacunas detectadas: <strong>${nLacunas}</strong></span>
+      </div>
+      ${nLacunas > 0 ? `<div class="complete-lacunas-wrap">${lacunasHTML}</div>` : ''}
+      <div class="form-group">
+        <label>Feedback</label>
+        <input type="text" value="${d.feedback||''}"
+          oninput="updateComplete(${di},'feedback',this.value)"
+          placeholder="Ex: Lembre-se: digitalWrite liga/desliga, delay espera em ms!">
+      </div>
+    `;
+    lista.appendChild(card);
+  });
+}
+
+window.adicionarComplete = function() {
+  window.completeState.push({ descricao:'', codigo:'', lacunas:[], feedback:'', pontos:1.0 });
+  renderCompleteLista();
+  recalcularPontos();
+  atualizarBtnComplete();
+};
+
+window.removerComplete = function(di) {
+  window.completeState.splice(di, 1);
+  renderCompleteLista();
+  recalcularPontos();
+  atualizarBtnComplete();
+};
+
+window.updateComplete = function(di, field, value) {
+  if (window.completeState[di]) window.completeState[di][field] = value;
+};
+
+window.updateCompleteCodigo = function(di, valor) {
+  if (!window.completeState[di]) return;
+  window.completeState[di].codigo = valor;
+  const n = contarLacunas(valor);
+  // Ajustar array de lacunas
+  const lacunas = window.completeState[di].lacunas || [];
+  while (lacunas.length < n) lacunas.push({ opcoes:['','','',''], correta:'' });
+  lacunas.length = n;
+  window.completeState[di].lacunas = lacunas;
+  renderCompleteLista();
+};
+
+window.updateOpcao = function(di, li, oi, valor) {
+  if (!window.completeState[di]) return;
+  const lac = window.completeState[di].lacunas[li];
+  if (!lac) return;
+  lac.opcoes[oi] = valor;
+  // Se era a correta, atualizar
+  if (lac.correta === lac.opcoes[oi]) lac.correta = valor;
+};
+
+window.setCorreta = function(di, li, oi) {
+  if (!window.completeState[di]) return;
+  const lac = window.completeState[di].lacunas[li];
+  if (!lac) return;
+  lac.correta = lac.opcoes[oi] || '';
+};
+
+// =====================================================================
+// ---- CONECTA OS PONTOS ----
+// =====================================================================
+
+const TIPOS_COMP_ADM = {
+  arduino:      { label: 'Arduino', cor: '#2980b9' },
+  resistor:     { label: 'Resistor', cor: '#8e44ad' },
+  led:          { label: 'LED', cor: '#f39c12' },
+  led_rgb:      { label: 'LED RGB', cor: '#e056cd' },
+  botao:        { label: 'Botão', cor: '#27ae60' },
+  potenciometro:{ label: 'Potenciômetro', cor: '#16a085' },
+  ldr:          { label: 'LDR', cor: '#d35400' },
+  protoboard:   { label: 'Protoboard', cor: '#7f8c8d' },
+  jumpers:      { label: 'Jumpers', cor: '#2c3e50' },
+  sensor_som:   { label: 'Sensor Som', cor: '#c0392b' },
+  sensor_ult:   { label: 'Sensor Ult.', cor: '#1abc9c' },
+  termistor:    { label: 'Termistor', cor: '#e74c3c' },
+  matriz_led:   { label: 'Matriz LED', cor: '#9b59b6' },
+  gnd:          { label: 'GND', cor: '#2c3e50' },
+  vcc:          { label: 'VCC', cor: '#c0392b' },
+};
+
+window.toggleConecta = function() {
+  const body = document.getElementById('conecta-body');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnConecta();
+};
+
+function atualizarBtnConecta() {
+  const btn  = document.getElementById('btn-toggle-conecta');
+  const body = document.getElementById('conecta-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = (window.conectaState || []).length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' desafio' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Desafios (' + n + ')' : '▼ Criar Jogo');
+}
+
+window.adicionarConecta = function() {
+  if (!window.conectaState) window.conectaState = [];
+  if (window.conectaState.length >= 10) return;
+  window.conectaState.push({
+    descricao: '',
+    componentes: [],
+    conexoes_corretas: [],
+    feedback_erro: '',
+    pontos: 2.0
+  });
+  renderConectaLista();
+  recalcularPontos();
+  atualizarBtnConecta();
+};
+
+window.removerConecta = function(di) {
+  window.conectaState.splice(di, 1);
+  renderConectaLista();
+  recalcularPontos();
+  atualizarBtnConecta();
+};
+
+window.updateConecta = function(di, field, value) {
+  if (!window.conectaState[di]) return;
+  window.conectaState[di][field] = value;
+  if (field === 'pontos') recalcularPontos();
+};
+
+window.adicionarCompConecta = function(di) {
+  if (!window.conectaState[di]) return;
+  const sel   = document.getElementById(`conecta-tipo-novo-${di}`);
+  const tipo  = sel ? sel.value : 'resistor';
+  const label = document.getElementById(`conecta-label-novo-${di}`)?.value.trim() || TIPOS_COMP_ADM[tipo]?.label || tipo;
+  const id    = 'c' + Date.now();
+  window.conectaState[di].componentes.push({ id, tipo, label, pinos: [] });
+  renderConectaLista();
+};
+
+window.adicionarPinoConecta = function(di, compIdx) {
+  const comp = window.conectaState[di]?.componentes[compIdx];
+  if (!comp) return;
+  const labelEl = document.getElementById(`pino-label-${di}-${compIdx}`);
+  const label   = labelEl?.value.trim();
+  if (!label) { showToast('Digite o nome do pino.', 'error'); return; }
+  if (!comp.pinos) comp.pinos = [];
+  const id = 'p' + Date.now();
+  comp.pinos.push({ id, label });
+  renderConectaLista();
+};
+
+window.removerPinoConecta = function(di, compIdx, pinoId) {
+  const comp = window.conectaState[di]?.componentes[compIdx];
+  if (!comp) return;
+  comp.pinos = (comp.pinos || []).filter(p => p.id !== pinoId);
+  // Remove conexões que usavam este pino
+  window.conectaState[di].conexoes_corretas = (window.conectaState[di].conexoes_corretas || []).filter(conn => {
+    const sep = conn.indexOf('-');
+    const a = conn.slice(0, sep), b = conn.slice(sep + 1);
+    return a !== pinoId && b !== pinoId;
+  });
+  renderConectaLista();
+};
+
+window.removerCompConecta = function(di, compId) {
+  if (!window.conectaState[di]) return;
+  window.conectaState[di].componentes = window.conectaState[di].componentes.filter(c => c.id !== compId);
+  // Remover conexões que usavam esse componente
+  window.conectaState[di].conexoes_corretas = window.conectaState[di].conexoes_corretas.filter(conn => {
+    const [a, b] = conn.split('-');
+    return a !== compId && b !== compId;
+  });
+  renderConectaLista();
+};
+
+window.adicionarConexaoConecta = function(di) {
+  if (!window.conectaState[di]) return;
+  const selA = document.getElementById(`conecta-conn-a-${di}`);
+  const selB = document.getElementById(`conecta-conn-b-${di}`);
+  if (!selA || !selB) return;
+  const a = selA.value, b = selB.value;
+  if (!a || !b) { showToast('Selecione os dois pinos.', 'error'); return; }
+  if (a === b) { showToast('Selecione pinos diferentes.', 'error'); return; }
+  const par = [a, b].sort().join('-');
+  if (!window.conectaState[di].conexoes_corretas) window.conectaState[di].conexoes_corretas = [];
+  if (!window.conectaState[di].conexoes_corretas.includes(par)) {
+    window.conectaState[di].conexoes_corretas.push(par);
+  }
+  renderConectaLista();
+};
+
+window.removerConexaoConecta = function(di, conn) {
+  if (!window.conectaState[di]) return;
+  window.conectaState[di].conexoes_corretas = window.conectaState[di].conexoes_corretas.filter(c => c !== conn);
+  renderConectaLista();
+};
+
+function renderConectaLista() {
+  const lista = document.getElementById('conecta-lista');
+  if (!lista) return;
+  if (!window.conectaState) window.conectaState = [];
+
+  if (window.conectaState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhum desafio cadastrado. Clique em + Desafio para começar.</div>';
+    return;
+  }
+
+  const tiposOpts = Object.entries(TIPOS_COMP_ADM).map(([k, v]) =>
+    `<option value="${k}">${v.label}</option>`
+  ).join('');
+
+  lista.innerHTML = window.conectaState.map((d, di) => {
+    const comps = d.componentes || [];
+    const conns = d.conexoes_corretas || [];
+
+    // Todos os pinos de todos os componentes (para os selects de conexão)
+    const todosPinos = [];
+    comps.forEach(c => {
+      (c.pinos || []).forEach(p => {
+        todosPinos.push({ pinoId: p.id, pinoLabel: p.label, compLabel: c.label, compTipo: c.tipo });
+      });
+    });
+
+    const pinoOptsA = todosPinos.map(p =>
+      `<option value="${p.pinoId}">${p.compLabel} — ${p.pinoLabel}</option>`
+    ).join('');
+    const pinoOptsB = pinoOptsA;
+
+    // HTML de cada componente com seus pinos
+    const compsHTML = comps.length === 0
+      ? '<div style="color:#aaa;font-size:12px;">Nenhum componente ainda.</div>'
+      : comps.map((c, ci) => {
+          const cor = TIPOS_COMP_ADM[c.tipo]?.cor || '#666';
+          const pinosHTML = (c.pinos || []).map(p =>
+            `<span style="display:inline-flex;align-items:center;gap:4px;background:#f0f4ff;border:1px solid #c0cce0;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;color:#2d3436;">
+              ⬤ ${p.label}
+              <button onclick="removerPinoConecta(${di},${ci},'${p.id}')" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:12px;padding:0;line-height:1;">✕</button>
+            </span>`
+          ).join('') || '<span style="color:#bbb;font-size:11px;font-style:italic;">sem pinos</span>';
+
+          return `
+          <div class="conecta-comp-item" style="flex-direction:column;align-items:flex-start;gap:6px;">
+            <div style="display:flex;align-items:center;gap:8px;width:100%;">
+              <span style="background:${cor};color:#fff;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700;">${c.label}</span>
+              <span style="color:#888;font-size:11px;font-style:italic;">${TIPOS_COMP_ADM[c.tipo]?.label||c.tipo}</span>
+              <button onclick="removerCompConecta(${di},'${c.id}')" style="margin-left:auto;background:#e74c3c;color:#fff;border:none;border-radius:6px;padding:2px 8px;cursor:pointer;font-size:11px;">✕ Remover</button>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">
+              ${pinosHTML}
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;margin-top:2px;">
+              <input id="pino-label-${di}-${ci}" type="text" placeholder="Nome do pino (ex: Pino 13, +, entrada...)" style="flex:1;min-width:160px;font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid #ccc;">
+              <button onclick="adicionarPinoConecta(${di},${ci})" style="background:#0984e3;color:#fff;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-size:12px;white-space:nowrap;">+ Pino</button>
+            </div>
+          </div>`;
+        }).join('');
+
+    // HTML das conexões definidas
+    const connsHTML = conns.length === 0
+      ? '<div style="color:#aaa;font-size:12px;">Nenhuma conexão definida.</div>'
+      : conns.map(conn => {
+          const sep    = conn.indexOf('-');
+          const aId    = conn.slice(0, sep);
+          const bId    = conn.slice(sep + 1);
+          const aInfo  = todosPinos.find(p => p.pinoId === aId);
+          const bInfo  = todosPinos.find(p => p.pinoId === bId);
+          const aLabel = aInfo ? `${aInfo.compLabel} — ${aInfo.pinoLabel}` : aId;
+          const bLabel = bInfo ? `${bInfo.compLabel} — ${bInfo.pinoLabel}` : bId;
+          return `<div class="conecta-conn-item">
+            <span>⚡ ${aLabel} ↔ ${bLabel}</span>
+            <button onclick="removerConexaoConecta(${di},'${conn}')" style="background:#e74c3c;color:#fff;border:none;border-radius:6px;padding:2px 6px;cursor:pointer;font-size:11px;">✕</button>
+          </div>`;
+        }).join('');
+
+    const temPinos = todosPinos.length >= 2;
+
+    return `
+    <div class="quiz-card">
+      <div class="quiz-card-header">
+        <strong>Desafio ${di + 1}</strong>
+        <button onclick="removerConecta(${di})" class="btn-rem-quiz">✕ Remover</button>
+      </div>
+      <div class="quiz-card-body">
+        <label>Descrição / Instrução</label>
+        <input type="text" value="${(d.descricao||'').replace(/"/g,'&quot;')}" oninput="updateConecta(${di},'descricao',this.value)" placeholder="Ex: Monte o circuito do LED piscante">
+
+        <label>Pontos</label>
+        <input type="number" min="0.5" max="10" step="0.5" value="${d.pontos||2}" oninput="updateConecta(${di},'pontos',parseFloat(this.value)||2)" style="width:90px;">
+
+        <label>Feedback de erro</label>
+        <input type="text" value="${(d.feedback_erro||'').replace(/"/g,'&quot;')}" oninput="updateConecta(${di},'feedback_erro',this.value)" placeholder="Dica quando errar...">
+
+        <div class="conecta-section-label" style="margin-top:10px;">
+          Componentes
+          <span style="color:#888;font-weight:400;font-size:10px;"> — adicione cada componente e seus pinos de conexão</span>
+        </div>
+        <div class="conecta-comps-lista">${compsHTML}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;background:#f8f9fa;border-radius:8px;padding:8px;">
+          <select id="conecta-tipo-novo-${di}" style="padding:4px 8px;border-radius:6px;border:1px solid #ccc;font-size:13px;">${tiposOpts}</select>
+          <input id="conecta-label-novo-${di}" type="text" placeholder="Rótulo do componente" style="flex:1;min-width:110px;font-size:13px;">
+          <button onclick="adicionarCompConecta(${di})" style="background:#0984e3;color:#fff;border:none;border-radius:6px;padding:5px 14px;cursor:pointer;white-space:nowrap;font-weight:700;">+ Componente</button>
+        </div>
+
+        <div class="conecta-section-label" style="margin-top:14px;">
+          Conexões Corretas
+          <span style="color:#888;font-weight:400;font-size:10px;"> — defina os pares de pinos que devem ser ligados</span>
+        </div>
+        <div class="conecta-conns-lista">${connsHTML}</div>
+        ${temPinos ? `
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;background:#f0fdf4;border-radius:8px;padding:8px;border:1px solid #d1fae5;">
+          <select id="conecta-conn-a-${di}" style="flex:1;padding:4px 8px;border-radius:6px;border:1px solid #ccc;font-size:12px;min-width:140px;">
+            <option value="">Pino A...</option>${pinoOptsA}
+          </select>
+          <span style="font-weight:900;color:#00b894;">↔</span>
+          <select id="conecta-conn-b-${di}" style="flex:1;padding:4px 8px;border-radius:6px;border:1px solid #ccc;font-size:12px;min-width:140px;">
+            <option value="">Pino B...</option>${pinoOptsB}
+          </select>
+          <button onclick="adicionarConexaoConecta(${di})" style="background:#00b894;color:#fff;border:none;border-radius:6px;padding:5px 14px;cursor:pointer;font-weight:700;white-space:nowrap;">+ Conexão</button>
+        </div>` : `<div style="color:#aaa;font-size:12px;margin-top:6px;padding:8px;background:#f9f9f9;border-radius:6px;">Adicione componentes com pelo menos 2 pinos para definir conexões.</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}

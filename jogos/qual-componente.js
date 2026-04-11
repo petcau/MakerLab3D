@@ -37,11 +37,95 @@ function getNivelIdx(pts) {
   return 0;
 }
 
+// ============================================================
+// SONS SINTÉTICOS — Web Audio API
+// ============================================================
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Primitiva: toca uma nota com envelope simples
+function nota(ctx, freq, tipo, inicio, duracao, vol = 0.28) {
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = tipo;
+  osc.frequency.setValueAtTime(freq, ctx.currentTime + inicio);
+  gain.gain.setValueAtTime(0, ctx.currentTime + inicio);
+  gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + inicio + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + inicio + duracao);
+  osc.start(ctx.currentTime + inicio);
+  osc.stop(ctx.currentTime + inicio + duracao + 0.02);
+}
+
+// Entrada no jogo — arpejo ascendente festivo (Dó-Mi-Sol-Dó)
+function somEntrada() {
+  try {
+    const ctx = getAudioCtx();
+    const freqs = [262, 330, 392, 523];
+    freqs.forEach((f, i) => nota(ctx, f, 'triangle', i * 0.10, 0.18, 0.22));
+    nota(ctx, 523, 'sine', 0.44, 0.5, 0.15); // sustain final suave
+  } catch(e) {}
+}
+
+// Acerto — dois pings ascendentes rápidos
+function somAcerto() {
+  try {
+    const ctx = getAudioCtx();
+    nota(ctx, 587, 'sine', 0,    0.12, 0.30); // Ré5
+    nota(ctx, 784, 'sine', 0.13, 0.22, 0.25); // Sol5
+  } catch(e) {}
+}
+
+// Erro — dois tons descendentes graves, suaves (não assusta)
+function somErro() {
+  try {
+    const ctx = getAudioCtx();
+    nota(ctx, 330, 'triangle', 0,    0.14, 0.22); // Mi4
+    nota(ctx, 220, 'triangle', 0.14, 0.28, 0.18); // Lá3
+  } catch(e) {}
+}
+
+// Final bom (≥70%) — fanfarra: escala rápida + acorde triunfante
+function somFinalBom() {
+  try {
+    const ctx = getAudioCtx();
+    [262, 330, 392, 523, 659].forEach((f, i) =>
+      nota(ctx, f, 'triangle', i * 0.07, 0.14, 0.20));
+    // acorde maior no final
+    [523, 659, 784].forEach(f =>
+      nota(ctx, f, 'sine', 0.42, 0.8, 0.13));
+  } catch(e) {}
+}
+
+// Final ruim (<70%) — três notas descendentes, leve
+function somFinalRuim() {
+  try {
+    const ctx = getAudioCtx();
+    nota(ctx, 392, 'triangle', 0,    0.22, 0.20); // Sol4
+    nota(ctx, 330, 'triangle', 0.20, 0.22, 0.18); // Mi4
+    nota(ctx, 262, 'triangle', 0.40, 0.40, 0.16); // Dó4
+  } catch(e) {}
+}
+
+// Garante que o contexto retoma após qualquer interação do usuário
+document.addEventListener('click', () => {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+});
+
+// ============================================================
+
 const params  = new URLSearchParams(window.location.search);
 const cardId  = params.get('card');
 
 let perguntas = [], atual = 0, acertos = 0, erros = 0, pontosGanhos = 0;
 let selecionados = [], respondida = false;
+let listaEmbaralhada = [];
 let cardData = null, alunoUid = null, escolaId = null, avatarSrc = '../assets/robo 1_transparente.png';
 let tentativasPermitidas = 3, tentativasUsadas = 0, resultadoDocId = null, tentativaRegistrada = false;
 
@@ -102,6 +186,7 @@ function iniciarJogo() {
   document.getElementById('q-prog-wrap').style.display = '';
   document.getElementById('comp-box').style.display    = '';
   document.getElementById('q-placar').style.display    = '';
+  somEntrada();
   renderPergunta();
 }
 
@@ -121,6 +206,7 @@ function renderPergunta() {
   document.getElementById('comp-pergunta').textContent = q.pergunta || '—';
   document.getElementById('comp-pts-badge').textContent = '+' + (pts % 1 === 0 ? pts : pts.toFixed(1)) + ' pt' + (pts !== 1 ? 's' : '');
 
+  listaEmbaralhada = [...COMPONENTES].sort(() => Math.random() - 0.5);
   renderGrid(q, false);
 
   document.getElementById('comp-feedback').style.display  = 'none';
@@ -132,8 +218,8 @@ function renderGrid(q, revelar) {
   const wrap    = document.getElementById('comp-grid-jogo');
   const corretos = q.corretos || [];
 
-  // Embaralha componentes
-  const lista = [...COMPONENTES].sort(() => Math.random() - 0.5);
+  // Usa lista já embaralhada (embaralha só uma vez por pergunta)
+  const lista = listaEmbaralhada;
 
   wrap.innerHTML = '';
   lista.forEach(c => {
@@ -206,10 +292,12 @@ window.verificar = function() {
   if (acertouTodos) {
     acertos++;
     pontosGanhos += pts;
+    somAcerto();
     fb.className = 'comp-feedback acerto';
     fb.textContent = '✅ Correto! ' + (q.feedback || 'Você identificou o(s) componente(s) certo(s)!');
   } else {
     erros++;
+    somErro();
     fb.className = 'comp-feedback erro';
     fb.textContent = '❌ ' + (q.feedback || 'Os componentes corretos foram destacados em verde.');
   }
@@ -223,7 +311,7 @@ window.verificar = function() {
     setTimeout(mostrarFinal, 1500);
   } else {
     document.getElementById('btn-verificar').style.display = 'none';
-    document.getElementById('btn-prox').style.display = '';
+    document.getElementById('btn-prox').style.display = 'block';
   }
 };
 
@@ -260,6 +348,7 @@ function mostrarFinal() {
   const btnTentar = document.querySelector('.btn-tentar');
   if (btnTentar) btnTentar.style.display = restantes > 0 ? '' : 'none';
 
+  concluido ? somFinalBom() : somFinalRuim();
   document.getElementById('tela-final').style.display = 'flex';
   salvarResultado(acertos, pontosGanhos, total, concluido).catch(e => console.warn(e));
 }
