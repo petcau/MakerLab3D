@@ -127,19 +127,35 @@ async function carregarCard() {
       } catch(e) { /* ignora erro individual */ }
     }));
 
-    // Busca resultados do aluno logado para cards vinculados
+    // Busca resultados do aluno logado para cards vinculados (todas as coleções)
     const resultadosAluno = {};
     try {
       const userAtual = await new Promise(resolve => {
         const unsub = onAuthStateChanged(getAuth(), user => { unsub(); resolve(user); });
       });
       if (userAtual) {
-        await Promise.all(todosIds.map(async id => {
-          try {
-            const rSnap = await getDoc(doc(db, 'resultados_quiz', userAtual.uid + '_' + id));
-            if (rSnap.exists()) resultadosAluno[id] = rSnap.data();
-          } catch(e) {}
-        }));
+        const colsJogos = [
+          { col: 'resultados_quiz',     sufixo: '_'         },
+          { col: 'resultados_bug',      sufixo: '_bug_'     },
+          { col: 'resultados_comp',     sufixo: '_comp_'    },
+          { col: 'resultados_ordena',   sufixo: '_ordena_'  },
+          { col: 'resultados_complete', sufixo: '_complete_'},
+          { col: 'resultados_conecta',  sufixo: '_conecta_' },
+          { col: 'resultados_box',      sufixo: '_box_'     },
+        ];
+        await Promise.all(todosIds.flatMap(id =>
+          colsJogos.map(async ({ col, sufixo }) => {
+            try {
+              const rSnap = await getDoc(doc(db, col, userAtual.uid + sufixo + id));
+              if (rSnap.exists()) {
+                const r = rSnap.data();
+                if (!resultadosAluno[id]) resultadosAluno[id] = { pts: 0, concluido: false };
+                resultadosAluno[id].pts += parseFloat(r.melhor_pontos) || 0;
+                if (r.concluido) resultadosAluno[id].concluido = true;
+              }
+            } catch(e) {}
+          })
+        ));
       }
     } catch(e) { console.warn('resultados vinculados:', e); }
 
@@ -169,9 +185,12 @@ async function carregarCard() {
         card.className = `mini-card ${cor}`;
         card.href      = `card.html?id=${id}`;
         card.target    = '_blank';
-        const resultado = resultadosAluno[id];
-        const concluido = resultado && resultado.concluido;
-        const ptsGanhos = resultado ? resultado.melhor_pontos : null;
+        const resultado  = resultadosAluno[id];
+        const concluido  = resultado && resultado.concluido;
+        const ptsGanhos  = resultado ? Math.round(resultado.pts * 10) / 10 : null;
+        const ptsStr     = ptsGanhos !== null && ptsGanhos > 0
+          ? (ptsGanhos % 1 === 0 ? ptsGanhos : ptsGanhos.toFixed(1)) + ' pts'
+          : null;
 
         if (concluido) card.classList.add('mini-card-concluido');
 
@@ -182,11 +201,11 @@ async function carregarCard() {
           </div>
           <div class="mini-card-nome">${nome}</div>
           ${tema ? `<div class="mini-card-tema">${tema}</div>` : ''}
-          ${concluido ? `<div class="mini-card-badge-concluido">✅ Concluído<span class="badge-pts">${ptsGanhos !== null ? (ptsGanhos % 1 === 0 ? ptsGanhos : ptsGanhos.toFixed(1)) + ' pts' : ''}</span></div>` : ''}
+          ${concluido ? `<div class="mini-card-badge-concluido">✅ Concluído</div>` : ''}
           <div class="mini-card-spacer"></div>
           <div class="mini-card-footer">
             ${duracao ? `<span class="mini-stat">⏱ ${duracao}</span>` : ''}
-            ${!concluido && pontos ? `<span class="mini-stat">⭐ ${pontos} pts</span>` : ''}
+            ${resultado ? `<span class="mini-stat mini-stat-conquistado">⭐ ${ptsStr || '0 pts'}</span>` : (pontos ? `<span class="mini-stat">⭐ ${pontos} pts</span>` : '<span class="mini-stat mini-stat-conquistado">⭐ 0 pts</span>')}
             <span class="mini-card-arrow">→</span>
           </div>
         `;
@@ -372,7 +391,7 @@ async function carregarCard() {
             if (roboImg) roboImg.src = avatarSrc;
             if (nivelEl) nivelEl.textContent = nivelNome;
             if (nomeEl)  nomeEl.textContent  = 'Olá, ' + nomeAluno + '!';
-            if (ptsEl && ptsVal) { ptsVal.textContent = pts; ptsEl.style.display = ''; }
+            if (ptsVal) ptsVal.textContent = pts;
 
             // Tentativas
             const docId      = alunoLogado.uid + (prefixo === 'bug' ? '_bug_' : prefixo === 'comp' ? '_comp_' : prefixo === 'ordena' ? '_ordena_' : prefixo === 'complete' ? '_complete_' : prefixo === 'conecta' ? '_conecta_' : prefixo === 'box' ? '_box_' : '_') + cardId;
@@ -395,8 +414,8 @@ async function carregarCard() {
               const tentEl2 = document.getElementById(prefixo + '-jogo-tentativas');
               if (tentEl2) {
                 tentEl2.innerHTML =
-                  'Tentativas <strong>' + usadas + '</strong> de <strong>' + tentPermitidas + '</strong>' +
-                  ' &nbsp;·&nbsp; Última: <strong style="color:var(--ouro-esc);">' + ultPts + ' pts</strong>';
+                  '<div class="pts-conq-badge">⭐ <strong>' + ultPts + ' pts</strong> — Pontos Conquistados</div>' +
+                  'Tentativas <strong>' + usadas + '</strong> de <strong>' + tentPermitidas + '</strong>';
               }
             }
 

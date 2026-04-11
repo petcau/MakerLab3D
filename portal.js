@@ -3,7 +3,7 @@ import {
   getAuth, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, collection, getDocs
+  getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -114,8 +114,25 @@ onAuthStateChanged(auth, async user => {
         carregarTrilhasProfessor();
       }
 
-      // Atualiza pontos reais do aluno
-      const ptsReais = dados.pontos_total || 0;
+      // Recalcula pontos somando todas as coleções de resultados
+      let ptsReais = dados.pontos_total || 0;
+      try {
+        const cols = ['resultados_quiz','resultados_bug','resultados_comp','resultados_ordena','resultados_complete','resultados_conecta','resultados_box'];
+        const results = await Promise.allSettled(cols.map(c => getDocs(query(collection(db, c), where('aluno_id', '==', user.uid)))));
+        let totalCalculado = 0;
+        results.forEach((r, i) => {
+          if (r.status === 'fulfilled') {
+            r.value.forEach(d => { totalCalculado += parseFloat(d.data().melhor_pontos) || 0; });
+          } else {
+            console.warn('Falha ao ler ' + cols[i] + ':', r.reason);
+          }
+        });
+        totalCalculado = Math.round(totalCalculado * 10) / 10;
+        console.log('[PONTOS] calculado:', totalCalculado, '| salvo:', ptsReais);
+        ptsReais = totalCalculado;
+        await updateDoc(doc(db, 'usuarios', user.uid), { pontos_total: ptsReais });
+      } catch(e) { console.warn('Recalculo pontos:', e); }
+
       desenharSelo(ptsReais);
 
       // Atualiza pontos na caixa de ranking
@@ -123,7 +140,6 @@ onAuthStateChanged(auth, async user => {
       if (rankPontosEl) rankPontosEl.textContent = ptsReais;
 
       // Calcular posição no ranking (escola e geral)
-      // Carregar ranking para todos os perfis
       calcularPosicaoRanking(user.uid, ptsReais, dados.escola_id || '');
 
       // Carregar progresso real do aluno

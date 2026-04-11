@@ -76,6 +76,11 @@ async function init() {
         const idx = getNivelIdx(pts);
         const num = idx + 1;
         escolaId  = u.escola_id || '';
+        const escolaSnap = await getDoc(doc(db, 'escolas', escolaId || '_'));
+        const escolaNome = escolaSnap.exists() ? (escolaSnap.data().nome || '') : '';
+        const el = document.getElementById('player-escola');
+        if (el && escolaNome) el.textContent = escolaNome;
+        document.getElementById('player-jogo').textContent = 'Caca ao Bug';
         avatarSrc = '../assets/robo ' + num + '_transparente.png';
 
         document.getElementById('player-nome').textContent   = u.nome || user.displayName || user.email.split('@')[0];
@@ -357,12 +362,10 @@ async function salvarResultado(acertos, pontos, total, concluido) {
     ultima_vez: serverTimestamp()
   });
   // Recalcular pontos totais do aluno
-  const qQuiz = query(collection(db, 'resultados_quiz'), where('aluno_id', '==', alunoUid));
-  const qBug  = query(collection(db, 'resultados_bug'),  where('aluno_id', '==', alunoUid));
-  const [sqSnap, sbSnap] = await Promise.all([getDocs(qQuiz), getDocs(qBug)]);
+  const cols = ['resultados_quiz','resultados_bug','resultados_comp','resultados_ordena','resultados_complete','resultados_conecta','resultados_box'];
+  const snaps = await Promise.all(cols.map(c => getDocs(query(collection(db,c), where('aluno_id','==',alunoUid)))));
   let total2 = 0;
-  sqSnap.forEach(d => { total2 += parseFloat(d.data().melhor_pontos) || 0; });
-  sbSnap.forEach(d => { total2 += parseFloat(d.data().melhor_pontos) || 0; });
+  snaps.forEach(s => s.forEach(d => { total2 += parseFloat(d.data().melhor_pontos)||0; }));
   await updateDoc(doc(db, 'usuarios', alunoUid), { pontos_total: Math.round(total2 * 10) / 10 });
   document.getElementById('player-pts').textContent = Math.round(total2 * 10) / 10;
 }

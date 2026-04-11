@@ -193,8 +193,14 @@ body {
 .form-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 28px;
+  align-items: center;
+  position: sticky;
+  top: -32px;
+  z-index: 100;
+  background: var(--cinza-claro);
+  padding: 12px 32px;
+  margin: -32px -32px 20px;
+  border-bottom: 1px solid var(--cinza-medio);
 }
 
 .form-title {

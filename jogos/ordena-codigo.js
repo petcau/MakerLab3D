@@ -72,6 +72,11 @@ async function init() {
         const idx = getNivelIdx(pts);
         const num = idx + 1;
         escolaId  = u.escola_id || '';
+        const escolaSnap = await getDoc(doc(db, 'escolas', escolaId || '_'));
+        const escolaNome = escolaSnap.exists() ? (escolaSnap.data().nome || '') : '';
+        const el = document.getElementById('player-escola');
+        if (el && escolaNome) el.textContent = escolaNome;
+        document.getElementById('player-jogo').textContent = 'Ordene o Codigo';
         avatarSrc = '../assets/robo ' + num + '_transparente.png';
         document.getElementById('player-nome').textContent   = u.nome || user.displayName || user.email.split('@')[0];
         document.getElementById('player-nivel').textContent  = 'Nível ' + num + ' — ' + NIVEL_NOMES[idx];
@@ -429,7 +434,7 @@ async function salvarResultado(acertos, pontos, total, concluido) {
     ultima_vez: serverTimestamp()
   });
   // Recalcular pontos totais
-  const queries = ['resultados_quiz','resultados_bug','resultados_comp','resultados_ordena']
+  const queries = ['resultados_quiz','resultados_bug','resultados_comp','resultados_ordena','resultados_complete','resultados_conecta','resultados_box']
     .map(col => getDocs(query(collection(db, col), where('aluno_id','==',alunoUid))));
   const snaps = await Promise.all(queries);
   let total2 = 0;

@@ -144,6 +144,11 @@ async function init() {
         const idx = getNivelIdx(pts);
         const num = idx + 1;
         escolaId  = u.escola_id || '';
+        const escolaSnap = await getDoc(doc(db, 'escolas', escolaId || '_'));
+        const escolaNome = escolaSnap.exists() ? (escolaSnap.data().nome || '') : '';
+        const el = document.getElementById('player-escola');
+        if (el && escolaNome) el.textContent = escolaNome;
+        document.getElementById('player-jogo').textContent = 'Qual Componente?';
         avatarSrc = '../assets/robo ' + num + '_transparente.png';
         document.getElementById('player-nome').textContent   = u.nome || user.displayName || user.email.split('@')[0];
         document.getElementById('player-nivel').textContent  = 'Nível ' + num + ' — ' + NIVEL_NOMES[idx];
@@ -381,14 +386,10 @@ async function salvarResultado(acertos, pontos, total, concluido) {
     historico: arrayUnion({ data: new Date().toISOString(), pontos, acertos, pct: Math.round((acertos/total)*100) }),
     ultima_vez: serverTimestamp()
   });
-  const qQuiz = query(collection(db, 'resultados_quiz'), where('aluno_id', '==', alunoUid));
-  const qBug  = query(collection(db, 'resultados_bug'),  where('aluno_id', '==', alunoUid));
-  const qComp = query(collection(db, 'resultados_comp'), where('aluno_id', '==', alunoUid));
-  const [sq, sb, sc] = await Promise.all([getDocs(qQuiz), getDocs(qBug), getDocs(qComp)]);
+  const cols = ['resultados_quiz','resultados_bug','resultados_comp','resultados_ordena','resultados_complete','resultados_conecta','resultados_box'];
+  const snaps = await Promise.all(cols.map(c => getDocs(query(collection(db,c), where('aluno_id','==',alunoUid)))));
   let total2 = 0;
-  sq.forEach(d => { total2 += parseFloat(d.data().melhor_pontos) || 0; });
-  sb.forEach(d => { total2 += parseFloat(d.data().melhor_pontos) || 0; });
-  sc.forEach(d => { total2 += parseFloat(d.data().melhor_pontos) || 0; });
+  snaps.forEach(s => s.forEach(d => { total2 += parseFloat(d.data().melhor_pontos)||0; }));
   await updateDoc(doc(db, 'usuarios', alunoUid), { pontos_total: Math.round(total2 * 10) / 10 });
   document.getElementById('player-pts').textContent = Math.round(total2 * 10) / 10;
 }

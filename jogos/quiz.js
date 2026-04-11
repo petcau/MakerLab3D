@@ -80,6 +80,11 @@ async function init() {
         document.getElementById('player-card').style.display = '';
         alunoUid = user.uid;
         escolaId = u.escola_id || '';
+        const escolaSnap = await getDoc(doc(db, 'escolas', escolaId || '_'));
+        const escolaNome = escolaSnap.exists() ? (escolaSnap.data().nome || '') : '';
+        const el = document.getElementById('player-escola');
+        if (el && escolaNome) el.textContent = escolaNome;
+        document.getElementById('player-jogo').textContent = 'Quiz';
       }
 
       // Dados do card
@@ -409,10 +414,10 @@ async function salvarResultado(acertos, pontosGanhos, total) {
 // ── Recalcula pontos totais somando melhor_pontos de todos os resultados do aluno ──
 async function recalcularPontosAluno() {
   try {
-    const q    = query(collection(db, 'resultados_quiz'), where('aluno_id', '==', alunoUid));
-    const snap = await getDocs(q);
-    let total  = 0;
-    snap.forEach(d => { total += parseFloat(d.data().melhor_pontos) || 0; });
+    const cols = ['resultados_quiz','resultados_bug','resultados_comp','resultados_ordena','resultados_complete','resultados_conecta','resultados_box'];
+    const snaps = await Promise.all(cols.map(c => getDocs(query(collection(db,c), where('aluno_id','==',alunoUid)))));
+    let total = 0;
+    snaps.forEach(s => s.forEach(d => { total += parseFloat(d.data().melhor_pontos)||0; }));
 
     await updateDoc(doc(db, 'usuarios', alunoUid), {
       pontos_total: Math.round(total * 10) / 10
