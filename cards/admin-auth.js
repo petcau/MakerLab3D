@@ -3,7 +3,8 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, signOut,
-  createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup
+  createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import {
   getFirestore, collection, doc,
@@ -48,12 +49,14 @@ onAuthStateChanged(auth, async user => {
       nomeEl.textContent = snap.data().nome || user.email;
     }
 
-    // Gestor vê abas Usuários e Escolas, conteudista não
-    if (perfilAtual === 'gestor') {
-      const tabUsers   = document.getElementById('tab-usuarios');
+    // Gestor: vê Usuários + Escolas | Conteudista: vê apenas Escolas
+    if (perfilAtual === 'gestor' || perfilAtual === 'conteudista') {
       const tabEscolas = document.getElementById('tab-escolas');
-      if (tabUsers)   tabUsers.style.display   = '';
       if (tabEscolas) tabEscolas.style.display = '';
+    }
+    if (perfilAtual === 'gestor') {
+      const tabUsers = document.getElementById('tab-usuarios');
+      if (tabUsers) tabUsers.style.display = '';
     }
 
   } catch(err) {
@@ -68,6 +71,9 @@ window.fazerLogout = async function() {
 };
 
 // ---- TAB USUÁRIOS ----
+let todosUsuarios = [];
+let perfilFiltroAtivo = 'gestor';
+
 window.carregarUsuarios = async function() {
   const listEl = document.getElementById('usuarios-list');
   if (!listEl) return;
@@ -75,51 +81,63 @@ window.carregarUsuarios = async function() {
 
   try {
     const snap = await getDocs(collection(db, 'usuarios'));
-    listEl.innerHTML = '';
-
-    if (snap.empty) {
-      listEl.innerHTML = '<div class="list-loading">Nenhum usuário cadastrado.</div>';
-      return;
-    }
-
-    const docs = [];
-    snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
-    docs.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-
-    const grupos = { gestor: [], conteudista: [] };
-    docs.forEach(u => {
-      if (grupos[u.perfil]) grupos[u.perfil].push(u);
-      else grupos['conteudista'].push(u);
-    });
-
-    const labels = { gestor: 'Gestores', conteudista: 'Conteudistas' };
-
-    Object.entries(grupos).forEach(([perfil, users]) => {
-      if (users.length === 0) return;
-      const sep = document.createElement('div');
-      sep.className   = 'list-group-label';
-      sep.textContent = labels[perfil] || perfil;
-      listEl.appendChild(sep);
-
-      users.forEach(u => {
-        const item = document.createElement('div');
-        item.className  = 'card-item';
-        item.dataset.id = u.id;
-        item.innerHTML  = `
-          <div class="card-item-num">${u.perfil?.toUpperCase() || '—'}</div>
-          <div class="card-item-nome">${u.nome || 'Sem nome'}</div>
-          <div class="card-item-nivel">${u.email || ''}</div>
-          <span class="card-item-status status-publicado">Ativo</span>
-        `;
-        item.onclick = () => abrirUsuario(u);
-        listEl.appendChild(item);
-      });
-    });
-
+    todosUsuarios = [];
+    snap.forEach(d => todosUsuarios.push({ id: d.id, ...d.data() }));
+    todosUsuarios.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    renderUsuariosFiltrados(perfilFiltroAtivo);
   } catch(err) {
     listEl.innerHTML = `<div class="list-loading" style="color:#e74c3c;">Erro: ${err.message}</div>`;
   }
 };
+
+window.filtrarUsuarios = function(perfil) {
+  perfilFiltroAtivo = perfil;
+  // Atualiza botões de filtro
+  document.querySelectorAll('.ufiltro').forEach(b => {
+    b.classList.toggle('ativo', b.dataset.perfil === perfil);
+  });
+  // Mostra "+ Novo" apenas para perfis admin
+  const btnNovo = document.getElementById('usuarios-btn-novo');
+  if (btnNovo) btnNovo.style.display = (perfil === 'gestor' || perfil === 'conteudista') ? '' : 'none';
+  // Limpa seleção e conteúdo
+  document.querySelectorAll('#usuarios-list .card-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('usuarios-content').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-state-icon">👤</div>
+      <p>Selecione um usuário<br>ou cadastre um novo.</p>
+    </div>`;
+  renderUsuariosFiltrados(perfil);
+};
+
+function renderUsuariosFiltrados(perfil) {
+  const listEl = document.getElementById('usuarios-list');
+  if (!listEl) return;
+  const lista = todosUsuarios.filter(u => u.perfil === perfil);
+  listEl.innerHTML = '';
+
+  if (lista.length === 0) {
+    const perfilLabels = { gestor: 'gestor', conteudista: 'conteudista', professor: 'professor', aluno: 'aluno' };
+    listEl.innerHTML = `<div class="list-loading">Nenhum ${perfilLabels[perfil] || perfil} cadastrado.</div>`;
+    return;
+  }
+
+  lista.forEach(u => {
+    const item = document.createElement('div');
+    item.className  = 'card-item';
+    item.dataset.id = u.id;
+    const sub = u.perfil === 'aluno'
+      ? (u.serie ? u.serie + (u.turma ? ' — ' + u.turma : '') : (u.email || ''))
+      : (u.email || '');
+    item.innerHTML = `
+      <div class="card-item-num">${u.perfil?.toUpperCase() || '—'}</div>
+      <div class="card-item-nome">${u.nome || 'Sem nome'}</div>
+      <div class="card-item-nivel">${sub}</div>
+      <span class="card-item-status status-publicado">Ativo</span>
+    `;
+    item.onclick = () => abrirUsuario(u);
+    listEl.appendChild(item);
+  });
+}
 
 function abrirUsuario(u) {
   document.querySelectorAll('#usuarios-list .card-item').forEach(i => i.classList.remove('active'));
@@ -199,9 +217,99 @@ window.salvarUsuario = async function(uid) {
     }
     await carregarUsuarios();
   } catch(err) {
+    if (err.code === 'auth/email-already-in-use') {
+      // Conta existe no Auth mas não no Firestore — mostrar opção de restaurar
+      mostrarRestaurarUsuario(email, nome, perfil);
+    } else {
+      const msgs = { 'auth/weak-password': 'Senha muito fraca.' };
+      showToast('❌ ' + (msgs[err.code] || err.message), 'error');
+    }
+  }
+};
+
+function mostrarRestaurarUsuario(email, nome, perfil) {
+  const content = document.getElementById('usuarios-content');
+  if (!content) return;
+
+  // Mantém o form e adiciona aviso de restauração
+  const avisoExistente = document.getElementById('restaurar-aviso');
+  if (avisoExistente) avisoExistente.remove();
+
+  const aviso = document.createElement('div');
+  aviso.id = 'restaurar-aviso';
+  aviso.style.cssText = 'background:#fff8ec;border:2px solid #f39c12;border-radius:10px;padding:16px;margin-top:16px;';
+  aviso.innerHTML = `
+    <div style="font-weight:800;color:#7a5200;margin-bottom:8px;">⚠️ E-mail já existe no Firebase Auth</div>
+    <p style="font-size:13px;color:#555;margin-bottom:12px;">
+      A conta <strong>${email}</strong> existe mas foi removida do sistema admin.<br>
+      Para restaurar, informe a senha atual desta conta:
+    </p>
+    <input type="password" id="restaurar-senha" placeholder="Senha atual da conta"
+      style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid #ccc;font-size:13px;margin-bottom:10px;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="restaurarUsuario('${email}','${nome}','${perfil}')"
+        style="background:#e67e22;color:#fff;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-weight:700;font-size:13px;">
+        🔄 Restaurar Acesso
+      </button>
+      <button onclick="enviarRedefinicaoSenha('${email}')"
+        style="background:#3498db;color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px;">
+        📧 Enviar redefinição de senha
+      </button>
+      <button onclick="document.getElementById('restaurar-aviso').remove()"
+        style="background:#eee;color:#333;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px;">
+        Cancelar
+      </button>
+    </div>
+    <p id="restaurar-reset-msg" style="font-size:12px;color:#555;margin-top:10px;display:none;"></p>
+  `;
+  content.appendChild(aviso);
+  document.getElementById('restaurar-senha')?.focus();
+}
+
+window.enviarRedefinicaoSenha = async function(email) {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    const msg = document.getElementById('restaurar-reset-msg');
+    if (msg) {
+      msg.style.display = '';
+      msg.innerHTML = `✅ E-mail de redefinição enviado para <strong>${email}</strong>.<br>
+        Após o usuário redefinir a senha, informe a nova senha no campo acima e clique em Restaurar Acesso.`;
+    }
+  } catch(err) {
+    showToast('❌ Erro ao enviar e-mail: ' + err.message, 'error');
+  }
+};
+
+window.restaurarUsuario = async function(email, nome, perfil) {
+  const senha = document.getElementById('restaurar-senha')?.value;
+  if (!senha) { showToast('⚠️ Informe a senha.', 'error'); return; }
+
+  try {
+    // Usa segunda instância do Firebase para não afetar a sessão do admin
+    const { initializeApp: initApp2, getApps: getApps2 } = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js");
+    const { getAuth: getAuth2, signInWithEmailAndPassword: signIn2, signOut: signOut2 } = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js");
+
+    const cfg2  = { apiKey:"AIzaSyAndgQiwxpe6wyCF8aa5NqqdMuwLJfMIMM", authDomain:"makerlab3d-4e455.firebaseapp.com", projectId:"makerlab3d-4e455" };
+    const app2  = getApps2().find(a => a.name === 'restaurar-temp') || initApp2(cfg2, 'restaurar-temp');
+    const auth2 = getAuth2(app2);
+    const cred  = await signIn2(auth2, email, senha);
+    const uid   = cred.user.uid;
+    await signOut2(auth2);
+
+    // Recria o documento no Firestore
+    await setDoc(doc(db, 'usuarios', uid), {
+      nome, email, perfil,
+      criado_em: new Date().toISOString()
+    });
+
+    document.getElementById('restaurar-aviso')?.remove();
+    showToast('✅ Usuário restaurado com sucesso!', 'success');
+    await carregarUsuarios();
+  } catch(err) {
     const msgs = {
-      'auth/email-already-in-use': 'E-mail já cadastrado.',
-      'auth/weak-password': 'Senha muito fraca.',
+      'auth/wrong-password':  'Senha incorreta.',
+      'auth/invalid-credential': 'Senha incorreta.',
+      'auth/too-many-requests': 'Muitas tentativas. Tente mais tarde.',
     };
     showToast('❌ ' + (msgs[err.code] || err.message), 'error');
   }

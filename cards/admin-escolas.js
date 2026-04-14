@@ -108,13 +108,13 @@ function renderEscolaForm(id, e = {}) {
   const ufOptions = ufs.map(u => `<option value="${u}" ${e.uf === u ? 'selected' : ''}>${u}</option>`).join('');
 
   content.innerHTML = `
-    <div class="form-header" style="flex-direction:column; gap:0; align-items:stretch; padding:0; background:none; border:none;">
+    <div class="form-header" style="position:relative; top:0; margin:0 -32px 20px; flex-direction:column; gap:0; align-items:stretch; padding:0; background:var(--cinza-claro); border-bottom:1px solid var(--cinza-medio);">
       ${id ? `
-      <div style="display:flex; justify-content:flex-end; gap:8px; padding:16px 24px 12px; border-bottom:1px solid var(--cinza-medio); background:var(--off-white); border-radius:12px 12px 0 0;">
+      <div style="display:flex; justify-content:flex-end; gap:8px; padding:12px 24px 10px; border-bottom:1px solid var(--cinza-medio); background:var(--off-white);">
         <button class="btn-convidar" onclick="abrirModalConvite('${id}')">📩 Convidar Professor</button>
         <button class="btn-convidar" style="background:#8e44ad;" onclick="abrirModalConviteAluno('${id}')">🎒 Convidar Aluno</button>
       </div>` : ''}
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 24px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 24px;">
         <div class="form-title" style="margin:0;">${id ? `Escola ${e.id_escola || ''}` : 'Nova Escola'}</div>
         <div style="display:flex; gap:8px;">
           ${id ? `<button class="btn-deletar" onclick="deletarEscola('${id}')">🗑 Remover</button>` : ''}

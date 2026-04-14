@@ -122,6 +122,7 @@
                 <div class="progress-bar" style="margin-top:10px;">
                   <div class="progress-fill" id="rank-barra" style="width: 0%;"></div>
                 </div>
+                <button class="btn-ver-cards" onclick="abrirModalCards()">🃏 Ver Cards Pontuados</button>
               </div>
 
               <div class="ranking-posicoes">
@@ -313,7 +314,7 @@
             <p>Gerencie alunos e professores vinculados a cada escola.</p>
           </a>
 
-          <a class="acesso-card acesso-card-link" href="cards/admin.html" target="_blank" onclick="abrirAdminAba('usuarios', event)">
+          <a id="card-admin-usuarios" class="acesso-card acesso-card-link" href="cards/admin.html" target="_blank" onclick="abrirAdminAba('usuarios', event)">
             <div class="acesso-card-top">
               <div class="acesso-card-icon roxo">🔐</div>
               <span class="acesso-card-badge ativo">Acessar</span>
@@ -371,6 +372,19 @@
 
       </div>
 
+    </div>
+  </div>
+
+  <!-- Modal Cards Pontuados -->
+  <div id="modal-cards-pts" class="modal-cards-pts-overlay" style="display:none;" onclick="fecharModalCards(event)">
+    <div class="modal-cards-pts-box">
+      <div class="modal-cards-pts-header">
+        <div class="modal-cards-pts-titulo">🃏 Cards Pontuados</div>
+        <button class="modal-cards-pts-close" onclick="document.getElementById('modal-cards-pts').style.display='none'">×</button>
+      </div>
+      <div id="modal-cards-pts-body" class="modal-cards-pts-body">
+        <div style="text-align:center;padding:32px;color:#aaa;">Carregando...</div>
+      </div>
     </div>
   </div>
 

@@ -70,7 +70,13 @@
       <div class="sidebar">
         <div class="sidebar-header">
           <span class="sidebar-title">Usuários</span>
-          <button class="btn-novo" onclick="novoUsuario()">+ Novo</button>
+          <button class="btn-novo" id="usuarios-btn-novo" onclick="novoUsuario()">+ Novo</button>
+        </div>
+        <div class="usuarios-filter-tabs">
+          <button class="ufiltro ativo" data-perfil="gestor"       onclick="filtrarUsuarios('gestor')">Gestores</button>
+          <button class="ufiltro"       data-perfil="conteudista"   onclick="filtrarUsuarios('conteudista')">Conteudistas</button>
+          <button class="ufiltro"       data-perfil="professor"     onclick="filtrarUsuarios('professor')">Professores</button>
+          <button class="ufiltro"       data-perfil="aluno"         onclick="filtrarUsuarios('aluno')">Alunos</button>
         </div>
         <div class="card-list" id="usuarios-list">
           <div class="list-loading">Carregando...</div>

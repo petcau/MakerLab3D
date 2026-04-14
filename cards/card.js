@@ -205,7 +205,7 @@ async function carregarCard() {
           <div class="mini-card-spacer"></div>
           <div class="mini-card-footer">
             ${duracao ? `<span class="mini-stat">⏱ ${duracao}</span>` : ''}
-            ${resultado ? `<span class="mini-stat mini-stat-conquistado">⭐ ${ptsStr || '0 pts'}</span>` : (pontos ? `<span class="mini-stat">⭐ ${pontos} pts</span>` : '<span class="mini-stat mini-stat-conquistado">⭐ 0 pts</span>')}
+            <span class="mini-stat mini-stat-conquistado">⭐ ${ptsStr || '0 pts'}</span>
             <span class="mini-card-arrow">→</span>
           </div>
         `;

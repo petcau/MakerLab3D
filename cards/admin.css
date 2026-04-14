@@ -103,6 +103,38 @@ body {
 
 .btn-novo:hover { background: #e6b800; transform: scale(1.02); }
 
+/* ---- Filtro de perfil na aba Usuários ---- */
+.usuarios-filter-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border-bottom: 1px solid var(--cinza-medio);
+  background: var(--cinza-claro);
+}
+
+.ufiltro {
+  padding: 9px 4px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #999;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.ufiltro:hover { color: #555; }
+.ufiltro.ativo {
+  color: var(--preto);
+  border-bottom-color: var(--amarelo);
+  background: #fff;
+}
+
 .card-list {
   flex: 1;
   overflow-y: auto;

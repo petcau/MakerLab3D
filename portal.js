@@ -107,10 +107,10 @@ onAuthStateChanged(auth, async user => {
       inicializarPaineis(perfil);
 
       // Carrega trilhas conforme perfil
-      if (perfil === 'aluno' || perfil === 'gestor') {
+      if (perfil === 'aluno' || perfil === 'gestor' || perfil === 'conteudista') {
         carregarTrilhasAluno();
       }
-      if (perfil === 'professor' || perfil === 'gestor') {
+      if (perfil === 'professor' || perfil === 'gestor' || perfil === 'conteudista') {
         carregarTrilhasProfessor();
       }
 
@@ -335,9 +335,12 @@ const subtitulos = {
 };
 
 function mostrarPaineis(visao) {
-  // Gestor vê todos os painéis; outros veem só o seu
-  if (visao === 'gestor') {
+  // Gestor e conteudista veem todos os painéis; outros veem só o seu
+  if (visao === 'gestor' || visao === 'conteudista') {
     Object.values(paineis).forEach(p => p && p.classList.add('visivel'));
+    // Conteudista não gerencia usuários admin
+    const cardUsuarios = document.getElementById('card-admin-usuarios');
+    if (cardUsuarios) cardUsuarios.style.display = visao === 'conteudista' ? 'none' : '';
   } else {
     Object.entries(paineis).forEach(([k, p]) => {
       if (!p) return;
@@ -755,3 +758,93 @@ document.getElementById('btn-sair').addEventListener('click', async () => {
   await signOut(auth);
   window.location.href = 'login.html';
 });
+
+// ── Modal Cards Pontuados ──────────────────────────────────────────────
+const COLS_JOGOS = [
+  { col: 'resultados_quiz',     jogo: 'Quiz' },
+  { col: 'resultados_bug',      jogo: 'Caça ao Bug' },
+  { col: 'resultados_comp',     jogo: 'Qual Componente?' },
+  { col: 'resultados_ordena',   jogo: 'Ordena Código' },
+  { col: 'resultados_complete', jogo: 'Complete o Código' },
+  { col: 'resultados_conecta',  jogo: 'Conecta os Pontos' },
+  { col: 'resultados_box',      jogo: 'Simulador BOX' },
+];
+
+window.abrirModalCards = async function() {
+  const modal = document.getElementById('modal-cards-pts');
+  const body  = document.getElementById('modal-cards-pts-body');
+  if (!modal || !body) return;
+
+  modal.style.display = 'flex';
+  body.innerHTML = '<div style="text-align:center;padding:32px;color:#aaa;">Carregando...</div>';
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  try {
+    // Busca resultados em todas as coleções
+    const resultados = await Promise.allSettled(
+      COLS_JOGOS.map(({ col, jogo }) =>
+        getDocs(query(collection(db, col), where('aluno_id', '==', user.uid)))
+          .then(snap => {
+            const items = [];
+            snap.forEach(d => {
+              const r = d.data();
+              if ((r.melhor_pontos || 0) > 0) items.push({ card_id: r.card_id, pontos: parseFloat(r.melhor_pontos) || 0, jogo });
+            });
+            return items;
+          })
+      )
+    );
+
+    // Agrupa por card_id somando pontos de diferentes jogos
+    const mapa = {};
+    resultados.forEach(r => {
+      if (r.status !== 'fulfilled') return;
+      r.value.forEach(({ card_id, pontos, jogo }) => {
+        if (!card_id) return;
+        if (!mapa[card_id]) mapa[card_id] = { pontos: 0, jogos: [] };
+        mapa[card_id].pontos += pontos;
+        mapa[card_id].jogos.push(jogo);
+      });
+    });
+
+    if (Object.keys(mapa).length === 0) {
+      body.innerHTML = '<div style="text-align:center;padding:32px;color:#aaa;font-size:14px;">Você ainda não pontuou em nenhum card.</div>';
+      return;
+    }
+
+    // Busca nomes dos cards no Firestore
+    const cardIds = Object.keys(mapa);
+    const cardSnaps = await Promise.allSettled(cardIds.map(id => getDoc(doc(db, 'cards', id))));
+
+    const lista = cardIds.map((id, i) => {
+      const snap = cardSnaps[i];
+      const titulo = (snap.status === 'fulfilled' && snap.value.exists())
+        ? (snap.value.data().titulo || snap.value.data().nome || id)
+        : id;
+      return { id, titulo, pontos: Math.round(mapa[id].pontos * 10) / 10, jogos: [...new Set(mapa[id].jogos)] };
+    });
+
+    lista.sort((a, b) => b.pontos - a.pontos);
+
+    body.innerHTML = lista.map(c => `
+      <div class="modal-card-pts-item">
+        <div class="modal-card-pts-info">
+          <div class="modal-card-pts-nome">${c.titulo}</div>
+          <div class="modal-card-pts-jogos">${c.jogos.join(' · ')}</div>
+        </div>
+        <div class="modal-card-pts-badge">${c.pontos} pts</div>
+      </div>
+    `).join('');
+
+  } catch(err) {
+    body.innerHTML = `<div style="text-align:center;padding:24px;color:#e74c3c;font-size:13px;">Erro ao carregar: ${err.message}</div>`;
+  }
+};
+
+window.fecharModalCards = function(e) {
+  if (e.target === document.getElementById('modal-cards-pts')) {
+    document.getElementById('modal-cards-pts').style.display = 'none';
+  }
+};
