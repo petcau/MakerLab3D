@@ -154,6 +154,9 @@ function renderUsuarioForm(u) {
   const content = document.getElementById('usuarios-content');
   if (!content) return;
 
+  const isAdmin = !u || u.perfil === 'gestor' || u.perfil === 'conteudista';
+  const perfilLabels = { gestor: 'Gestor', conteudista: 'Conteudista', professor: 'Professor', aluno: 'Aluno' };
+
   content.innerHTML = `
     <div class="form-header">
       <div class="form-title">${u ? 'Editar Usuário' : 'Novo Usuário Admin'}</div>
@@ -171,7 +174,7 @@ function renderUsuarioForm(u) {
           <input type="text" id="u-nome" value="${u?.nome || ''}" placeholder="Nome completo">
         </div>
         <div class="form-group">
-          <label>E-mail *</label>
+          <label>E-mail</label>
           <input type="email" id="u-email" value="${u?.email || ''}" placeholder="email@exemplo.com"
             ${u ? 'readonly style="opacity:0.5"' : ''}>
         </div>
@@ -181,11 +184,15 @@ function renderUsuarioForm(u) {
           <input type="password" id="u-senha" placeholder="Mínimo 6 caracteres">
         </div>` : ''}
         <div class="form-group">
-          <label>Perfil *</label>
+          <label>Perfil</label>
+          ${isAdmin ? `
           <select id="u-perfil">
             <option value="gestor"      ${u?.perfil === 'gestor'      ? 'selected' : ''}>Gestor</option>
             <option value="conteudista" ${u?.perfil === 'conteudista' ? 'selected' : ''}>Conteudista</option>
-          </select>
+          </select>` : `
+          <input type="text" value="${perfilLabels[u?.perfil] || u?.perfil || ''}" readonly style="opacity:0.5;">
+          <input type="hidden" id="u-perfil" value="${u?.perfil || ''}">
+          `}
         </div>
       </div>
     </div>
@@ -202,8 +209,10 @@ window.salvarUsuario = async function(uid) {
 
   try {
     if (uid) {
-      // Atualiza dados existentes
-      await setDoc(doc(db, 'usuarios', uid), { nome, perfil }, { merge: true });
+      // Para professor/aluno só atualiza nome; para gestor/conteudista atualiza nome + perfil
+      const adminPerfis = ['gestor', 'conteudista'];
+      const dados = adminPerfis.includes(perfil) ? { nome, perfil } : { nome };
+      await setDoc(doc(db, 'usuarios', uid), dados, { merge: true });
       showToast('✅ Usuário atualizado!', 'success');
     } else {
       // Cria novo usuário no Firebase Auth
