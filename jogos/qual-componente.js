@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, arrayUnion, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, arrayUnion, increment, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyAndgQiwxpe6wyCF8aa5NqqdMuwLJfMIMM",
@@ -127,7 +127,13 @@ let perguntas = [], atual = 0, acertos = 0, erros = 0, pontosGanhos = 0;
 let selecionados = [], respondida = false;
 let listaEmbaralhada = [];
 let cardData = null, alunoUid = null, escolaId = null, avatarSrc = '../assets/robo 1_transparente.png';
-let tentativasPermitidas = 3, tentativasUsadas = 0, resultadoDocId = null, tentativaRegistrada = false;
+let tentativasPermitidas = 3, tentativasUsadas = 0, resultadoDocId = null, tentativaRegistrada = false, inicioJogo = 0;
+
+function getSemanaLetiva() {
+  const hoje = new Date();
+  const inicio = new Date(hoje.getFullYear(), 2, 1);
+  return Math.max(1, Math.ceil((hoje - inicio) / (7 * 24 * 3600 * 1000)));
+}
 
 async function init() {
   if (!cardId) { erroLoad('Card não especificado.'); return; }
@@ -360,6 +366,7 @@ function mostrarFinal() {
 
 async function registrarTentativa() {
   if (!resultadoDocId || !alunoUid) return;
+  inicioJogo = Date.now();
   try {
     const ref  = doc(db, 'resultados_comp', resultadoDocId);
     const snap = await getDoc(ref);
@@ -369,7 +376,9 @@ async function registrarTentativa() {
         tentativas_permitidas: tentativasPermitidas, tentativas_usadas: 1,
         concluido: false, melhor_pontos: 0, melhor_acertos: 0,
         total_perguntas: perguntas.length,
-        primeira_vez: serverTimestamp(), ultima_vez: serverTimestamp(), historico: []
+        primeira_vez: serverTimestamp(), ultima_vez: serverTimestamp(), historico: [],
+        duracao_total_segundos: 0, historico_pontos: [],
+        semana_letiva: getSemanaLetiva(), dispositivo: window.innerWidth < 768 ? 'mobile' : 'desktop'
       });
     } else {
       await updateDoc(ref, { tentativas_usadas: (snap.data().tentativas_usadas || 0) + 1, ultima_vez: serverTimestamp() });
@@ -380,13 +389,16 @@ async function registrarTentativa() {
 
 async function salvarResultado(acertos, pontos, total, concluido) {
   if (!resultadoDocId) return;
+  const duracao = Math.round((Date.now() - inicioJogo) / 1000);
   const ref = doc(db, 'resultados_comp', resultadoDocId);
   await updateDoc(ref, {
     concluido, melhor_pontos: pontos, melhor_acertos: acertos,
     historico: arrayUnion({ data: new Date().toISOString(), pontos, acertos, pct: Math.round((acertos/total)*100) }),
+    historico_pontos: arrayUnion(pontos),
+    duracao_total_segundos: increment(duracao),
     ultima_vez: serverTimestamp()
   });
-  const cols = ['resultados_quiz','resultados_bug','resultados_comp','resultados_ordena','resultados_complete','resultados_conecta','resultados_box'];
+  const cols = ['resultados_quiz','resultados_bug','resultados_comp','resultados_ordena','resultados_complete','resultados_conecta','resultados_box','resultados_binario'];
   const snaps = await Promise.all(cols.map(c => getDocs(query(collection(db,c), where('aluno_id','==',alunoUid)))));
   let total2 = 0;
   snaps.forEach(s => s.forEach(d => { total2 += parseFloat(d.data().melhor_pontos)||0; }));

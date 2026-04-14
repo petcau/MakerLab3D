@@ -1655,3 +1655,56 @@ body {
 .section-box-jogo .quiz-jogo-nivel-badge { color: #7d3500; background: rgba(230,126,34,0.12); border: 1px solid rgba(230,126,34,0.3); }
 .section-box-jogo .quiz-jogo-pontos-aluno { color: #7d3500; }
 .section-box-jogo .quiz-jogo-aluno-nome   { color: #7d3500; }
+
+/* ---- CÓDIGO BINÁRIO ---- */
+.section-binario-jogo {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e8d5ff 100%);
+  border-radius: 20px;
+  border: 2px solid #8e44ad;
+  padding: 28px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 24px rgba(142,68,173,0.12);
+  position: relative;
+}
+
+.section-binario-jogo::before {
+  content: '0  1  0  1';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: rgba(142,68,173,0.18);
+  font-family: 'Courier New', monospace;
+  pointer-events: none;
+}
+
+.binario-jogo-btn {
+  background: linear-gradient(135deg, #8e44ad, #6c3483);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 24px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.25s;
+  box-shadow: 0 4px 16px rgba(142,68,173,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+  letter-spacing: 0.5px;
+}
+
+.binario-jogo-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 24px rgba(142,68,173,0.5); }
+
+.section-binario-jogo .quiz-stat { background: rgba(142,68,173,0.1); border: 1px solid rgba(142,68,173,0.3); }
+.section-binario-jogo .quiz-stat-valor { color: #4a1a6b; }
+.section-binario-jogo .quiz-jogo-divider { background: linear-gradient(180deg, transparent, #8e44ad, transparent); }
+.section-binario-jogo .quiz-jogo-tag { color: #8e44ad; }
+.section-binario-jogo .quiz-jogo-nivel-badge { color: #4a1a6b; background: rgba(142,68,173,0.12); border: 1px solid rgba(142,68,173,0.3); }
+.section-binario-jogo .quiz-jogo-pontos-aluno { color: #4a1a6b; }
+.section-binario-jogo .quiz-jogo-aluno-nome   { color: #4a1a6b; }

@@ -43,10 +43,10 @@ function nota(ctx, freq, tipo, inicio, duracao, vol = 0.28) {
   osc.start(ctx.currentTime + inicio);
   osc.stop(ctx.currentTime + inicio + duracao + 0.02);
 }
-function somEntrada() { try { const ctx = getAudioCtx(); [262,330,392,523].forEach((f,i) => nota(ctx,f,'triangle',i*0.10,0.18,0.22)); nota(ctx,523,'sine',0.44,0.5,0.15); } catch(e) {} }
-function somAcerto()  { try { const ctx = getAudioCtx(); nota(ctx,587,'sine',0,0.12,0.30); nota(ctx,784,'sine',0.13,0.22,0.25); } catch(e) {} }
-function somErro()    { try { const ctx = getAudioCtx(); nota(ctx,330,'triangle',0,0.14,0.22); nota(ctx,220,'triangle',0.14,0.28,0.18); } catch(e) {} }
-function somFinalBom(){ try { const ctx = getAudioCtx(); [262,330,392,523,659].forEach((f,i) => nota(ctx,f,'triangle',i*0.07,0.14,0.20)); [523,659,784].forEach(f => nota(ctx,f,'sine',0.42,0.8,0.13)); } catch(e) {} }
+function somEntrada()  { try { const ctx = getAudioCtx(); [262,330,392,523].forEach((f,i) => nota(ctx,f,'triangle',i*0.10,0.18,0.22)); nota(ctx,523,'sine',0.44,0.5,0.15); } catch(e) {} }
+function somAcerto()   { try { const ctx = getAudioCtx(); nota(ctx,587,'sine',0,0.12,0.30); nota(ctx,784,'sine',0.13,0.22,0.25); } catch(e) {} }
+function somErro()     { try { const ctx = getAudioCtx(); nota(ctx,330,'triangle',0,0.14,0.22); nota(ctx,220,'triangle',0.14,0.28,0.18); } catch(e) {} }
+function somFinalBom() { try { const ctx = getAudioCtx(); [262,330,392,523,659].forEach((f,i) => nota(ctx,f,'triangle',i*0.07,0.14,0.20)); [523,659,784].forEach(f => nota(ctx,f,'sine',0.42,0.8,0.13)); } catch(e) {} }
 function somFinalRuim(){ try { const ctx = getAudioCtx(); nota(ctx,392,'triangle',0,0.22,0.20); nota(ctx,330,'triangle',0.20,0.22,0.18); nota(ctx,262,'triangle',0.40,0.40,0.16); } catch(e) {} }
 document.addEventListener('click', () => { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
 // ============================================================
@@ -54,7 +54,7 @@ document.addEventListener('click', () => { if (audioCtx && audioCtx.state === 's
 const params = new URLSearchParams(window.location.search);
 const cardId = params.get('card');
 
-let perguntas = [], atual = 0, acertos = 0, erros = 0, pontosGanhos = 0, respondida = false, cardData = null, avatarSrc = '../assets/robo 1_transparente.png';
+let desafios = [], atual = 0, acertos = 0, erros = 0, pontosGanhos = 0, respondida = false, cardData = null, avatarSrc = '../assets/robo 1_transparente.png';
 let tentativaRegistrada = false, resultadoDocId = null, tentativasUsadas = 0, tentativasPermitidas = 3, alunoUid = null, escolaId = null, inicioJogo = 0;
 
 function getSemanaLetiva() {
@@ -62,6 +62,39 @@ function getSemanaLetiva() {
   const inicio = new Date(hoje.getFullYear(), 2, 1);
   const diff = hoje - inicio;
   return Math.max(1, Math.ceil(diff / (7 * 24 * 3600 * 1000)));
+}
+
+// Converte string binária de 5 bits para decimal
+function binarioParaDecimal(bin) {
+  const bits = bin.padStart(5, '0').slice(0, 5);
+  return parseInt(bits, 2);
+}
+
+// Gera 3 distrações plausíveis (diferentes do correto, entre 0 e 31)
+function gerarDistratores(correto) {
+  const usados = new Set([correto]);
+  const distratores = [];
+
+  // Candidatos próximos primeiro
+  const candidatos = [];
+  for (let d = 1; d <= 8; d++) {
+    if (correto - d >= 0)  candidatos.push(correto - d);
+    if (correto + d <= 31) candidatos.push(correto + d);
+  }
+  // Completa com aleatórios se precisar
+  while (candidatos.length < 20) {
+    const r = Math.floor(Math.random() * 32);
+    if (!usados.has(r) && !candidatos.includes(r)) candidatos.push(r);
+  }
+
+  for (const c of candidatos) {
+    if (!usados.has(c) && distratores.length < 3) {
+      distratores.push(c);
+      usados.add(c);
+    }
+    if (distratores.length === 3) break;
+  }
+  return distratores;
 }
 
 async function init() {
@@ -91,7 +124,7 @@ async function init() {
         const escolaNome = escolaSnap.exists() ? (escolaSnap.data().nome || '') : '';
         const el = document.getElementById('player-escola');
         if (el && escolaNome) el.textContent = escolaNome;
-        document.getElementById('player-jogo').textContent = 'Quiz';
+        document.getElementById('player-jogo').textContent = 'Binário';
       }
 
       // Dados do card
@@ -100,15 +133,18 @@ async function init() {
       cardData = cardSnap.data();
 
       document.getElementById('q-card-nome').textContent = cardData.nome || cardId;
-      document.title = 'Quiz — ' + (cardData.nome || cardId);
+      document.title = 'Código Binário — ' + (cardData.nome || cardId);
 
-      if (!cardData.quiz || cardData.quiz.length === 0) { erroLoad('Este card não tem quiz cadastrado.'); return; }
+      if (!cardData.binario_desafios || cardData.binario_desafios.length === 0) {
+        erroLoad('Este card não tem desafios binários cadastrados.');
+        return;
+      }
 
-      tentativasPermitidas = cardData.tentativas || 3;
-      resultadoDocId = user.uid + '_' + cardId;
+      tentativasPermitidas = cardData.binario_tentativas || 3;
+      resultadoDocId = user.uid + '_binario_' + cardId;
 
       // Verificar tentativas usadas
-      const resultSnap = await getDoc(doc(db, 'resultados_quiz', resultadoDocId));
+      const resultSnap = await getDoc(doc(db, 'resultados_binario', resultadoDocId));
       if (resultSnap.exists()) {
         tentativasUsadas = resultSnap.data().tentativas_usadas || 0;
       }
@@ -118,7 +154,7 @@ async function init() {
         return;
       }
 
-      perguntas = [...cardData.quiz].sort(() => Math.random() - 0.5);
+      desafios = [...cardData.binario_desafios].sort(() => Math.random() - 0.5);
       iniciarJogo();
 
     } catch(e) { erroLoad('Erro: ' + e.message); }
@@ -126,103 +162,55 @@ async function init() {
 }
 
 function erroLoad(msg) {
-  document.getElementById('loading').innerHTML = '<p style="color:var(--vermelho);font-weight:700;">' + msg + '</p>';
+  document.getElementById('loading').innerHTML = '<p style="color:#e74c3c;font-weight:700;">' + msg + '</p>';
 }
 
 function iniciarJogo() {
-  document.getElementById('loading').style.display   = 'none';
+  document.getElementById('loading').style.display    = 'none';
   document.getElementById('q-prog-wrap').style.display = '';
-  document.getElementById('q-box').style.display      = '';
-  document.getElementById('q-placar').style.display   = '';
+  document.getElementById('q-box').style.display       = '';
+  document.getElementById('q-placar').style.display    = '';
   somEntrada();
-  renderPergunta();
+  renderDesafio();
 }
 
-// Renderiza texto da pergunta — detecta blocos de código entre ``` ou por palavras-chave
-function renderPerguntaTexto(texto) {
-  const el = document.getElementById('q-texto');
-
-  // Caso 1: tem marcadores ```
-  if (texto.includes('```')) {
-    const partes = texto.split('```');
-    let html = '';
-    partes.forEach((parte, i) => {
-      if (!parte.trim()) return;
-      if (i % 2 === 0) {
-        html += '<span class="q-texto-narrativo">' + parte.replace(/</g, '&lt;') + '</span>';
-      } else {
-        const linhas = parte.split('\n');
-        if (linhas[0].trim().match(/^[a-zA-Z]+$/)) linhas.shift();
-        html += '<pre class="q-code-block"><code>' + linhas.join('\n').replace(/</g, '&lt;') + '</code></pre>';
-      }
-    });
-    el.innerHTML = html;
-    return;
-  }
-
-  // Caso 2: sem marcadores — detectar automaticamente linhas de código
-  const KEYWORDS = /^(void|int|bool|float|char|String|if|else|for|while|do|switch|case|return|digitalWrite|digitalRead|analogWrite|analogRead|delay|Serial|#include|#define|\{|\})/;
-  const linhas = texto.split('\n');
-  const blocos = [];
-  let modoAtual = null; // 'texto' ou 'codigo'
-  let buffer = [];
-
-  linhas.forEach(linha => {
-    const eCodigo = KEYWORDS.test(linha.trim()) || linha.includes(';') || linha.trim() === '{' || linha.trim() === '}';
-    const tipo = eCodigo ? 'codigo' : 'texto';
-
-    if (tipo !== modoAtual) {
-      if (buffer.length) blocos.push({ tipo: modoAtual, linhas: [...buffer] });
-      buffer = [];
-      modoAtual = tipo;
-    }
-    buffer.push(linha);
-  });
-  if (buffer.length) blocos.push({ tipo: modoAtual, linhas: buffer });
-
-  // Se só tem texto (nenhum bloco de código detectado), exibe simples
-  const temCodigo = blocos.some(b => b.tipo === 'codigo');
-  if (!temCodigo) {
-    el.textContent = texto;
-    return;
-  }
-
-  let html = '';
-  blocos.forEach(bloco => {
-    if (bloco.tipo === 'texto') {
-      const t = bloco.linhas.join(' ').trim();
-      if (t) html += '<span class="q-texto-narrativo">' + t.replace(/</g, '&lt;') + '</span>';
-    } else {
-      html += '<pre class="q-code-block"><code>' + bloco.linhas.join('\n').replace(/</g, '&lt;') + '</code></pre>';
-    }
-  });
-
-  el.innerHTML = html;
-}
-
-function renderPergunta() {
-  if (atual >= perguntas.length) { mostrarFinal(); return; }
+function renderDesafio() {
+  if (atual >= desafios.length) { mostrarFinal(); return; }
   respondida = false;
-  const q   = perguntas[atual];
-  const pct = Math.round((atual / perguntas.length) * 100);
+  const d   = desafios[atual];
+  const pct = Math.round((atual / desafios.length) * 100);
 
-  document.getElementById('prog-txt').textContent    = 'Pergunta ' + (atual + 1) + ' de ' + perguntas.length;
-  document.getElementById('prog-pct').textContent    = pct + '%';
-  document.getElementById('prog-fill').style.width   = pct + '%';
-  document.getElementById('q-num').textContent       = 'Pergunta ' + (atual + 1);
-  renderPerguntaTexto(q.pergunta || '—');
-  const pts = parseFloat(q.pontos) || 1.0;
+  document.getElementById('prog-txt').textContent  = 'Desafio ' + (atual + 1) + ' de ' + desafios.length;
+  document.getElementById('prog-pct').textContent  = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('q-num').textContent     = 'Desafio ' + (atual + 1);
+
+  const pts = parseFloat(d.pontos) || 1.0;
   document.getElementById('q-pts-badge').textContent = '+' + (pts % 1 === 0 ? pts : pts.toFixed(1)) + ' pt' + (pts !== 1 ? 's' : '');
+
+  // Renderiza os bits
+  const bin = (d.binario || '00000').padStart(5, '0').slice(0, 5);
+  for (let i = 0; i < 5; i++) {
+    const el = document.getElementById('bit-' + (4 - i));
+    const b  = bin[i];
+    el.textContent = b;
+    el.className   = 'bin-bit ' + (b === '1' ? 'bit-um' : 'bit-zero');
+  }
+
+  // Gera alternativas
+  const correto = binarioParaDecimal(bin);
+  const distratores = gerarDistratores(correto);
+  const alternativas = [correto, ...distratores].sort(() => Math.random() - 0.5);
+  const idxCorreto = alternativas.indexOf(correto);
 
   const altsEl = document.getElementById('q-alts');
   altsEl.innerHTML = '';
   const letras = ['A','B','C','D'];
-  (q.alternativas || []).forEach((alt, i) => {
-    if (!alt && alt !== 0) return;
+  alternativas.forEach((val, i) => {
     const btn = document.createElement('button');
     btn.className = 'q-alt';
-    btn.innerHTML = '<span class="q-alt-letra">' + letras[i] + '</span>' + alt;
-    btn.onclick = () => responder(i, q);
+    btn.innerHTML = '<span class="q-alt-letra">' + letras[i] + '</span>' + val;
+    btn.onclick = () => responder(i, idxCorreto, pts);
     altsEl.appendChild(btn);
   });
 
@@ -230,24 +218,22 @@ function renderPergunta() {
   document.getElementById('btn-prox').style.display   = 'none';
 }
 
-window.responder = function(idx, q) {
+window.responder = function(idx, idxCorreto, pts) {
   if (respondida) return;
   respondida = true;
 
-  // Registrar tentativa ao responder a 1ª pergunta
+  // Registrar tentativa ao responder ao 1º desafio
   if (!tentativaRegistrada && atual === 0) {
     tentativaRegistrada = true;
     registrarTentativa();
   }
 
   const alts    = document.querySelectorAll('.q-alt');
-  const correta = q.correta;
-  const pts     = parseFloat(q.pontos) || 1.0;
-  const acertou = idx === correta;
+  const acertou = idx === idxCorreto;
 
   alts.forEach(b => b.disabled = true);
   alts[idx].classList.add(acertou ? 'correta' : 'errada');
-  if (!acertou && alts[correta]) alts[correta].classList.add('revelada');
+  if (!acertou && alts[idxCorreto]) alts[idxCorreto].classList.add('revelada');
 
   if (acertou) { acertos++; pontosGanhos += pts; somAcerto(); } else { erros++; somErro(); }
 
@@ -256,23 +242,23 @@ window.responder = function(idx, q) {
   document.getElementById('pl-pt').textContent = pontosGanhos % 1 === 0 ? pontosGanhos : pontosGanhos.toFixed(1);
 
   const fb = document.getElementById('q-feedback');
-  fb.className    = 'q-feedback ' + (acertou ? 'acerto' : 'erro');
-  fb.textContent  = (acertou ? '✅ ' : '❌ ') + (q.feedback || (acertou ? 'Correto!' : 'Resposta incorreta.'));
+  fb.className   = 'q-feedback ' + (acertou ? 'acerto' : 'erro');
+  fb.textContent = acertou ? '✅ Correto! Você converteu o binário para decimal.' : '❌ Incorreto. Observe cada bit e seu valor posicional.';
   fb.style.display = 'block';
 
   const btnP = document.getElementById('btn-prox');
   btnP.style.display = 'block';
-  btnP.textContent   = atual < perguntas.length - 1 ? 'Próxima →' : 'Ver Resultado 🎖️';
+  btnP.textContent   = atual < desafios.length - 1 ? 'Próxima →' : 'Ver Resultado 🎖️';
 };
 
-window.proxima = function() { atual++; renderPergunta(); };
+window.proxima = function() { atual++; renderDesafio(); };
 
 function mostrarFinal() {
   document.getElementById('q-prog-wrap').style.display = 'none';
   document.getElementById('q-box').style.display       = 'none';
   document.getElementById('q-placar').style.display    = 'none';
 
-  const total = perguntas.length;
+  const total = desafios.length;
   const pct   = Math.round((acertos / total) * 100);
 
   document.getElementById('res-ac').textContent = acertos;
@@ -283,16 +269,16 @@ function mostrarFinal() {
   let emoji, titulo, msg;
   if (pct === 100) {
     emoji = '👑'; titulo = 'Perfeito!';
-    msg = 'Você acertou todas as ' + total + ' perguntas! Desempenho excepcional, Mestre Maker!';
+    msg = 'Você converteu todos os ' + total + ' números binários! Mestre Maker!';
   } else if (pct >= 70) {
     emoji = '🎖️'; titulo = 'Muito bem!';
-    msg = 'Você acertou ' + acertos + ' de ' + total + ' perguntas. Continue assim!';
+    msg = 'Você acertou ' + acertos + ' de ' + total + ' desafios. Continue assim!';
   } else if (pct >= 40) {
     emoji = '💡'; titulo = 'Bom esforço!';
-    msg = 'Você acertou ' + acertos + ' de ' + total + ' perguntas. Revise o card e tente novamente!';
+    msg = 'Você acertou ' + acertos + ' de ' + total + ' desafios. Revise e tente de novo!';
   } else {
     emoji = '🔄'; titulo = 'Não desista!';
-    msg = 'Você acertou ' + acertos + ' de ' + total + ' perguntas. Releia o conteúdo e tente de novo!';
+    msg = 'Você acertou ' + acertos + ' de ' + total + '. Relembre os valores: 16, 8, 4, 2, 1.';
   }
 
   document.getElementById('tf-emoji').textContent  = emoji;
@@ -300,30 +286,24 @@ function mostrarFinal() {
   document.getElementById('tf-sub').textContent    = pct + '% de aproveitamento';
   document.getElementById('res-msg').textContent   = msg;
 
-  // Badge concluído
   const badgeConcluido = document.getElementById('tf-badge-concluido');
-  if (badgeConcluido) {
-    badgeConcluido.style.display = pct >= 70 ? '' : 'none';
-  }
+  if (badgeConcluido) badgeConcluido.style.display = pct >= 70 ? '' : 'none';
 
-  // Mostrar tentativas restantes na tela final
   const restantes = tentativasPermitidas - tentativasUsadas;
   const tentEl = document.getElementById('tf-tentativas-restantes');
   if (tentEl) {
     tentEl.textContent = restantes > 0
       ? restantes + ' tentativa' + (restantes !== 1 ? 's' : '') + ' restante' + (restantes !== 1 ? 's' : '')
       : 'Nenhuma tentativa restante';
-    tentEl.style.color = restantes > 0 ? 'var(--azul-med)' : 'var(--vermelho)';
+    tentEl.style.color = restantes > 0 ? '#5F6480' : '#e74c3c';
   }
 
-  // Esconde botão tentar novamente se não tiver mais tentativas
   const btnTentar = document.querySelector('.btn-tentar');
   if (btnTentar) btnTentar.style.display = restantes > 0 ? '' : 'none';
 
   pct >= 70 ? somFinalBom() : somFinalRuim();
   document.getElementById('tela-final').style.display = 'flex';
 
-  // Salva resultado em background (não bloqueia a UI)
   salvarResultado(acertos, pontosGanhos, total).catch(e => console.warn('Erro ao salvar:', e));
 }
 
@@ -342,42 +322,42 @@ window.reiniciar = function() {
   if (tentativasUsadas >= tentativasPermitidas) { mostrarBloqueado(null); return; }
   tentativaRegistrada = false;
   atual = 0; acertos = 0; erros = 0; pontosGanhos = 0; respondida = false;
-  perguntas = [...cardData.quiz].sort(() => Math.random() - 0.5);
-  document.getElementById('tela-final').style.display = 'none';
-  document.getElementById('q-prog-wrap').style.display  = '';
-  document.getElementById('q-box').style.display        = '';
-  document.getElementById('q-placar').style.display     = '';
+  desafios = [...cardData.binario_desafios].sort(() => Math.random() - 0.5);
+  document.getElementById('tela-final').style.display  = 'none';
+  document.getElementById('q-prog-wrap').style.display = '';
+  document.getElementById('q-box').style.display       = '';
+  document.getElementById('q-placar').style.display    = '';
   document.getElementById('pl-ac').textContent = '0';
   document.getElementById('pl-er').textContent = '0';
   document.getElementById('pl-pt').textContent = '0';
-  renderPergunta();
+  renderDesafio();
 };
 
-// ── Registra uso da tentativa ao responder 1ª pergunta ──
+// ── Registra uso da tentativa ao responder ao 1º desafio ──
 async function registrarTentativa() {
   if (!resultadoDocId || !alunoUid) return;
   inicioJogo = Date.now();
   try {
-    const ref  = doc(db, 'resultados_quiz', resultadoDocId);
+    const ref  = doc(db, 'resultados_binario', resultadoDocId);
     const snap = await getDoc(ref);
     if (!snap.exists()) {
       await setDoc(ref, {
-        aluno_id:             alunoUid,
-        card_id:              cardId,
-        escola_id:            escolaId,
+        aluno_id:              alunoUid,
+        card_id:               cardId,
+        escola_id:             escolaId,
         tentativas_permitidas: tentativasPermitidas,
-        tentativas_usadas:    1,
-        concluido:            false,
-        melhor_pontos:        0,
-        melhor_acertos:       0,
-        total_perguntas:      perguntas.length,
-        primeira_vez:         serverTimestamp(),
-        ultima_vez:           serverTimestamp(),
-        historico:            [],
+        tentativas_usadas:     1,
+        concluido:             false,
+        melhor_pontos:         0,
+        melhor_acertos:        0,
+        total_desafios:        desafios.length,
+        primeira_vez:          serverTimestamp(),
+        ultima_vez:            serverTimestamp(),
+        historico:             [],
         duracao_total_segundos: 0,
-        historico_pontos:     [],
-        semana_letiva:        getSemanaLetiva(),
-        dispositivo:          window.innerWidth < 768 ? 'mobile' : 'desktop'
+        historico_pontos:      [],
+        semana_letiva:         getSemanaLetiva(),
+        dispositivo:           window.innerWidth < 768 ? 'mobile' : 'desktop'
       });
     } else {
       await updateDoc(ref, {
@@ -391,36 +371,33 @@ async function registrarTentativa() {
 }
 
 // ── Salva resultado ao terminar ──
-async function salvarResultado(acertos, pontosGanhos, total) {
+async function salvarResultado(acertos, pontos, total) {
   if (!resultadoDocId || !alunoUid) return;
   try {
     const pct      = Math.round((acertos / total) * 100);
     const concluiu = pct >= 70;
-    const ref      = doc(db, 'resultados_quiz', resultadoDocId);
+    const ref      = doc(db, 'resultados_binario', resultadoDocId);
     const snap     = await getDoc(ref);
     const anterior = snap.exists() ? snap.data() : {};
 
     const jaConcluidoAntes = anterior.concluido || false;
-
     const duracao = Math.round((Date.now() - inicioJogo) / 1000);
-    // Salva resultado com arrayUnion para o histórico (mais seguro)
-    // melhor_pontos e melhor_acertos = última tentativa
+
     await updateDoc(ref, {
       concluido:      concluiu || jaConcluidoAntes,
-      melhor_pontos:  pontosGanhos,
+      melhor_pontos:  pontos,
       melhor_acertos: acertos,
       historico:      arrayUnion({
         data:    new Date().toISOString(),
-        pontos:  pontosGanhos,
+        pontos:  pontos,
         acertos: acertos,
         pct:     pct
       }),
-      historico_pontos:       arrayUnion(pontosGanhos),
+      historico_pontos:       arrayUnion(pontos),
       duracao_total_segundos: increment(duracao),
-      ultima_vez: serverTimestamp()
+      ultima_vez:             serverTimestamp()
     });
 
-    // Recalcular e atualizar pontos totais do aluno
     await recalcularPontosAluno();
 
   } catch(e) { console.warn('Erro ao salvar resultado:', e); }
@@ -438,7 +415,6 @@ async function recalcularPontosAluno() {
       pontos_total: Math.round(total * 10) / 10
     });
 
-    // Atualizar pontos no player card em tempo real
     document.getElementById('player-pts').textContent = Math.round(total * 10) / 10;
   } catch(e) { console.warn('Erro ao recalcular pontos:', e); }
 }
@@ -446,19 +422,18 @@ async function recalcularPontosAluno() {
 // ── Tela de bloqueio ──
 function mostrarBloqueado(dados) {
   document.getElementById('loading').style.display = 'none';
-  const restantes = tentativasPermitidas - tentativasUsadas;
   document.getElementById('q-box').innerHTML = `
     <div style="padding:40px 28px; text-align:center;">
       <div style="font-size:52px; margin-bottom:16px;">🔒</div>
-      <div style="font-family:'Nunito',sans-serif; font-size:22px; font-weight:900; color:var(--azul); margin-bottom:8px;">Quiz encerrado</div>
-      <div style="font-size:14px; color:var(--azul-med); margin-bottom:24px;">
+      <div style="font-family:'Nunito',sans-serif; font-size:22px; font-weight:900; color:#2F3447; margin-bottom:8px;">Jogo encerrado</div>
+      <div style="font-size:14px; color:#5F6480; margin-bottom:24px;">
         Você já usou todas as <strong>${tentativasPermitidas}</strong> tentativas permitidas.
       </div>
       ${dados ? `
-      <div style="background:#fffbea; border:1.5px solid var(--ouro); border-radius:16px; padding:16px; margin-bottom:24px; display:inline-block;">
-        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--ouro-esc); margin-bottom:8px;">Seu melhor resultado</div>
-        <div style="font-family:'Nunito',sans-serif; font-size:28px; font-weight:900; color:var(--azul);">${dados.melhor_acertos}/${dados.total_perguntas} perguntas</div>
-        <div style="font-size:14px; color:var(--ouro-esc); font-weight:700;">${dados.melhor_pontos % 1 === 0 ? dados.melhor_pontos : dados.melhor_pontos.toFixed(1)} pontos</div>
+      <div style="background:#f9f0ff; border:1.5px solid #c39bd3; border-radius:16px; padding:16px; margin-bottom:24px; display:inline-block;">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#6c3483; margin-bottom:8px;">Seu melhor resultado</div>
+        <div style="font-family:'Nunito',sans-serif; font-size:28px; font-weight:900; color:#2F3447;">${dados.melhor_acertos}/${dados.total_desafios} desafios</div>
+        <div style="font-size:14px; color:#6c3483; font-weight:700;">${dados.melhor_pontos % 1 === 0 ? dados.melhor_pontos : dados.melhor_pontos.toFixed(1)} pontos</div>
         ${dados.concluido ? '<div style="margin-top:8px; font-size:13px; color:#15803d; font-weight:700;">✅ Desafio concluído!</div>' : ''}
       </div>` : ''}
       <br>

@@ -137,6 +137,7 @@ function renderForm(id, d) {
   window.completeState = d.complete_desafios ? JSON.parse(JSON.stringify(d.complete_desafios)) : [];
   window.conectaState  = d.conecta_desafios  ? JSON.parse(JSON.stringify(d.conecta_desafios))  : [];
   window.boxState      = d.box_desafios      ? JSON.parse(JSON.stringify(d.box_desafios))      : [];
+  window.binarioState  = d.binario_desafios  ? JSON.parse(JSON.stringify(d.binario_desafios))  : [];
   window.glossarioState = d.glossario ? JSON.parse(JSON.stringify(d.glossario)) : [];
   tagsState.links_desafios   = d.links_desafios   ? [...d.links_desafios]   : [];
   tagsState.links_componentes = d.links_componentes ? [...d.links_componentes] : [];
@@ -585,6 +586,29 @@ function renderForm(id, d) {
       </div>
     </div>
 
+    <!-- CÓDIGO BINÁRIO -->
+    <div class="form-section form-section-binario">
+      <div class="section-title-row">
+        <span class="section-title">💜 Código Binário</span>
+        <button class="btn-toggle-jogo" onclick="toggleBinario()" id="btn-toggle-binario">▼ Criar Jogo</button>
+      </div>
+      <div id="binario-body" style="display:none;">
+        <span class="helper-text" style="display:block;margin-bottom:8px;margin-top:12px;">
+          Cadastre números binários de 5 bits (ex: <strong>01101</strong>). O aluno converte para decimal com múltipla escolha.
+        </span>
+        <div class="form-row" style="margin-bottom:16px;align-items:flex-end;">
+          <div class="form-group" style="max-width:220px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-binario-tentativas" min="1" max="10" value="${d.binario_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarBinario()">+ Desafio</button>
+          </div>
+        </div>
+        <div id="binario-lista"></div>
+      </div>
+    </div>
+
     ${id ? `
     <div class="form-section">
       <div class="section-title">Link do Card</div>
@@ -611,6 +635,8 @@ function renderForm(id, d) {
   atualizarBtnConecta();
   renderBoxLista();
   atualizarBtnBox();
+  renderBinarioLista();
+  atualizarBtnBinario();
 }
 
 // ---- UPLOAD DE IMAGEM ----
@@ -871,6 +897,8 @@ window.salvarCard = async function (publicar) {
     conecta_tentativas: parseInt(document.getElementById('f-conecta-tentativas')?.value) || 3,
     box_desafios:       window.boxState      || [],
     box_tentativas:     parseInt(document.getElementById('f-box-tentativas')?.value) || 3,
+    binario_desafios:   window.binarioState  || [],
+    binario_tentativas: parseInt(document.getElementById('f-binario-tentativas')?.value) || 3,
     tentativas:       parseInt(document.getElementById('f-tentativas')?.value) || 3,
     video_url:        document.getElementById('f-video-url')?.value?.trim() || '',
     publicado:        publicar,
@@ -1239,7 +1267,8 @@ function recalcularPontos() {
   const totalComplete = (window.completeState || []).reduce((sum, c) => sum + (parseFloat(c.pontos) || 1.0), 0);
   const totalConecta  = (window.conectaState  || []).reduce((sum, c) => sum + (parseFloat(c.pontos) || 2.0), 0);
   const totalBox      = (window.boxState      || []).reduce((sum, b) => sum + (parseFloat(b.pontos) || 2.0), 0);
-  const total         = totalQuiz + totalBug + totalComp + totalOrdena + totalComplete + totalConecta + totalBox;
+  const totalBinario  = (window.binarioState  || []).reduce((sum, b) => sum + (parseFloat(b.pontos) || 1.0), 0);
+  const total         = totalQuiz + totalBug + totalComp + totalOrdena + totalComplete + totalConecta + totalBox + totalBinario;
   const el = document.getElementById('f-pontos');
   if (el) el.value = total % 1 === 0 ? total : total.toFixed(1);
 }
@@ -2288,6 +2317,98 @@ function renderBoxLista() {
             ${gerarMapaBoxHTML(conns)}
           </div>
 
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ==============================
+// ---- CÓDIGO BINÁRIO ----
+// ==============================
+
+window.binarioState = [];
+
+window.toggleBinario = function() {
+  const body = document.getElementById('binario-body');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnBinario();
+};
+
+function atualizarBtnBinario() {
+  const btn  = document.getElementById('btn-toggle-binario');
+  const body = document.getElementById('binario-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = (window.binarioState || []).length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' desafio' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Desafios (' + n + ')' : '▼ Criar Jogo');
+}
+
+window.adicionarBinario = function() {
+  if (!window.binarioState) window.binarioState = [];
+  if (window.binarioState.length >= 20) return;
+  window.binarioState.push({ binario: '', pontos: 1.0 });
+  renderBinarioLista();
+  recalcularPontos();
+  atualizarBtnBinario();
+};
+
+window.removerBinario = function(di) {
+  window.binarioState.splice(di, 1);
+  renderBinarioLista();
+  recalcularPontos();
+  atualizarBtnBinario();
+};
+
+window.updateBinario = function(di, field, value) {
+  if (!window.binarioState[di]) return;
+  window.binarioState[di][field] = value;
+  if (field === 'pontos') recalcularPontos();
+};
+
+function renderBinarioLista() {
+  const lista = document.getElementById('binario-lista');
+  if (!lista) return;
+  if (!window.binarioState) window.binarioState = [];
+
+  if (window.binarioState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhum desafio cadastrado. Clique em + Desafio para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = window.binarioState.map((d, di) => {
+    const bin = (d.binario || '').padStart(5, '0').slice(0, 5);
+    const decimal = bin ? parseInt(bin, 2) : '—';
+    const preview = bin
+      ? `<span style="font-family:monospace;font-size:13px;background:#f3e8ff;padding:3px 10px;border-radius:6px;border:1px solid #c39bd3;letter-spacing:3px;">${bin}</span> = <strong>${decimal}</strong>`
+      : '';
+
+    return `
+    <div class="quiz-card">
+      <div class="quiz-card-header">
+        <strong>Desafio ${di + 1}</strong>
+        ${preview ? '<span style="font-size:12px;color:#6c3483;margin-left:8px;">' + preview + '</span>' : ''}
+        <button onclick="removerBinario(${di})" class="btn-rem-quiz">✕ Remover</button>
+      </div>
+      <div class="quiz-card-body">
+        <div class="form-row" style="gap:14px;align-items:flex-end;">
+          <div class="form-group" style="max-width:180px;">
+            <label>Número Binário (5 bits)</label>
+            <input type="text" maxlength="5" placeholder="Ex: 01101"
+              value="${(d.binario||'').replace(/"/g,'&quot;')}"
+              oninput="updateBinario(${di},'binario',this.value.replace(/[^01]/g,'').slice(0,5));renderBinarioLista()"
+              style="font-family:monospace;letter-spacing:3px;font-size:16px;font-weight:700;">
+            <span class="helper-text">Use apenas 0 e 1 (5 dígitos)</span>
+          </div>
+          <div class="form-group" style="max-width:100px;">
+            <label>Pontos</label>
+            <input type="number" min="0.5" max="10" step="0.5"
+              value="${d.pontos||1}"
+              oninput="updateBinario(${di},'pontos',parseFloat(this.value)||1)">
+          </div>
         </div>
       </div>
     </div>`;
