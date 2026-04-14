@@ -3,8 +3,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import {
   getFirestore, collection, doc,
-  getDocs, setDoc, deleteDoc
+  getDocs, setDoc, deleteDoc, getDoc, arrayUnion
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import {
   getStorage, ref,
   uploadBytesResumable, getDownloadURL
@@ -147,6 +148,7 @@ function renderForm(id, d) {
     <div class="form-header">
       <div class="form-title">${id ? 'Editar Card' : 'Novo Card'}</div>
       <div class="form-actions">
+        ${id ? `<button class="btn-historico" onclick="abrirHistoricoCard('${id}')">📋 Histórico</button>` : ''}
         ${id ? `<button class="btn-deletar" onclick="deletarCard('${id}')">🗑 Deletar</button>` : ''}
         <button class="btn-salvar"   onclick="salvarCard(false)">💾 Salvar Rascunho</button>
         <button class="btn-publicar" onclick="salvarCard(true)">🚀 Publicar</button>
@@ -876,7 +878,27 @@ window.salvarCard = async function (publicar) {
   };
 
   try {
-    await setDoc(doc(db, 'cards', id), data);
+    const auth = getAuth();
+    const user = auth.currentUser;
+    const entrada = {
+      nome:  user?.displayName || '',
+      email: user?.email || '',
+      acao:  cardAtivo ? 'alterado' : 'criado',
+      status: publicar ? 'publicado' : 'rascunho',
+      data:  new Date().toISOString()
+    };
+
+    // Busca histórico anterior para preservar (setDoc substituiria tudo)
+    let historicoAnterior = [];
+    if (cardAtivo) {
+      const snap = await getDoc(doc(db, 'cards', id));
+      if (snap.exists()) historicoAnterior = snap.data().historico || [];
+    }
+
+    await setDoc(doc(db, 'cards', id), {
+      ...data,
+      historico: [...historicoAnterior, entrada]
+    });
     cardAtivo = id;
     showToast(publicar ? '🚀 Card publicado!' : '💾 Rascunho salvo!', 'success');
     await listarCards();
@@ -885,6 +907,90 @@ window.salvarCard = async function (publicar) {
     });
   } catch (err) {
     showToast(`❌ Erro: ${err.message}`, 'error');
+  }
+};
+
+// ---- HISTÓRICO DO CARD ----
+window.abrirHistoricoCard = async function(id) {
+  document.getElementById('modal-historico')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-historico';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-box modal-box-lg">
+      <div class="modal-header">
+        <div class="modal-title">📋 Histórico de Modificações</div>
+        <button class="modal-close" onclick="document.getElementById('modal-historico').remove()">×</button>
+      </div>
+      <div class="modal-body modal-scroll" id="historico-body">
+        <div style="text-align:center;padding:24px;color:#aaa;">Carregando...</div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  try {
+    const snap = await getDoc(doc(db, 'cards', id));
+    const historico = snap.exists() ? (snap.data().historico || []) : [];
+    const body = document.getElementById('historico-body');
+
+    if (historico.length === 0) {
+      body.innerHTML = '<div style="text-align:center;padding:24px;color:#aaa;font-size:13px;">Nenhum histórico registrado ainda.</div>';
+      return;
+    }
+
+    // Agrupa por usuário + data (dia)
+    const grupos = {};
+    historico.forEach(h => {
+      const dia = new Date(h.data).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+      const chave = `${h.email || 'anon'}__${dia}`;
+      if (!grupos[chave]) {
+        grupos[chave] = { ...h, diaFmt: dia, entradas: [] };
+      }
+      grupos[chave].entradas.push(new Date(h.data));
+      // Mantém o status da última entrada do grupo
+      grupos[chave].status = h.status;
+      grupos[chave].acao   = h.acao;
+    });
+
+    const lista = Object.values(grupos).reverse();
+    body.innerHTML = lista.map((g, i) => {
+      const acaoColor = g.acao === 'criado' ? '#27ae60' : '#2980b9';
+      const datas = g.entradas.sort((a, b) => a - b);
+      const horaInicio = datas[0].toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+      const horaFim    = datas[datas.length - 1].toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+      const qtd = datas.length;
+      const statusBadge = g.status === 'publicado'
+        ? '<span style="background:#e8f8f0;color:#27ae60;border:1px solid #a9e4c3;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;">PUBLICADO</span>'
+        : '<span style="background:#f5f5f5;color:#888;border:1px solid #ddd;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;">RASCUNHO</span>';
+      const qtdBadge = qtd > 1
+        ? `<span style="background:#f0f4ff;color:#2c5fc3;border:1px solid #c2d1f5;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;">${qtd}x alterações</span>`
+        : '';
+      const horario = qtd > 1
+        ? `${g.diaFmt} · ${horaInicio} → ${horaFim}`
+        : `${g.diaFmt} às ${horaInicio}`;
+      return `
+        <div style="display:flex;gap:14px;align-items:flex-start;padding:14px 0;${i < lista.length-1 ? 'border-bottom:1px solid #f0f0f0;' : ''}">
+          <div style="width:36px;height:36px;border-radius:50%;background:${acaoColor}20;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">
+            ${g.acao === 'criado' ? '✨' : '✏️'}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+              <span style="font-weight:700;color:#1a2340;font-size:13px;">${g.nome || g.email || 'Usuário desconhecido'}</span>
+              <span style="background:${acaoColor}20;color:${acaoColor};border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;text-transform:uppercase;">${g.acao}</span>
+              ${statusBadge}
+              ${qtdBadge}
+            </div>
+            <div style="font-size:11px;color:#999;">${g.email || ''}</div>
+            <div style="font-size:11px;color:#bbb;margin-top:2px;">${horario}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch(err) {
+    const body = document.getElementById('historico-body');
+    if (body) body.innerHTML = `<div style="color:#e74c3c;padding:16px;font-size:13px;">Erro: ${err.message}</div>`;
   }
 };
 

@@ -548,11 +548,14 @@ async function carregarTrilhasAluno() {
             const clicavel = cls !== 'bloqueado';
             const tag      = clicavel ? 'a' : 'div';
             const href     = clicavel ? ' href="' + url + '" target="_blank"' : '';
+            const imgHtml = c.imagem_url
+              ? '<div class="trilha-card-img"><img src="' + c.imagem_url + '" alt="" loading="lazy" onerror="this.parentNode.style.display=\'none\'"></div>'
+              : '';
             const div = '<' + tag + ' class="trilha-card-item ' + cls + '"' + href + ' style="text-decoration:none;">'
               + '<div class="trilha-card-status">' + ico + '</div>'
               + '<div class="trilha-card-num">' + (c.tipo || 'Desafio') + ' ' + String(c.numero || (i+1)).padStart(2,'0') + '</div>'
               + '<div class="trilha-card-nome">' + (c.nome || cid) + '</div>'
-              + '<div class="trilha-card-pts">' + (c.pontos || 10) + ' pts</div>'
+              + imgHtml
               + '</' + tag + '>';
             return div;
           }).join('')}
@@ -614,11 +617,14 @@ async function carregarTrilhasProfessor() {
       const cardsHtml = cardIds.map((cid, i) => {
         const c   = cardsDB[cid] || {};
         const url = 'cards/card.html?id=' + cid;
+        const imgHtmlP = c.imagem_url
+          ? '<div class="trilha-card-img"><img src="' + c.imagem_url + '" alt="" loading="lazy" onerror="this.parentNode.style.display=\'none\'"></div>'
+          : '';
         return '<a class="trilha-card-item proximo" href="' + url + '" target="_blank" style="text-decoration:none;">'
           + '<div class="trilha-card-status">&#9654;</div>'
           + '<div class="trilha-card-num">' + (c.tipo || 'Card') + ' ' + String(c.numero || (i+1)).padStart(2,'0') + '</div>'
           + '<div class="trilha-card-nome">' + (c.nome || cid) + '</div>'
-          + '<div class="trilha-card-pts">' + (c.pontos || 10) + ' pts</div>'
+          + imgHtmlP
           + '</a>';
       }).join('');
 
@@ -674,7 +680,6 @@ function renderTrilhaSimulada() {
               + '<div class="trilha-card-status">' + ico + '</div>'
               + '<div class="trilha-card-num">Desafio ' + c.num + '</div>'
               + '<div class="trilha-card-nome">' + c.nome + '</div>'
-              + '<div class="trilha-card-pts">' + c.pts + ' pts</div>'
               + '</div>';
           }).join('');
     return '<div class="trilha-bloco">'

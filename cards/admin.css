@@ -288,6 +288,19 @@ body {
 
 .btn-deletar:hover { background: #fdf2f2; border-color: var(--vermelho); }
 
+.btn-historico {
+  background: #fff;
+  color: #555;
+  border: 1px solid var(--cinza-medio);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter Tight', sans-serif;
+}
+.btn-historico:hover { background: #f0f4ff; border-color: #7b9de8; color: #2c5fc3; }
+
 /* ---- Seções do formulário ---- */
 .form-section {
   background: #fff;
