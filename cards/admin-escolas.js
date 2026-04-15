@@ -100,9 +100,21 @@ window.novaEscola = async function() {
 };
 
 // ---- RENDER FORM ----
-function renderEscolaForm(id, e = {}) {
+async function renderEscolaForm(id, e = {}) {
   const content = document.getElementById('escolas-content');
   if (!content) return;
+
+  // Busca seções para o select
+  let secaoOptions = '<option value="">Selecione uma seção...</option>';
+  try {
+    const snapSec = await getDocs(collection(db, 'secoes'));
+    const secoes = [];
+    snapSec.forEach(d => secoes.push({ id: d.id, ...d.data() }));
+    secoes.sort((a, b) => (a.ordem ?? 99) - (b.ordem ?? 99));
+    secaoOptions += secoes
+      .map(s => `<option value="${s.id}" ${e.secao_id === s.id ? 'selected' : ''}>${s.nome || s.id}</option>`)
+      .join('');
+  } catch(_) {}
 
   const ufs = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
   const ufOptions = ufs.map(u => `<option value="${u}" ${e.uf === u ? 'selected' : ''}>${u}</option>`).join('');
@@ -146,6 +158,13 @@ function renderEscolaForm(id, e = {}) {
         <div class="form-group full">
           <label>Nome da Escola *</label>
           <input type="text" id="e-nome" value="${e.nome || ''}" placeholder="Ex: EMEF João da Silva">
+        </div>
+        <div class="form-group full">
+          <label>Seção</label>
+          <select id="e-secao">
+            ${secaoOptions}
+          </select>
+          <span class="helper-text">Seção de trilhas que esta escola irá utilizar. Deixe em branco para utilizar todas as trilhas.</span>
         </div>
 
       </div>
@@ -364,6 +383,7 @@ window.salvarEscola = async function(id) {
     possui_mediador_pedagogico: document.getElementById('e-med-ped')?.checked          || false,
     data_implantacao:           document.getElementById('e-data-impl')?.value          || '',
     status_projeto:             document.getElementById('e-status-proj')?.value        || '',
+    secao_id:                   document.getElementById('e-secao')?.value              || '',
     observacoes:                document.getElementById('e-obs')?.value?.trim()        || '',
     atualizado_em:              new Date().toISOString()
   };

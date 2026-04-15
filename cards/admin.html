@@ -13,6 +13,7 @@
     <div class="header-tabs">
       <button class="tab-btn active" id="tab-cards"    onclick="switchTab('cards')">🃏 Cards</button>
       <button class="tab-btn"        id="tab-trilhas"  onclick="switchTab('trilhas')">🗺️ Trilhas</button>
+      <button class="tab-btn"        id="tab-secoes"   onclick="switchTab('secoes')">📚 Seções</button>
       <button class="tab-btn"        id="tab-usuarios" onclick="switchTab('usuarios')" style="display:none;">👥 Usuários</button>
       <button class="tab-btn"        id="tab-escolas"  onclick="switchTab('escolas')"  style="display:none;">🏫 Escolas</button>
     </div>
@@ -59,6 +60,27 @@
         <div class="empty-state">
           <div class="empty-state-icon">🗺️</div>
           <p>Selecione uma trilha na lista<br>ou crie uma nova para começar.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA SEÇÕES -->
+  <div id="view-secoes" class="tab-view" style="display:none;">
+    <div class="layout">
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-title">Seções</span>
+          <button class="btn-novo" onclick="novaSecao()">+ Nova Seção</button>
+        </div>
+        <div class="card-list" id="secao-list">
+          <div class="list-loading">Carregando seções...</div>
+        </div>
+      </div>
+      <div class="main" id="secao-content">
+        <div class="empty-state">
+          <div class="empty-state-icon">📚</div>
+          <p>Selecione uma seção na lista<br>ou crie uma nova para começar.</p>
         </div>
       </div>
     </div>
@@ -118,6 +140,7 @@
   <script type="module" src="admin-auth.js"></script>
   <script type="module" src="admin.js"></script>
   <script type="module" src="admin-trilhas.js"></script>
+  <script type="module" src="admin-secoes.js"></script>
   <script type="module" src="admin-escolas.js"></script>
 </body>
 </html>

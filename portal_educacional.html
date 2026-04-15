@@ -77,6 +77,15 @@
             <button class="btn-visao" data-visao="aluno" onclick="mudarVisao('aluno')">Aluno</button>
           </div>
         </div>
+
+        <!-- FILTRO POR SEÇÃO (apenas gestores) -->
+        <div id="secao-selector-wrap" style="display:none; align-items:center; gap:10px; margin-top:10px;">
+          <span style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.7);">📚 Seção:</span>
+          <select id="secao-selector" onchange="filtrarPorSecao(this.value)"
+            style="background:#2F3447; color:#fff; border:1.5px solid rgba(255,255,255,0.25); border-radius:10px; padding:6px 12px; font-size:13px; font-weight:700; cursor:pointer; outline:none;">
+            <option value="">Todas as trilhas</option>
+          </select>
+        </div>
       </div>
     </div>
 

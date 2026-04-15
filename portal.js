@@ -106,12 +106,33 @@ onAuthStateChanged(auth, async user => {
       // Inicializa painéis conforme perfil
       inicializarPaineis(perfil);
 
-      // Carrega trilhas conforme perfil
+      // Carrega trilhas conforme perfil — filtra pela seção da escola se existir
+      let trilhasDaSecao = null; // null = todas
+
+      if ((perfil === 'aluno' || perfil === 'professor') && dados.escola_id) {
+        try {
+          const escolaSnap = await getDoc(doc(db, 'escolas', dados.escola_id));
+          if (escolaSnap.exists()) {
+            const secaoId = escolaSnap.data().secao_id || '';
+            if (secaoId) {
+              const secaoSnap = await getDoc(doc(db, 'secoes', secaoId));
+              if (secaoSnap.exists()) {
+                trilhasDaSecao = secaoSnap.data().trilhas || null;
+              }
+            }
+          }
+        } catch(e) { console.warn('Erro ao buscar seção da escola:', e); }
+      }
+
+      if (perfil === 'gestor' || perfil === 'conteudista') {
+        await carregarSeletorSecaoGestor();
+      }
+
       if (perfil === 'aluno' || perfil === 'gestor' || perfil === 'conteudista') {
-        carregarTrilhasAluno();
+        carregarTrilhasAluno(trilhasDaSecao);
       }
       if (perfil === 'professor' || perfil === 'gestor' || perfil === 'conteudista') {
-        carregarTrilhasProfessor();
+        carregarTrilhasProfessor(trilhasDaSecao);
       }
 
       // Recalcula pontos somando todas as coleções de resultados
@@ -484,7 +505,7 @@ function desenharSelo(pts) {
 // Selo será atualizado após login com pontos reais
 
 // ── Carregar trilhas do Firestore ──────────────────────────────────────
-async function carregarTrilhasAluno() {
+async function carregarTrilhasAluno(filtroIds = null) {
   const container = document.getElementById('trilhas-aluno-container');
   if (!container) return;
 
@@ -499,14 +520,21 @@ async function carregarTrilhasAluno() {
     const trilhasSnap = await getDocs(collection(db, 'trilhas'));
 
     if (trilhasSnap.empty) {
-      // Sem trilhas cadastradas → mostra dados simulados
       container.innerHTML = renderTrilhaSimulada();
       return;
     }
 
-    const trilhas = [];
+    let trilhas = [];
     trilhasSnap.forEach(d => { if (d.data().publicado) { const t = { id: d.id, ...d.data() }; trilhas.push(t); trilhasCache[d.id] = t; } });
-    trilhas.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+
+    // Filtra e ordena pela seção se fornecida
+    if (filtroIds && filtroIds.length > 0) {
+      trilhas = filtroIds
+        .map(id => trilhas.find(t => t.id === id))
+        .filter(Boolean);
+    } else {
+      trilhas.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    }
 
     if (trilhas.length === 0) {
       container.innerHTML = renderTrilhaSimulada();
@@ -571,26 +599,32 @@ async function carregarTrilhasAluno() {
 }
 
 // ── Trilhas do Professor (todas desbloqueadas) ───────────────────────
-async function carregarTrilhasProfessor() {
+async function carregarTrilhasProfessor(filtroIds = null) {
   const container = document.getElementById('trilhas-professor-container');
-  console.log('[PROF TRILHAS] container:', container ? 'encontrado' : 'NÃO encontrado');
   if (!container) return;
 
   try {
     const snap = await getDocs(collection(db, 'trilhas'));
-    console.log('[PROF TRILHAS] docs:', snap.size);
     if (snap.empty) {
       container.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">Nenhuma trilha publicada ainda.</p>';
       return;
     }
 
-    const docs = [];
+    let docs = [];
     snap.forEach(d => { if (d.data().publicado) docs.push(d); });
-    docs.sort((a, b) => {
-      const ia = isNaN(a.id) ? a.id : Number(a.id);
-      const ib = isNaN(b.id) ? b.id : Number(b.id);
-      return typeof ia === 'number' && typeof ib === 'number' ? ia - ib : String(ia).localeCompare(String(ib));
-    });
+
+    // Filtra e ordena pela seção se fornecida
+    if (filtroIds && filtroIds.length > 0) {
+      docs = filtroIds
+        .map(id => docs.find(d => d.id === id))
+        .filter(Boolean);
+    } else {
+      docs.sort((a, b) => {
+        const ia = isNaN(a.id) ? a.id : Number(a.id);
+        const ib = isNaN(b.id) ? b.id : Number(b.id);
+        return typeof ia === 'number' && typeof ib === 'number' ? ia - ib : String(ia).localeCompare(String(ib));
+      });
+    }
 
     // Busca dados dos cards
     const todosIds = new Set();
@@ -692,6 +726,40 @@ function renderTrilhaSimulada() {
       + '</div>';
   }).join('');
 }
+
+// ── Seletor de Seção para Gestores ────────────────────────────────────
+async function carregarSeletorSecaoGestor() {
+  const wrap = document.getElementById('secao-selector-wrap');
+  if (!wrap) return;
+
+  try {
+    const snap = await getDocs(collection(db, 'secoes'));
+    const secoes = [];
+    snap.forEach(d => { if (d.data().publicado !== false) secoes.push({ id: d.id, ...d.data() }); });
+    secoes.sort((a, b) => (a.ordem ?? 99) - (b.ordem ?? 99));
+
+    if (secoes.length === 0) return;
+
+    wrap.style.display = 'flex';
+    const sel = document.getElementById('secao-selector');
+    if (!sel) return;
+
+    sel.innerHTML = '<option value="">📚 Todas as trilhas</option>'
+      + secoes.map(s => `<option value="${s.id}">${s.nome || s.id}</option>`).join('');
+  } catch(e) { console.warn('Erro ao carregar seções:', e); }
+}
+
+window.filtrarPorSecao = async function(secaoId) {
+  let filtroIds = null;
+  if (secaoId) {
+    try {
+      const snap = await getDoc(doc(db, 'secoes', secaoId));
+      if (snap.exists()) filtroIds = snap.data().trilhas || null;
+    } catch(e) { console.warn(e); }
+  }
+  carregarTrilhasAluno(filtroIds);
+  carregarTrilhasProfessor(filtroIds);
+};
 
 } // fim do else (modo preview)
 
