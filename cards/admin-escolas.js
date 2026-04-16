@@ -3,7 +3,7 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import {
   getFirestore, collection, doc,
-  getDocs, setDoc, deleteDoc, getDoc, query, orderBy
+  getDocs, setDoc, deleteDoc, getDoc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -340,10 +340,21 @@ async function renderEscolaForm(id, e = {}) {
       <div id="alunos-list-${id}" class="professores-list">
         <div class="list-loading">Carregando alunos...</div>
       </div>
+    </div>
+
+    <!-- TURMAS -->
+    <div class="form-section">
+      <div class="section-title-row">
+        <span class="section-title">🏫 Turmas</span>
+        <button class="btn-convidar" style="background:#16a085;" onclick="abrirModalTurma('${id}', null)">+ Nova Turma</button>
+      </div>
+      <div id="turmas-list-${id}" class="professores-list">
+        <div class="list-loading">Carregando turmas...</div>
+      </div>
     </div>` : ''}
   `;
 
-  if (id) { carregarProfessores(id); carregarAlunos(id); }
+  if (id) { carregarProfessores(id); carregarAlunos(id); carregarTurmas(id); }
 }
 
 // ---- REGENERAR CÓDIGO ----
@@ -955,6 +966,318 @@ window.salvarAluno = async function(escolaId, uid) {
   } catch(err) {
     showToast('❌ Erro: ' + err.message, 'error');
   }
+};
+
+// ==============================
+// ---- TURMAS ----
+// ==============================
+
+window.carregarTurmas = async function(escolaId) {
+  const listEl = document.getElementById(`turmas-list-${escolaId}`);
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="list-loading" style="font-size:12px;">Carregando...</div>';
+
+  try {
+    const snap = await getDocs(query(collection(db, 'turmas'), where('escola_id', '==', escolaId)));
+    const turmas = [];
+    snap.forEach(d => turmas.push({ id: d.id, ...d.data() }));
+
+    if (turmas.length === 0) {
+      listEl.innerHTML = '<div class="prof-empty">Nenhuma turma cadastrada ainda.</div>';
+      return;
+    }
+
+    turmas.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    listEl.innerHTML = '';
+    turmas.forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'prof-row';
+      row.style.flexDirection = 'column';
+      row.style.alignItems = 'stretch';
+      row.style.gap = '8px';
+      row.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+          <div class="prof-info" style="flex:1;">
+            <div class="prof-nome">
+              ${t.nome || '—'}
+              <span style="font-size:10px; color:#999; font-weight:400; margin-left:8px;">
+                ${t.ativa ? '✅ Ativa' : '⏸ Inativa'}
+                ${t.inicio ? ' · Início: ' + t.inicio : ''}
+              </span>
+            </div>
+            <div class="prof-email">
+              Cód: <strong>${t.codigo || '—'}</strong>
+              ${t.professor_nome ? ' · Prof: ' + t.professor_nome : ''}
+              · ${(t.alunos || []).length} aluno(s)
+            </div>
+          </div>
+          <div class="prof-actions" style="flex-shrink:0;">
+            <button class="prof-btn-edit" onclick="abrirModalTurma('${escolaId}', '${t.id}')">✏️ Editar</button>
+            <button class="prof-btn-edit" style="background:#16a085;color:#fff;border-color:#16a085;" onclick="gerenciarAlunosTurma('${t.id}', '${escolaId}')">🎒 Alunos</button>
+            <button class="prof-btn-del"  onclick="deletarTurma('${t.id}', '${escolaId}')">🗑</button>
+          </div>
+        </div>
+      `;
+      listEl.appendChild(row);
+    });
+  } catch(err) {
+    listEl.innerHTML = `<div class="list-loading" style="color:#e74c3c;font-size:12px;">Erro: ${err.message}</div>`;
+  }
+};
+
+window.abrirModalTurma = async function(escolaId, turmaId) {
+  document.getElementById('modal-turma')?.remove();
+
+  let turma = {};
+  if (turmaId) {
+    const snap = await getDoc(doc(db, 'turmas', turmaId));
+    if (snap.exists()) turma = { id: snap.id, ...snap.data() };
+  }
+
+  // Busca professores da escola
+  let profOptions = '<option value="">Sem professor designado</option>';
+  try {
+    const snap = await getDocs(collection(db, 'usuarios'));
+    const profs = [];
+    snap.forEach(d => {
+      const u = d.data();
+      if (u.escola_id === escolaId && u.perfil === 'professor') profs.push({ id: d.id, ...u });
+    });
+    profs.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    profOptions += profs.map(p =>
+      `<option value="${p.id}" data-nome="${p.nome || ''}" ${turma.professor_id === p.id ? 'selected' : ''}>${p.nome || p.email}</option>`
+    ).join('');
+  } catch(_) {}
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-turma';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-box modal-box-lg">
+      <div class="modal-header">
+        <div class="modal-title">${turmaId ? 'Editar Turma' : 'Nova Turma'}</div>
+        <button class="modal-close" onclick="document.getElementById('modal-turma').remove()">×</button>
+      </div>
+      <div class="modal-body modal-scroll">
+        <div class="modal-secao-titulo">Dados da Turma</div>
+        <div class="modal-grid">
+          <div class="form-group">
+            <label>Código da Turma *</label>
+            <input type="text" id="tm-codigo" value="${turma.codigo || ''}" placeholder="Ex: 6A, 7B, TURMA-01">
+          </div>
+          <div class="form-group">
+            <label>Nome da Turma *</label>
+            <input type="text" id="tm-nome" value="${turma.nome || ''}" placeholder="Ex: 6º Ano A — Matutino">
+          </div>
+          <div class="form-group">
+            <label>Início</label>
+            <input type="date" id="tm-inicio" value="${turma.inicio || ''}">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="tm-ativa">
+              <option value="true"  ${turma.ativa !== false ? 'selected' : ''}>Ativa</option>
+              <option value="false" ${turma.ativa === false  ? 'selected' : ''}>Inativa</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Professor Responsável</label>
+            <select id="tm-professor">
+              ${profOptions}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-salvar" onclick="document.getElementById('modal-turma').remove()">Cancelar</button>
+        <button class="btn-publicar" onclick="salvarTurma('${escolaId}', '${turmaId || ''}')">💾 Salvar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('tm-codigo')?.focus();
+};
+
+window.salvarTurma = async function(escolaId, turmaId) {
+  const codigo = document.getElementById('tm-codigo')?.value?.trim();
+  const nome   = document.getElementById('tm-nome')?.value?.trim();
+  if (!codigo) { showToast('⚠️ Informe o código da turma.', 'error'); return; }
+  if (!nome)   { showToast('⚠️ Informe o nome da turma.', 'error'); return; }
+
+  const profSel     = document.getElementById('tm-professor');
+  const professorId = profSel?.value || '';
+  const professorNome = profSel?.options[profSel.selectedIndex]?.dataset?.nome || '';
+
+  const docId = (turmaId && turmaId !== '') ? turmaId : `turma-${escolaId}-${Date.now()}`;
+
+  const dados = {
+    codigo,
+    nome,
+    inicio:          document.getElementById('tm-inicio')?.value || '',
+    ativa:           document.getElementById('tm-ativa')?.value !== 'false',
+    professor_id:    professorId,
+    professor_nome:  professorNome,
+    escola_id:       escolaId,
+    alunos:          [], // preserva alunos existentes se edição
+    atualizado_em:   new Date().toISOString()
+  };
+
+  // Se editando, preserva array de alunos
+  if (turmaId && turmaId !== '') {
+    try {
+      const snap = await getDoc(doc(db, 'turmas', turmaId));
+      if (snap.exists()) dados.alunos = snap.data().alunos || [];
+    } catch(_) {}
+  } else {
+    dados.criado_em = new Date().toISOString();
+  }
+
+  try {
+    await setDoc(doc(db, 'turmas', docId), dados);
+    showToast('✅ Turma salva!', 'success');
+    document.getElementById('modal-turma')?.remove();
+    await carregarTurmas(escolaId);
+  } catch(err) {
+    showToast('❌ Erro: ' + err.message, 'error');
+  }
+};
+
+window.deletarTurma = async function(turmaId, escolaId) {
+  if (!confirm('Remover esta turma? Esta ação não pode ser desfeita.')) return;
+  try {
+    await deleteDoc(doc(db, 'turmas', turmaId));
+    showToast('🗑 Turma removida.', '');
+    await carregarTurmas(escolaId);
+  } catch(err) {
+    showToast('❌ Erro: ' + err.message, 'error');
+  }
+};
+
+// ---- GERENCIAR ALUNOS DA TURMA ----
+window.gerenciarAlunosTurma = async function(turmaId, escolaId) {
+  document.getElementById('modal-alunos-turma')?.remove();
+
+  let turmaAlunos = [];
+  let turmaData   = {};
+  try {
+    const snap = await getDoc(doc(db, 'turmas', turmaId));
+    if (snap.exists()) { turmaData = snap.data(); turmaAlunos = turmaData.alunos || []; }
+  } catch(_) {}
+
+  // Carrega todos os alunos da escola
+  let todosAlunos = [];
+  try {
+    const snap = await getDocs(collection(db, 'usuarios'));
+    snap.forEach(d => {
+      const u = d.data();
+      if (u.escola_id === escolaId && u.perfil === 'aluno') todosAlunos.push({ id: d.id, ...u });
+    });
+    todosAlunos.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+  } catch(_) {}
+
+  // Estado compartilhado — buildListas sempre lê daqui
+  window._turmaAlunosState = { turmaAlunos, todosAlunos };
+
+  function buildListas() {
+    const ta  = window._turmaAlunosState.turmaAlunos;
+    const all = window._turmaAlunosState.todosAlunos;
+    const nasTurma  = all.filter(a => ta.includes(a.id));
+    const foraTurma = all.filter(a => !ta.includes(a.id));
+
+    const htmlNa = nasTurma.length === 0
+      ? '<div class="prof-empty" style="font-size:12px;">Nenhum aluno na turma.</div>'
+      : nasTurma.map(a => `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; border:1.5px solid #DDD8CC; border-radius:10px; margin-bottom:6px; background:#fff;">
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:13px; font-weight:600; color:#2F3447; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${a.nome || '—'}</div>
+              <div style="font-size:11px; color:#8B9BB4;">${a.matricula || ''}</div>
+            </div>
+            <button onclick="removerAlunoTurma('${turmaId}','${a.id}','${escolaId}')"
+              style="flex-shrink:0; padding:5px 10px; font-size:11px; font-weight:600; background:#e74c3c; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+              Remover
+            </button>
+          </div>`).join('');
+
+    const htmlFora = foraTurma.length === 0
+      ? '<div class="prof-empty" style="font-size:12px;">Todos os alunos já estão na turma.</div>'
+      : foraTurma.map(a => `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; border:1.5px solid #DDD8CC; border-radius:10px; margin-bottom:6px; background:#fff;">
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:13px; font-weight:600; color:#2F3447; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${a.nome || '—'}</div>
+              <div style="font-size:11px; color:#8B9BB4;">${a.matricula || ''}</div>
+            </div>
+            <button onclick="adicionarAlunoTurma('${turmaId}','${a.id}','${escolaId}')"
+              style="flex-shrink:0; padding:5px 10px; font-size:11px; font-weight:600; background:#16a085; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+              Adicionar
+            </button>
+          </div>`).join('');
+
+    const el = document.getElementById('modal-alunos-turma');
+    if (el) {
+      el.querySelector('#at-na-turma').innerHTML   = htmlNa;
+      el.querySelector('#at-fora-turma').innerHTML = htmlFora;
+      el.querySelector('#at-contagem').textContent = `${nasTurma.length} aluno(s) na turma`;
+    }
+  }
+
+  window._turmaAlunosState.buildListas = buildListas;
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-alunos-turma';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-box modal-box-lg">
+      <div class="modal-header">
+        <div class="modal-title">🎒 Alunos — ${turmaData.nome || 'Turma'}</div>
+        <button class="modal-close" onclick="document.getElementById('modal-alunos-turma').remove()">×</button>
+      </div>
+      <div class="modal-body modal-scroll" style="padding:0;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; height:100%;">
+          <!-- Alunos na turma -->
+          <div style="border-right:1px solid #DDD8CC; padding:16px;">
+            <div style="font-size:12px; font-weight:700; color:#8B9BB4; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px;">
+              Na Turma · <span id="at-contagem">0 aluno(s)</span>
+            </div>
+            <div id="at-na-turma" class="professores-list" style="max-height:340px; overflow-y:auto;"></div>
+          </div>
+          <!-- Alunos disponíveis -->
+          <div style="padding:16px;">
+            <div style="font-size:12px; font-weight:700; color:#8B9BB4; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px;">
+              Disponíveis (escola)
+            </div>
+            <div id="at-fora-turma" class="professores-list" style="max-height:340px; overflow-y:auto;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-publicar" onclick="document.getElementById('modal-alunos-turma').remove()">Fechar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  buildListas();
+};
+
+window.adicionarAlunoTurma = async function(turmaId, alunoId, escolaId) {
+  try {
+    const alunos = [...(window._turmaAlunosState.turmaAlunos || [])];
+    if (alunos.includes(alunoId)) return;
+    alunos.push(alunoId);
+    window._turmaAlunosState.turmaAlunos = alunos;
+    window._turmaAlunosState.buildListas();
+    await setDoc(doc(db, 'turmas', turmaId), { alunos }, { merge: true });
+    carregarTurmas(escolaId);
+  } catch(err) { showToast('❌ Erro: ' + err.message, 'error'); }
+};
+
+window.removerAlunoTurma = async function(turmaId, alunoId, escolaId) {
+  try {
+    const alunos = (window._turmaAlunosState.turmaAlunos || []).filter(id => id !== alunoId);
+    window._turmaAlunosState.turmaAlunos = alunos;
+    window._turmaAlunosState.buildListas();
+    await setDoc(doc(db, 'turmas', turmaId), { alunos }, { merge: true });
+    carregarTurmas(escolaId);
+  } catch(err) { showToast('❌ Erro: ' + err.message, 'error'); }
 };
 
 // ---- CONVITE ALUNO WHATSAPP ----

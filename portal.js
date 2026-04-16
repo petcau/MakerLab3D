@@ -3,7 +3,7 @@ import {
   getAuth, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where
+  getFirestore, doc, getDoc, updateDoc, setDoc, deleteDoc, collection, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -133,6 +133,13 @@ onAuthStateChanged(auth, async user => {
       }
       if (perfil === 'professor' || perfil === 'gestor' || perfil === 'conteudista') {
         carregarTrilhasProfessor(trilhasDaSecao);
+      }
+      if (perfil === 'professor') {
+        window._profUid      = user.uid;
+        window._profEscolaId = dados.escola_id || '';
+        window._profNome     = dados.nome || user.displayName || '';
+        carregarTurmasProfessor(user.uid, dados.escola_id || '');
+        carregarAlunosEscola(dados.escola_id || '');
       }
 
       // Recalcula pontos somando todas as coleções de resultados
@@ -759,6 +766,284 @@ window.filtrarPorSecao = async function(secaoId) {
   }
   carregarTrilhasAluno(filtroIds);
   carregarTrilhasProfessor(filtroIds);
+};
+
+// ── TURMAS DO PROFESSOR ────────────────────────────────────────────────
+
+async function carregarTurmasProfessor(uid, escolaId) {
+  const wrap = document.getElementById('prof-turmas-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="trilha-loading">Carregando turmas...</div>';
+  try {
+    const snap = await getDocs(query(collection(db, 'turmas'), where('escola_id', '==', escolaId)));
+    const turmas = [];
+    snap.forEach(d => turmas.push({ id: d.id, ...d.data() }));
+    turmas.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+
+    if (turmas.length === 0) {
+      wrap.innerHTML = `
+        <div style="text-align:center; padding:28px 0; color:#aaa; font-size:14px;">
+          Nenhuma turma cadastrada ainda.<br>
+          <button onclick="abrirModalTurmaPortal(null)"
+            style="margin-top:12px; padding:8px 20px; background:#16a085; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;">
+            + Criar primeira turma
+          </button>
+        </div>`;
+      return;
+    }
+
+    wrap.innerHTML = '';
+    turmas.forEach(t => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#fff; border:1.5px solid #DDD8CC; border-radius:14px; padding:16px 20px; margin-bottom:12px; display:flex; align-items:center; gap:16px;';
+      card.innerHTML = `
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:15px; font-weight:700; color:#2F3447;">${t.nome || '—'}</span>
+            <span style="font-size:11px; padding:2px 8px; border-radius:20px; font-weight:700;
+              background:${t.ativa !== false ? '#e8f8f5' : '#f5f5f5'};
+              color:${t.ativa !== false ? '#16a085' : '#aaa'};">
+              ${t.ativa !== false ? '✅ Ativa' : '⏸ Inativa'}
+            </span>
+          </div>
+          <div style="font-size:12px; color:#8B9BB4; margin-top:4px;">
+            Cód: <strong>${t.codigo || '—'}</strong>
+            ${t.inicio ? ' · Início: ' + t.inicio : ''}
+            · <strong>${(t.alunos || []).length}</strong> aluno(s)
+            ${t.professor_nome ? ' · Prof: ' + t.professor_nome : ''}
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-shrink:0;">
+          <button onclick="verAlunosTurma('${t.id}', '${(t.nome || '').replace(/'/g,"\\'")}', '${escolaId}')"
+            style="padding:7px 14px; font-size:12px; font-weight:700; background:#2980b9; color:#fff; border:none; border-radius:8px; cursor:pointer;">
+            🎒 Ver Alunos
+          </button>
+          <button onclick="abrirModalTurmaPortal('${t.id}')"
+            style="padding:7px 12px; font-size:12px; background:#f5f3ee; color:#5F6480; border:1.5px solid #DDD8CC; border-radius:8px; cursor:pointer;">
+            ✏️
+          </button>
+          <button onclick="deletarTurmaPortal('${t.id}', '${escolaId}', '${uid}')"
+            style="padding:7px 10px; font-size:12px; background:#fff0f0; color:#e74c3c; border:1.5px solid #fdd; border-radius:8px; cursor:pointer;">
+            🗑
+          </button>
+        </div>
+      `;
+      wrap.appendChild(card);
+    });
+  } catch(e) {
+    wrap.innerHTML = `<div style="color:#e74c3c; padding:16px; font-size:13px;">Erro ao carregar turmas: ${e.message}</div>`;
+  }
+}
+
+async function carregarAlunosEscola(escolaId) {
+  const wrap = document.getElementById('prof-alunos-escola-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="trilha-loading">Carregando alunos...</div>';
+  try {
+    const snap = await getDocs(collection(db, 'usuarios'));
+    const alunos = [];
+    snap.forEach(d => {
+      const u = d.data();
+      if (u.escola_id === escolaId && u.perfil === 'aluno') alunos.push({ id: d.id, ...u });
+    });
+    alunos.sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
+    renderTabelaAlunos(wrap, alunos, false);
+  } catch(e) {
+    wrap.innerHTML = `<div style="color:#e74c3c; padding:16px; font-size:13px;">Erro: ${e.message}</div>`;
+  }
+}
+
+function renderTabelaAlunos(container, alunos, miniMode) {
+  if (alunos.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa; font-size:13px;">Nenhum aluno encontrado.</div>';
+    return;
+  }
+  const rows = alunos.map((a, i) => {
+    const pts   = (a.pontos_total || 0);
+    const nivel = a.nivel_maker || 'Explorador';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + 'º';
+    return `
+      <div style="display:flex; align-items:center; gap:12px; padding:10px 14px;
+        border-bottom:1px solid #F0EDE6; background:${i % 2 === 0 ? '#fff' : '#fafaf8'};">
+        <div style="font-size:15px; width:32px; text-align:center; flex-shrink:0;">${medal}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13px; font-weight:700; color:#2F3447; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${a.nome || '—'}</div>
+          <div style="font-size:11px; color:#8B9BB4;">Matrícula: ${a.matricula || '—'} · ${a.ano_letivo?.replace('_',' ') || ''} · ${a.turno || ''}</div>
+        </div>
+        <div style="text-align:right; flex-shrink:0;">
+          <div style="font-size:14px; font-weight:800; color:#2980b9;">${pts.toLocaleString('pt-BR')} <span style="font-size:10px; font-weight:600; color:#8B9BB4;">pts</span></div>
+          <div style="font-size:10px; color:#16a085; font-weight:600;">${nivel}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div style="background:#fff; border:1.5px solid #DDD8CC; border-radius:14px; overflow:hidden;">
+      <div style="display:flex; align-items:center; padding:10px 14px; background:#F5F3EE; border-bottom:1px solid #DDD8CC;">
+        <span style="font-size:11px; font-weight:700; color:#8B9BB4; text-transform:uppercase; letter-spacing:.5px;">
+          ${alunos.length} aluno(s) · por pontuação
+        </span>
+      </div>
+      ${rows}
+    </div>`;
+}
+
+window.verAlunosTurma = async function(turmaId, turmaNome, escolaId) {
+  document.getElementById('modal-turma-alunos')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-turma-alunos';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:18px;width:100%;max-width:620px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid #F0EDE6;">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:#2F3447;">🏫 ${turmaNome}</div>
+          <div style="font-size:12px;color:#8B9BB4;margin-top:2px;">Performance dos alunos</div>
+        </div>
+        <button onclick="document.getElementById('modal-turma-alunos').remove()"
+          style="width:32px;height:32px;border-radius:50%;border:none;background:#f5f3ee;font-size:18px;cursor:pointer;color:#555;">×</button>
+      </div>
+      <div id="modal-turma-alunos-body" style="overflow-y:auto;padding:16px;">
+        <div style="text-align:center;padding:32px;color:#aaa;">Carregando...</div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  try {
+    const turmaSnap = await getDoc(doc(db, 'turmas', turmaId));
+    const alunoIds  = turmaSnap.exists() ? (turmaSnap.data().alunos || []) : [];
+
+    if (alunoIds.length === 0) {
+      document.getElementById('modal-turma-alunos-body').innerHTML =
+        '<div style="text-align:center;padding:32px;color:#aaa;font-size:14px;">Nenhum aluno na turma ainda.</div>';
+      return;
+    }
+
+    const snap = await getDocs(collection(db, 'usuarios'));
+    const alunos = [];
+    snap.forEach(d => {
+      if (alunoIds.includes(d.id)) alunos.push({ id: d.id, ...d.data() });
+    });
+    alunos.sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
+
+    const body = document.getElementById('modal-turma-alunos-body');
+    renderTabelaAlunos(body, alunos, false);
+  } catch(e) {
+    document.getElementById('modal-turma-alunos-body').innerHTML =
+      `<div style="color:#e74c3c;padding:16px;font-size:13px;">Erro: ${e.message}</div>`;
+  }
+};
+
+window.abrirModalTurmaPortal = async function(turmaId) {
+  document.getElementById('modal-turma-portal')?.remove();
+
+  let turma = {};
+  const escolaIdAtual = window._profEscolaId || '';
+  const profUidAtual  = window._profUid || '';
+
+  if (turmaId) {
+    const snap = await getDoc(doc(db, 'turmas', turmaId));
+    if (snap.exists()) turma = { id: snap.id, ...snap.data() };
+  }
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-turma-portal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:18px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid #F0EDE6;">
+        <div style="font-size:16px;font-weight:800;color:#2F3447;">${turmaId ? 'Editar Turma' : 'Nova Turma'}</div>
+        <button onclick="document.getElementById('modal-turma-portal').remove()"
+          style="width:32px;height:32px;border-radius:50%;border:none;background:#f5f3ee;font-size:18px;cursor:pointer;color:#555;">×</button>
+      </div>
+      <div style="padding:20px 22px; display:flex; flex-direction:column; gap:14px;">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#5F6480;display:block;margin-bottom:5px;">Código da Turma *</label>
+          <input id="ptp-codigo" type="text" value="${turma.codigo || ''}" placeholder="Ex: 6A, TURMA-01"
+            style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #DDD8CC;border-radius:9px;font-size:14px;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#5F6480;display:block;margin-bottom:5px;">Nome da Turma *</label>
+          <input id="ptp-nome" type="text" value="${turma.nome || ''}" placeholder="Ex: 6º Ano A — Matutino"
+            style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #DDD8CC;border-radius:9px;font-size:14px;outline:none;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#5F6480;display:block;margin-bottom:5px;">Início</label>
+            <input id="ptp-inicio" type="date" value="${turma.inicio || ''}"
+              style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #DDD8CC;border-radius:9px;font-size:14px;outline:none;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#5F6480;display:block;margin-bottom:5px;">Status</label>
+            <select id="ptp-ativa"
+              style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #DDD8CC;border-radius:9px;font-size:14px;outline:none;background:#fff;">
+              <option value="true"  ${turma.ativa !== false ? 'selected' : ''}>Ativa</option>
+              <option value="false" ${turma.ativa === false  ? 'selected' : ''}>Inativa</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding:14px 22px;border-top:1px solid #F0EDE6;">
+        <button onclick="document.getElementById('modal-turma-portal').remove()"
+          style="padding:9px 18px;border:1.5px solid #DDD8CC;background:#fff;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;color:#5F6480;">
+          Cancelar
+        </button>
+        <button onclick="salvarTurmaPortal('${turmaId || ''}')"
+          style="padding:9px 20px;background:#16a085;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">
+          💾 Salvar
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.getElementById('ptp-codigo')?.focus();
+};
+
+window.salvarTurmaPortal = async function(turmaId) {
+  const codigo = document.getElementById('ptp-codigo')?.value?.trim();
+  const nome   = document.getElementById('ptp-nome')?.value?.trim();
+  if (!codigo) { alert('Informe o código da turma.'); return; }
+  if (!nome)   { alert('Informe o nome da turma.'); return; }
+
+  const escolaId = window._profEscolaId || '';
+  const uid      = window._profUid || '';
+  const docId    = (turmaId && turmaId !== '') ? turmaId : `turma-${escolaId}-${Date.now()}`;
+
+  const dados = {
+    codigo, nome,
+    inicio:         document.getElementById('ptp-inicio')?.value || '',
+    ativa:          document.getElementById('ptp-ativa')?.value !== 'false',
+    escola_id:      escolaId,
+    professor_id:   uid,
+    professor_nome: window._profNome || '',
+    atualizado_em:  new Date().toISOString()
+  };
+
+  if (!turmaId || turmaId === '') {
+    dados.alunos    = [];
+    dados.criado_em = new Date().toISOString();
+  } else {
+    try {
+      const snap = await getDoc(doc(db, 'turmas', docId));
+      if (snap.exists()) dados.alunos = snap.data().alunos || [];
+    } catch(_) { dados.alunos = []; }
+  }
+
+  try {
+    await setDoc(doc(db, 'turmas', docId), dados);
+    document.getElementById('modal-turma-portal')?.remove();
+    carregarTurmasProfessor(uid, escolaId);
+  } catch(e) { alert('Erro ao salvar: ' + e.message); }
+};
+
+window.deletarTurmaPortal = async function(turmaId, escolaId, uid) {
+  if (!confirm('Remover esta turma?')) return;
+  try {
+    await deleteDoc(doc(db, 'turmas', turmaId));
+    carregarTurmasProfessor(uid, escolaId);
+  } catch(e) { alert('Erro: ' + e.message); }
 };
 
 } // fim do else (modo preview)

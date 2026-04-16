@@ -260,6 +260,28 @@
           <div class="trilha-loading">Carregando trilhas...</div>
         </div>
 
+        <!-- TURMAS DO PROFESSOR -->
+        <div class="gestor-secao-titulo" style="margin-top:36px;">
+          <div class="gestor-secao-num">🏫</div>
+          <span>Turmas</span>
+          <button id="btn-nova-turma-prof" onclick="abrirModalTurmaPortal(null)"
+            style="margin-left:auto; padding:7px 16px; font-size:12px; font-weight:700; background:#16a085; color:#fff; border:none; border-radius:8px; cursor:pointer;">
+            + Nova Turma
+          </button>
+        </div>
+        <div id="prof-turmas-wrap">
+          <div class="trilha-loading">Carregando turmas...</div>
+        </div>
+
+        <!-- ALUNOS DA ESCOLA -->
+        <div class="gestor-secao-titulo" style="margin-top:36px;">
+          <div class="gestor-secao-num">🎒</div>
+          <span>Todos os Alunos da Escola</span>
+        </div>
+        <div id="prof-alunos-escola-wrap">
+          <div class="trilha-loading">Carregando alunos...</div>
+        </div>
+
       </div>
 
       <!-- ══════════════════════════════════════════
@@ -333,6 +355,15 @@
             </div>
             <h4>Trilhas</h4>
             <p>Monte trilhas pedagógicas organizando os cards em sequência de aprendizagem.</p>
+          </a>
+
+          <a class="acesso-card acesso-card-link" href="cards/admin.html" target="_blank" onclick="abrirAdminAba('secoes', event)">
+            <div class="acesso-card-top">
+              <div class="acesso-card-icon roxo">📚</div>
+              <span class="acesso-card-badge ativo">Acessar</span>
+            </div>
+            <h4>Seções</h4>
+            <p>Agrupe trilhas em seções e vincule cada seção a uma escola.</p>
           </a>
 
         </div>
