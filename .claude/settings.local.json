@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/peterson.lobato/.claude/projects/c--Users-peterson-lobato-Documents-GitHub-MakerLab3D-MakerLab3D/memory/**)"
+    ]
+  }
+}
