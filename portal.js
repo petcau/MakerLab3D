@@ -260,7 +260,7 @@ async function carregarProgresso(uid, ptsTotal) {
   } catch(e) { console.warn('Erro progresso:', e); }
 }
 
-async function calcularPosicaoRanking(meuUid, meusPontos, minhaEscolaId) {
+async function calcularPosicaoRanking(meuUid, _meusPontos, minhaEscolaId) {
   try {
     const snap = await getDocs(collection(db, 'usuarios'));
     const alunos = [];
@@ -383,7 +383,6 @@ function inicializarPaineis(perfil) {
 }
 
 // Seletor de visualização (apenas gestor)
-let visaoAtual = 'gestor';
 
 window.mudarVisao = function(visao) {
   visaoAtual = visao;
@@ -423,7 +422,7 @@ window.gamifTab = function(tipo) {
 };
 
 // ── Grid de semanas ────────────────────────────────────────────────────
-function renderSemanas(concluidas, atual, total) {
+function renderSemanas(_concluidas, atual, total) {
   const grid = document.getElementById('prog-semanas-grid');
   if (!grid) return;
   grid.innerHTML = '';
@@ -757,11 +756,15 @@ async function carregarSeletorSecaoGestor() {
 }
 
 window.filtrarPorSecao = async function(secaoId) {
-  let filtroIds = null;
+  let filtroIds = null; // null = mostrar todas, sem filtro
   if (secaoId) {
     try {
       const snap = await getDoc(doc(db, 'secoes', secaoId));
-      if (snap.exists()) filtroIds = snap.data().trilhas || null;
+      if (snap.exists()) {
+        const arr = snap.data().trilhas;
+        // Preserva a ordem exata definida no cadastro da seção
+        filtroIds = Array.isArray(arr) && arr.length > 0 ? arr : null;
+      }
     } catch(e) { console.warn(e); }
   }
   carregarTrilhasAluno(filtroIds);
@@ -814,7 +817,7 @@ async function carregarTurmasProfessor(uid, escolaId) {
           </div>
         </div>
         <div style="display:flex; gap:8px; flex-shrink:0;">
-          <button onclick="verAlunosTurma('${t.id}', '${(t.nome || '').replace(/'/g,"\\'")}', '${escolaId}')"
+          <button onclick="verAlunosTurma('${t.id}', '${(t.nome || '').replace(/'/g,"\\'")}' )"
             style="padding:7px 14px; font-size:12px; font-weight:700; background:#2980b9; color:#fff; border:none; border-radius:8px; cursor:pointer;">
             🎒 Ver Alunos
           </button>
@@ -847,13 +850,13 @@ async function carregarAlunosEscola(escolaId) {
       if (u.escola_id === escolaId && u.perfil === 'aluno') alunos.push({ id: d.id, ...u });
     });
     alunos.sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
-    renderTabelaAlunos(wrap, alunos, false);
+    renderTabelaAlunos(wrap, alunos);
   } catch(e) {
     wrap.innerHTML = `<div style="color:#e74c3c; padding:16px; font-size:13px;">Erro: ${e.message}</div>`;
   }
 }
 
-function renderTabelaAlunos(container, alunos, miniMode) {
+function renderTabelaAlunos(container, alunos) {
   if (alunos.length === 0) {
     container.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa; font-size:13px;">Nenhum aluno encontrado.</div>';
     return;
@@ -888,7 +891,7 @@ function renderTabelaAlunos(container, alunos, miniMode) {
     </div>`;
 }
 
-window.verAlunosTurma = async function(turmaId, turmaNome, escolaId) {
+window.verAlunosTurma = async function(turmaId, turmaNome) {
   document.getElementById('modal-turma-alunos')?.remove();
 
   const modal = document.createElement('div');
@@ -940,8 +943,6 @@ window.abrirModalTurmaPortal = async function(turmaId) {
   document.getElementById('modal-turma-portal')?.remove();
 
   let turma = {};
-  const escolaIdAtual = window._profEscolaId || '';
-  const profUidAtual  = window._profUid || '';
 
   if (turmaId) {
     const snap = await getDoc(doc(db, 'turmas', turmaId));
@@ -1107,7 +1108,7 @@ function toEmbed(url) {
 }
 
 // Abre o admin na aba correta via localStorage
-window.abrirAdminAba = function(aba, event) {
+window.abrirAdminAba = function(aba) {
   localStorage.setItem('admin_aba_destino', aba);
 };
 
