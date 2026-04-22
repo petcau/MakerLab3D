@@ -1,7 +1,7 @@
 // card.js — MakerLab 3D
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -33,27 +33,90 @@ function makeChip(text, cls) {
   return chip;
 }
 
-// Converte texto com * em lista e preserva quebras de linha
+window.copiarCodigo = function() {
+  const pre = document.getElementById('ativ-codigo');
+  const btn = document.getElementById('btn-copiar-codigo');
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = '✅';
+    setTimeout(() => { btn.textContent = '📋'; }, 2000);
+  });
+};
+
+// Escapa HTML para uso seguro em innerHTML
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Aplica formatação inline: **bold** e `code`
+function aplicarInline(s) {
+  return s
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+}
+
+// Converte markdown para HTML e injeta no container
 function renderTextoLivre(texto, containerId) {
   const container = document.getElementById(containerId);
   if (!container || !texto) return;
 
-  const linhas = texto.split('\n');
-  let html = '';
-  let emLista = false;
+  // Substitui blocos ```...``` por <pre><code> antes de processar linha a linha
+  texto = texto.replace(/```(?:\w+)?\n?([\s\S]*?)```/g, (_, code) =>
+    `\x00PRE\x00${escHtml(code.trim())}\x00/PRE\x00`
+  );
+
+  const linhas   = texto.split('\n');
+  let html       = '';
+  let emLista    = false;
+
+  const fecharLista = () => { if (emLista) { html += '</ul>'; emLista = false; } };
 
   linhas.forEach(linha => {
-    const trimmed = linha.trim();
-    if (trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
-      if (!emLista) { html += '<ul class="texto-lista">'; emLista = true; }
-      html += `<li>${trimmed.slice(2)}</li>`;
-    } else {
-      if (emLista) { html += '</ul>'; emLista = false; }
-      if (trimmed) html += `<p>${trimmed}</p>`;
+    const t = linha.trim();
+
+    // Separador horizontal
+    if (/^---+$/.test(t)) {
+      fecharLista();
+      html += '<hr style="border:none;border-top:1px solid #e8eaf0;margin:10px 0;">';
+      return;
     }
+
+    // Cabeçalhos ### / ##
+    const hMatch = t.match(/^#{2,}\s+(.+)/);
+    if (hMatch) {
+      fecharLista();
+      html += `<p class="texto-subtitulo">${aplicarInline(escHtml(hMatch[1]))}</p>`;
+      return;
+    }
+
+    // Blockquote > texto
+    if (t.startsWith('> ')) {
+      fecharLista();
+      html += `<blockquote class="texto-blockquote">${aplicarInline(escHtml(t.slice(2)))}</blockquote>`;
+      return;
+    }
+
+    // Item de lista * ou •
+    if (t.startsWith('* ') || t.startsWith('• ') || t.startsWith('- ')) {
+      if (!emLista) { html += '<ul class="texto-lista">'; emLista = true; }
+      html += `<li>${aplicarInline(escHtml(t.slice(2)))}</li>`;
+      return;
+    }
+
+    // Bloco de código (placeholder gerado acima)
+    if (t.startsWith('\x00PRE\x00')) {
+      fecharLista();
+      const code = t.replace('\x00PRE\x00', '').replace('\x00/PRE\x00', '');
+      html += `<pre style="background:#1e1e1e;color:#d4d4d4;border-radius:8px;padding:14px 18px;font-size:12px;line-height:1.7;overflow-x:auto;white-space:pre;margin:8px 0;">${code}</pre>`;
+      return;
+    }
+
+    // Parágrafo normal
+    fecharLista();
+    if (t) html += `<p>${aplicarInline(escHtml(t))}</p>`;
   });
 
-  if (emLista) html += '</ul>';
+  fecharLista();
   container.innerHTML = html;
 }
 
@@ -76,7 +139,7 @@ async function carregarCard() {
     document.getElementById('nivel-badge').textContent  = d.nivel   || '—';
     document.getElementById('desafio-num').textContent  = numStr;
     document.getElementById('nome-desafio').textContent = d.nome    || '—';
-    document.getElementById('objetivo').textContent     = d.objetivo || '—';
+    renderTextoLivre(d.objetivo || '—', 'objetivo');
     document.title = 'MakerLab 3D — ' + (d.nome || 'Desafio');
 
     // Tema
@@ -105,11 +168,41 @@ async function carregarCard() {
     }
 
     // ---- CARDS VINCULADOS ----
-    const grupos = [
-      { key: 'links_desafios',    label: '🎯 Desafios',             cor: 'vinc-azul' },
-      { key: 'links_componentes', label: '🔩 Componentes',          cor: 'vinc-amarelo' },
-      { key: 'links_conexoes',    label: '🌐 Conexões com o Mundo', cor: 'vinc-verde' },
-    ];
+    // Mapeamento legado: mantém compatibilidade com campos já salvos
+    const VMAP_LEGADO = {
+      'Desafio':             'links_desafios',
+      'Componente':          'links_componentes',
+      'Conexão com o Mundo': 'links_conexoes',
+    };
+    function tipoKey(nome) {
+      if (VMAP_LEGADO[nome]) return VMAP_LEGADO[nome];
+      return 'links_' + nome.toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    }
+    const CORES_VINC = ['vinc-azul', 'vinc-amarelo', 'vinc-verde'];
+
+    // Carrega tipos do Firestore; fallback nos 3 padrões se coleção vazia
+    let tiposVinc = [];
+    try {
+      const tiposSnap = await getDocs(collection(db, 'tipos_card'));
+      tiposSnap.forEach(t => { if (t.data().ativo !== false) tiposVinc.push({ id: t.id, ...t.data() }); });
+      tiposVinc.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+    } catch(e) { /* usa fallback */ }
+
+    if (tiposVinc.length === 0) {
+      tiposVinc = [
+        { nome: 'Desafio',             icone: '🎯' },
+        { nome: 'Componente',          icone: '🔩' },
+        { nome: 'Conexão com o Mundo', icone: '🌐' },
+      ];
+    }
+
+    const grupos = tiposVinc.map((t, i) => ({
+      key:   tipoKey(t.nome),
+      label: `${t.icone || '📌'} ${t.nome}`,
+      cor:   CORES_VINC[i % CORES_VINC.length],
+    }));
 
     const grid = document.getElementById('linked-grid');
     let temVinculados = false;
@@ -135,13 +228,14 @@ async function carregarCard() {
       });
       if (userAtual) {
         const colsJogos = [
-          { col: 'resultados_quiz',     sufixo: '_'         },
-          { col: 'resultados_bug',      sufixo: '_bug_'     },
-          { col: 'resultados_comp',     sufixo: '_comp_'    },
-          { col: 'resultados_ordena',   sufixo: '_ordena_'  },
-          { col: 'resultados_complete', sufixo: '_complete_'},
-          { col: 'resultados_conecta',  sufixo: '_conecta_' },
-          { col: 'resultados_box',      sufixo: '_box_'     },
+          { col: 'resultados_quiz',     sufixo: '_'          },
+          { col: 'resultados_bug',      sufixo: '_bug_'      },
+          { col: 'resultados_comp',     sufixo: '_comp_'     },
+          { col: 'resultados_ordena',   sufixo: '_ordena_'   },
+          { col: 'resultados_complete', sufixo: '_complete_' },
+          { col: 'resultados_conecta',  sufixo: '_conecta_'  },
+          { col: 'resultados_box',      sufixo: '_box_'      },
+          { col: 'resultados_binario',  sufixo: '_binario_'  },
         ];
         await Promise.all(todosIds.flatMap(id =>
           colsJogos.map(async ({ col, sufixo }) => {
@@ -149,9 +243,10 @@ async function carregarCard() {
               const rSnap = await getDoc(doc(db, col, userAtual.uid + sufixo + id));
               if (rSnap.exists()) {
                 const r = rSnap.data();
-                if (!resultadosAluno[id]) resultadosAluno[id] = { pts: 0, concluido: false };
+                if (!resultadosAluno[id]) resultadosAluno[id] = { pts: 0, concluido: false, played: new Set() };
                 resultadosAluno[id].pts += parseFloat(r.melhor_pontos) || 0;
                 if (r.concluido) resultadosAluno[id].concluido = true;
+                resultadosAluno[id].played.add(sufixo);
               }
             } catch(e) {}
           })
@@ -232,15 +327,24 @@ async function carregarCard() {
         show('ativ-imagem-wrap');
       }
       if (d.atividade_codigo) {
-        document.getElementById('ativ-codigo').textContent = d.atividade_codigo;
+        const elCodigo = document.getElementById('ativ-codigo');
+        elCodigo.innerHTML = d.atividade_codigo.split('\n').map(linha => {
+          const esc = escHtml(linha);
+          if (/^\s*\/\//.test(linha)) return `<span style="color:#7ab3e0;">${esc}</span>`;
+          return esc.replace(/\bvoid\b/g, '<span style="color:#c9956a;">void</span>');
+        }).join('\n');
         show('ativ-codigo-wrap');
       }
       if ((d.glossario || []).length > 0) {
         const tbody = document.getElementById('ativ-glossario-tbody');
         d.glossario.forEach(g => {
           if (!g.codigo && !g.descricao) return;
+          const cod  = escHtml((g.codigo  || '').replace(/^`+|`+$/g, '').trim());
+          const desc = escHtml(g.descricao || '')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`([^`]+)`/g, '<code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:0.9em;">$1</code>');
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${g.codigo || ''}</td><td>${g.descricao || ''}</td>`;
+          tr.innerHTML = `<td><code style="font-size:0.88em;">${cod}</code></td><td>${desc}</td>`;
           tbody.appendChild(tr);
         });
         show('ativ-glossario-wrap');
@@ -370,8 +474,22 @@ async function carregarCard() {
       if (btnBinario) btnBinario.onclick = () => window.open('../jogos/binario.html?card=' + cardId, '_blank');
     }
 
+    // Retorna lista de sufixos dos jogos presentes em um card
+    function jogosDoCardData(data) {
+      const jogos = [];
+      if ((data.quiz             || []).length > 0) jogos.push('_');
+      if ((data.bug_codigos      || []).length > 0) jogos.push('_bug_');
+      if ((data.comp_perguntas   || []).length > 0) jogos.push('_comp_');
+      if ((data.ordena_desafios  || []).length > 0) jogos.push('_ordena_');
+      if ((data.complete_desafios|| []).length > 0) jogos.push('_complete_');
+      if ((data.conecta_desafios || []).length > 0) jogos.push('_conecta_');
+      if ((data.box_desafios     || []).length > 0) jogos.push('_box_');
+      if ((data.binario_desafios || []).length > 0) jogos.push('_binario_');
+      return jogos;
+    }
+
     // ---- AUTH — atualiza quiz e bug juntos ----
-    if (temQuiz || temBug || temComp || temOrdena || temComplete || temConecta || temBox || temBinario) {
+    if (temQuiz || temBug || temComp || temOrdena || temComplete || temConecta || temBox || temBinario || todosIds.length > 0) {
       const NIVEL_NOMES  = ['Explorador Iniciante','Curioso Digital','Aprendiz Maker','Construtor Criativo','Inventor em Ação','Programador Maker','Engenheiro Criativo','Inovador Maker','Mentor Maker','Mestre Maker'];
       const NIVEL_PONTOS = [0,100,250,500,900,1400,2000,2700,3500,4500];
       let alunoLogado = null;
@@ -478,6 +596,42 @@ async function carregarCard() {
             const val = totalConquistado % 1 === 0 ? totalConquistado : totalConquistado.toFixed(1);
             document.getElementById('pontos-conquistados').textContent = val + ' pts';
             document.getElementById('stat-pontos-conquistados').style.display = '';
+          }
+
+          // ---- CARD CONCLUÍDO ----
+          const idxAtual = [
+            temQuiz ? 0 : -1, temBug ? 1 : -1, temComp ? 2 : -1, temOrdena ? 3 : -1,
+            temComplete ? 4 : -1, temConecta ? 5 : -1, temBox ? 6 : -1, temBinario ? 7 : -1,
+          ].filter(i => i >= 0);
+
+          // Card sem jogos próprios → auto-aprovado; com jogos → todos devem ter sido jogados
+          let cardConcluido = idxAtual.length === 0 || idxAtual.every(i => resultDocs[i].exists());
+
+          // Verifica cards vinculados — ignora os sem jogos; usa concluido (igual ao mini-card)
+          if (cardConcluido) {
+            for (const linkedId of todosIds) {
+              const dados = dadosVinculados[linkedId];
+              if (!dados) continue;
+              const jogosLinked = jogosDoCardData(dados);
+              if (jogosLinked.length === 0) continue; // sem jogos → não computa
+              const resultado = resultadosAluno[linkedId];
+              if (!resultado || !resultado.concluido) { cardConcluido = false; break; }
+            }
+          }
+
+          // Só exibe o badge se há ao menos um jogo (no card ou nos vinculados)
+          const temJogosEmAlgumLugar = idxAtual.length > 0 ||
+            todosIds.some(id => dadosVinculados[id] && jogosDoCardData(dadosVinculados[id]).length > 0);
+
+          if (cardConcluido && temJogosEmAlgumLugar) {
+            document.getElementById('stat-pontos-conquistados').style.display = '';
+            document.getElementById('stat-pontos-conquistados').classList.add('conquistado-box--concluido');
+            document.getElementById('conquistado-icon').textContent = '🏆';
+            document.getElementById('conquistado-concluido-badge').style.display = '';
+          } else {
+            document.getElementById('stat-pontos-conquistados').classList.remove('conquistado-box--concluido');
+            document.getElementById('conquistado-icon').textContent = '🏅';
+            document.getElementById('conquistado-concluido-badge').style.display = 'none';
           }
 
         } catch(e) { console.warn('Auth jogos:', e); }

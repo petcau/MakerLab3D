@@ -358,7 +358,7 @@
         <div class="secao-body">
           <div class="form-row">
             <div class="form-group">
-              <label>Tipo de Vínculo *</label>
+              <label>Tipo de Vínculo</label>
               <select id="tipo-vinculo">
                 <option value="">Selecione</option>
                 <option value="efetivo">Efetivo</option>
@@ -367,13 +367,13 @@
               </select>
             </div>
             <div class="form-group">
-              <label>Área de Atuação *</label>
+              <label>Área de Atuação</label>
               <input type="text" id="area-atuacao" placeholder="Ex: Matemática, Ciências, Maker, Português">
             </div>
           </div>
           <div class="form-row full">
             <div class="form-group">
-              <label>Formação *</label>
+              <label>Formação</label>
               <input type="text" id="formacao" placeholder="Ex: Licenciatura em Computação">
             </div>
           </div>
@@ -385,7 +385,7 @@
         <div class="secao-titulo">Experiência Maker</div>
         <div class="secao-body">
           <div class="form-group">
-            <label>Nível de Experiência Maker *</label>
+            <label>Nível de Experiência Maker</label>
             <select id="nivel-experiencia">
               <option value="">Selecione</option>
               <option value="iniciante">Iniciante</option>
@@ -539,10 +539,6 @@
       document.getElementById('codigo').classList.remove('erro');
       if (!nome)    { mostrarMsg('Informe seu nome completo.', 'erro'); return null; }
       if (!tel)     { mostrarMsg('Informe seu telefone.', 'erro'); return null; }
-      if (!vinculo) { mostrarMsg('Selecione o tipo de vínculo.', 'erro'); return null; }
-      if (!area)    { mostrarMsg('Informe sua área de atuação.', 'erro'); return null; }
-      if (!form)    { mostrarMsg('Informe sua formação.', 'erro'); return null; }
-      if (!nivel)   { mostrarMsg('Selecione seu nível de experiência maker.', 'erro'); return null; }
       return { nome, tel, vinculo, area, form, nivel };
     }
 

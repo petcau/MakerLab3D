@@ -28,14 +28,104 @@ let cardAtivo  = null;
 let imagemURL  = '';
 let atividadeImagemURL = '';
 window.glossarioState = [];
-let tagsState  = { links_desafios: [], links_componentes: [], links_conexoes: [] };
+let tagsState  = {};
 let todosCards = {};
-// Mapa dos 3 grupos de cards vinculados
-const VMAP = [
-  { tipo: 'Desafio',             key: 'links_desafios',    sel: 'sel-desafios',      list: 'list-desafios' },
-  { tipo: 'Componente',          key: 'links_componentes', sel: 'sel-componentes-v', list: 'list-componentes-v' },
-  { tipo: 'Conexão com o Mundo', key: 'links_conexoes',    sel: 'sel-conexoes-v',    list: 'list-conexoes-v' },
+
+// Mapeamento legado: mantém compatibilidade com campos já salvos no Firestore
+const VMAP_LEGADO = {
+  'Desafio':             'links_desafios',
+  'Componente':          'links_componentes',
+  'Conexão com o Mundo': 'links_conexoes',
+};
+
+function tipoKey(nome) {
+  if (VMAP_LEGADO[nome]) return VMAP_LEGADO[nome];
+  return 'links_' + nome.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+}
+
+function tipoElemId(nome, prefixo) {
+  const slug = nome.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  return prefixo + slug;
+}
+
+function getVMAP() {
+  return (window._tiposCard || []).map(t => ({
+    tipo:  t.nome,
+    icone: t.icone || '📌',
+    key:   tipoKey(t.nome),
+    sel:   tipoElemId(t.nome, 'vsel-'),
+    list:  tipoElemId(t.nome, 'vlist-'),
+  }));
+}
+
+function renderVinculadosGruposHTML() {
+  return (window._tiposCard || []).map(t => {
+    const key  = tipoKey(t.nome);
+    const sel  = tipoElemId(t.nome, 'vsel-');
+    const list = tipoElemId(t.nome, 'vlist-');
+    return `
+      <div class="vg">
+        <div class="vg-header">
+          <span class="vg-title">${t.icone || '📌'} ${t.nome}</span>
+          <div class="vg-add-row">
+            <select class="vg-select" id="${sel}">
+              <option value="">Selecione um card do tipo ${t.nome}...</option>
+            </select>
+            <button class="vg-btn-add" onclick="addVinculado('${key}','${sel}','${list}')">Adicionar</button>
+          </div>
+        </div>
+        <div class="vg-list" id="${list}"></div>
+      </div>`;
+  }).join('');
+}
+
+// Tipos dinâmicos — carregados do Firestore, com fallback nos 3 padrões
+window._tiposCard = [
+  { id: null, nome: 'Desafio',             icone: '🎯', ordem: 1 },
+  { id: null, nome: 'Componente',          icone: '🔩', ordem: 2 },
+  { id: null, nome: 'Conexão com o Mundo', icone: '🌍', ordem: 3 },
 ];
+
+let _filtroTipo = '';
+
+async function carregarTiposCard() {
+  try {
+    const snap = await getDocs(collection(db, 'tipos_card'));
+    if (!snap.empty) {
+      const tipos = [];
+      snap.forEach(d => tipos.push({ id: d.id, ...d.data() }));
+      tipos.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+      window._tiposCard = tipos;
+    }
+  } catch(e) { console.warn('carregarTiposCard:', e); }
+  popularFiltroTipos();
+}
+
+function popularFiltroTipos() {
+  const sel = document.getElementById('card-tipo-filtro');
+  if (!sel) return;
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Todos os tipos</option>'
+    + window._tiposCard.map(t =>
+        `<option value="${t.nome}" ${atual === t.nome ? 'selected' : ''}>${t.icone ? t.icone + ' ' : ''}${t.nome}</option>`
+      ).join('');
+}
+
+window.filtrarCardsTipo = function(tipo) {
+  _filtroTipo = tipo;
+  listarCards();
+};
+
+// Callback chamado pelo admin-tipos.js após salvar/deletar um tipo
+window._recarregarTiposCard = function() {
+  carregarTiposCard().then(() => {
+    listarCards();
+  });
+};
 
 // ---- TOAST ----
 function showToast(msg, tipo = '') {
@@ -62,26 +152,33 @@ async function listarCards() {
     snap.forEach(docSnap => docs.push(docSnap));
     docs.sort((a, b) => (a.data().numero || 0) - (b.data().numero || 0));
 
-    // Agrupa por tipo
-    const grupos = { 'Desafio': [], 'Componente': [], 'Conexão com o Mundo': [] };
+    // Agrupa por tipo (usa tipos dinâmicos)
+    const grupos = {};
+    window._tiposCard.forEach(t => { grupos[t.nome] = []; });
+
     docs.forEach(docSnap => {
       const d    = docSnap.data();
-      const tipo = d.tipo || 'Desafio';
-      if (!grupos[tipo]) grupos[tipo] = [];
+      const tipo = d.tipo || window._tiposCard[0]?.nome || 'Desafio';
+      if (!grupos[tipo]) grupos[tipo] = []; // tipo desconhecido vai para grupo próprio
       grupos[tipo].push({ id: docSnap.id, data: d });
     });
 
-    const ordem = ['Desafio', 'Componente', 'Conexão com o Mundo'];
+    const ordem = window._tiposCard.map(t => t.nome);
+    // Adiciona tipos desconhecidos que apareçam nos cards mas não estejam na lista
+    Object.keys(grupos).forEach(g => { if (!ordem.includes(g)) ordem.push(g); });
+
+    // Aplica filtro por tipo
+    const ordemFiltrada = _filtroTipo ? ordem.filter(g => g === _filtroTipo) : ordem;
     let temConteudo = false;
 
-    ordem.forEach(grupo => {
+    ordemFiltrada.forEach(grupo => {
       const cards = grupos[grupo];
       if (!cards || cards.length === 0) return;
       temConteudo = true;
 
       const sep = document.createElement('div');
       sep.className   = 'list-group-label';
-      sep.textContent = grupo === 'Conexão com o Mundo' ? 'Conexões com o Mundo' : grupo + 's';
+      sep.textContent = grupo;
       listEl.appendChild(sep);
 
       cards.forEach(({ id, data: d }) => {
@@ -139,9 +236,15 @@ function renderForm(id, d) {
   window.boxState      = d.box_desafios      ? JSON.parse(JSON.stringify(d.box_desafios))      : [];
   window.binarioState  = d.binario_desafios  ? JSON.parse(JSON.stringify(d.binario_desafios))  : [];
   window.glossarioState = d.glossario ? JSON.parse(JSON.stringify(d.glossario)) : [];
-  tagsState.links_desafios   = d.links_desafios   ? [...d.links_desafios]   : [];
-  tagsState.links_componentes = d.links_componentes ? [...d.links_componentes] : [];
-  tagsState.links_conexoes   = d.links_conexoes   ? [...d.links_conexoes]   : [];
+  // Carrega links de todos os tipos dinâmicos (com fallback para legado)
+  tagsState = {};
+  getVMAP().forEach(({ key }) => {
+    tagsState[key] = d[key] ? [...d[key]] : [];
+  });
+  // Preserva campos legados que existam no documento mas não tenham tipo cadastrado
+  Object.keys(d).filter(k => k.startsWith('links_') && !tagsState[k]).forEach(k => {
+    tagsState[k] = [...d[k]];
+  });
   const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', 'card.html');
   const cardUrl = id ? `${baseUrl}?id=${id}` : '—';
 
@@ -151,6 +254,7 @@ function renderForm(id, d) {
       <div class="form-actions">
         ${id ? `<button class="btn-historico" onclick="abrirHistoricoCard('${id}')">📋 Histórico</button>` : ''}
         ${id ? `<button class="btn-deletar" onclick="deletarCard('${id}')">🗑 Deletar</button>` : ''}
+        ${id ? `<button class="btn-ver-card" onclick="window.open('card.html?id=${id}','_blank')" type="button">👁 Ver Card</button>` : ''}
         <button class="btn-salvar"   onclick="salvarCard(false)">💾 Salvar Rascunho</button>
         <button class="btn-publicar" onclick="salvarCard(true)">🚀 Publicar</button>
       </div>
@@ -185,10 +289,10 @@ function renderForm(id, d) {
         <div class="form-group">
           <label>Tipo do Card</label>
           <select id="f-tipo">
-            <option value=""                     ${!d.tipo                              ? 'selected':''}>Selecione...</option>
-            <option value="Desafio"              ${(d.tipo||'') === 'Desafio'           ? 'selected':''}>Desafio</option>
-            <option value="Componente"           ${(d.tipo||'') === 'Componente'        ? 'selected':''}>Componente</option>
-            <option value="Conexão com o Mundo"  ${(d.tipo||'') === 'Conexão com o Mundo' ? 'selected':''}>Conexão com o Mundo</option>
+            <option value="" ${!d.tipo ? 'selected':''}>Selecione...</option>
+            ${window._tiposCard.filter(t => t.ativo !== false).map(t =>
+              `<option value="${t.nome}" ${(d.tipo||'') === t.nome ? 'selected':''}>${t.icone ? t.icone + ' ' : ''}${t.nome}</option>`
+            ).join('')}
           </select>
         </div>
         <div class="form-group">
@@ -196,6 +300,10 @@ function renderForm(id, d) {
           <input type="text" id="f-tema" value="${d.tema || ''}" placeholder="Ex: Eletrônica, História, Programação...">
         </div>
 
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-prompt-ia"  onclick="abrirPromptIA()" type="button">🤖 Prompt IA</button>
+        <button class="btn-gerar-ia"   onclick="gerarPorIA()"    type="button">✨ Gerar por IA (Claude)</button>
       </div>
     </div>
 
@@ -274,40 +382,7 @@ function renderForm(id, d) {
       <div class="section-title">Cards Vinculados</div>
       <div id="vinculados-loading" style="color:#aaa; font-size:12px; padding:8px 0;">Carregando cards disponíveis...</div>
       <div id="vinculados-grupos" style="display:none;">
-
-        <div class="vg">
-          <div class="vg-header">
-            <span class="vg-title">🎯 Desafios</span>
-            <div class="vg-add-row">
-              <select class="vg-select" id="sel-desafios"><option value="">Selecione um desafio...</option></select>
-              <button class="vg-btn-add" onclick="addVinculado('links_desafios','sel-desafios','list-desafios')">Adicionar</button>
-            </div>
-          </div>
-          <div class="vg-list" id="list-desafios"></div>
-        </div>
-
-        <div class="vg">
-          <div class="vg-header">
-            <span class="vg-title">🔩 Componentes</span>
-            <div class="vg-add-row">
-              <select class="vg-select" id="sel-componentes-v"><option value="">Selecione um componente...</option></select>
-              <button class="vg-btn-add" onclick="addVinculado('links_componentes','sel-componentes-v','list-componentes-v')">Adicionar</button>
-            </div>
-          </div>
-          <div class="vg-list" id="list-componentes-v"></div>
-        </div>
-
-        <div class="vg">
-          <div class="vg-header">
-            <span class="vg-title">🌐 Conexões com o Mundo</span>
-            <div class="vg-add-row">
-              <select class="vg-select" id="sel-conexoes-v"><option value="">Selecione uma conexão...</option></select>
-              <button class="vg-btn-add" onclick="addVinculado('links_conexoes','sel-conexoes-v','list-conexoes-v')">Adicionar</button>
-            </div>
-          </div>
-          <div class="vg-list" id="list-conexoes-v"></div>
-        </div>
-
+        ${renderVinculadosGruposHTML()}
       </div>
     </div>
 
@@ -360,6 +435,10 @@ function renderForm(id, d) {
         </div>
         <div style="display:flex; gap:8px; margin-top:10px; align-items:center;">
           <input type="text" id="f-ativ-imagem-url" value="${d.atividade_imagem_url || ''}" placeholder="Ou cole a URL da imagem do circuito" style="flex:1; font-size:11px;">
+          ${d.atividade_imagem_url ? `<button type="button" onclick="removerAtivImagem()"
+            style="background:#fff0f0;color:#e74c3c;border:1.5px solid #f5c6c6;border-radius:7px;
+                   padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;
+                   font-family:'Inter Tight',sans-serif;">🗑 Remover</button>` : ''}
         </div>
       </div>
 
@@ -417,6 +496,10 @@ function renderForm(id, d) {
         <span class="helper-text">Use * para itens de lista e 💡 para dicas.</span>
       </div>
     </div>
+
+    <!-- PAINEL JOGOS -->
+    <div class="painel-jogos">
+      <div class="painel-jogos-titulo">🎮 Jogos</div>
 
     <!-- Quiz -->
     <div class="form-section form-section-quiz">
@@ -609,6 +692,8 @@ function renderForm(id, d) {
       </div>
     </div>
 
+    </div><!-- /painel-jogos -->
+
     ${id ? `
     <div class="form-section">
       <div class="section-title">Link do Card</div>
@@ -637,6 +722,60 @@ function renderForm(id, d) {
   atualizarBtnBox();
   renderBinarioLista();
   atualizarBtnBinario();
+  inicializarPainelJogos();
+}
+
+function inicializarPainelJogos() {
+  const jogos = [
+    { label: 'Quiz',              emoji: '🎯', cls: 'form-section-quiz',     bodyId: 'quiz-body',     state: window.quizState },
+    { label: 'Caça ao Bug',       emoji: '🐛', cls: 'form-section-bug',      bodyId: 'bug-body',      state: window.bugState },
+    { label: 'Qual Componente?',  emoji: '🔌', cls: 'form-section-comp',     bodyId: 'comp-body',     state: window.compState },
+    { label: 'Ordena o Código',   emoji: '🔀', cls: 'form-section-ordena',   bodyId: 'ordena-body',   state: window.ordenaState },
+    { label: 'Complete o Código', emoji: '📝', cls: 'form-section-complete', bodyId: 'complete-body', state: window.completeState },
+    { label: 'Conecta os Pontos', emoji: '🔗', cls: 'form-section-conecta',  bodyId: 'conecta-body',  state: window.conectaState },
+    { label: 'Simulador BOX',     emoji: '📦', cls: 'form-section-box',      bodyId: 'box-body',      state: window.boxState },
+    { label: 'Código Binário',    emoji: '💻', cls: 'form-section-binario',  bodyId: 'binario-body',  state: window.binarioState },
+  ];
+
+  // Oculta todas as seções sem dados
+  jogos.forEach(j => {
+    const sec = document.querySelector('.' + j.cls);
+    if (sec) sec.style.display = (j.state && j.state.length > 0) ? '' : 'none';
+  });
+
+  // Cria barra de botões
+  const bar = document.createElement('div');
+  bar.className = 'jogos-nav-bar';
+
+  jogos.forEach(j => {
+    const temDados = j.state && j.state.length > 0;
+    const btn = document.createElement('button');
+    btn.className = 'jogo-nav-btn' + (temDados ? ' tem-dados' : '');
+    btn.innerHTML = `${j.emoji} ${j.label}${temDados ? ` <span class="jogo-nav-count">${j.state.length}</span>` : ''}`;
+    btn.title = temDados ? `${j.state.length} item(s) criado(s)` : 'Clique para criar';
+
+    btn.onclick = () => {
+      const sec = document.querySelector('.' + j.cls);
+      if (!sec) return;
+      const visivel = sec.style.display !== 'none';
+      sec.style.display = visivel ? 'none' : '';
+      btn.classList.toggle('ativo', !visivel);
+      // Ao abrir, expande o corpo do jogo se estiver colapsado
+      if (!visivel) {
+        const body = document.getElementById(j.bodyId);
+        if (body && body.style.display === 'none') body.style.display = '';
+        setTimeout(() => sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+      }
+    };
+
+    // Marca como ativo se a seção está visível
+    if (temDados) btn.classList.add('ativo');
+    bar.appendChild(btn);
+  });
+
+  // Insere a barra após o título do painel
+  const titulo = document.querySelector('.painel-jogos-titulo');
+  if (titulo) titulo.insertAdjacentElement('afterend', bar);
 }
 
 // ---- UPLOAD DE IMAGEM ----
@@ -732,6 +871,23 @@ window.handleAtivImageUpload = async function (event) {
   );
 };
 
+window.removerAtivImagem = function() {
+  atividadeImagemURL = '';
+  const urlInput = document.getElementById('f-ativ-imagem-url');
+  if (urlInput) urlInput.value = '';
+  const area = document.getElementById('upload-area-ativ');
+  area.classList.remove('tem-imagem');
+  area.innerHTML = `
+    <div class="upload-placeholder" onclick="document.getElementById('f-ativ-imagem').click()">
+      <div class="upload-icon">🔌</div>
+      <div class="upload-text">Clique para fazer upload do circuito</div>
+      <div class="upload-subtext">PNG, JPG ou WebP — máx. 2MB</div>
+    </div>`;
+  const btnRemover = document.querySelector('button[onclick="removerAtivImagem()"]');
+  if (btnRemover) btnRemover.remove();
+  showToast('🗑 Imagem do circuito removida', '');
+};
+
 // ---- TAGS (componentes livres) ----
 function initTags(key, inputId, containerId) {
   renderTags(key, containerId);
@@ -771,35 +927,39 @@ window.removeTag = function (key, containerId, i) {
 // ---- CARDS VINCULADOS ----
 async function carregarCardsVinculados() {
   try {
-    const snap = await getDocs(collection(db, 'cards'));
-    todosCards = {};
-    const porTipo = { 'Desafio': [], 'Componente': [], 'Conexão com o Mundo': [] };
+    const snap  = await getDocs(collection(db, 'cards'));
+    const vmap  = getVMAP();
+    todosCards  = {};
+    const porTipo = {};
+    vmap.forEach(({ tipo }) => { porTipo[tipo] = []; });
 
     const docsV = [];
     snap.forEach(docSnap => docsV.push(docSnap));
     docsV.sort((a, b) => (a.data().numero || 0) - (b.data().numero || 0));
 
+    const tipoDefault = vmap[0]?.tipo || 'Desafio';
     docsV.forEach(docSnap => {
-      const d = docSnap.data();
-      todosCards[docSnap.id] = { nome: d.nome || docSnap.id, numero: d.numero || 0, tipo: d.tipo || 'Desafio' };
+      const d    = docSnap.data();
+      const tipo = d.tipo || tipoDefault;
+      todosCards[docSnap.id] = { nome: d.nome || docSnap.id, numero: d.numero || 0, tipo };
       if (docSnap.id === cardAtivo) return;
-      const tipo = d.tipo || 'Desafio';
-      if (porTipo[tipo]) porTipo[tipo].push({ id: docSnap.id, data: d });
+      if (!porTipo[tipo]) porTipo[tipo] = [];
+      porTipo[tipo].push({ id: docSnap.id, data: d });
     });
 
-    VMAP.forEach(({ tipo, sel }) => {
+    vmap.forEach(({ tipo, sel }) => {
       const el = document.getElementById(sel);
       if (!el) return;
       while (el.options.length > 1) el.remove(1);
       (porTipo[tipo] || []).forEach(({ id, data: d }) => {
         const opt = document.createElement('option');
         opt.value       = id;
-        opt.textContent = `${String(d.numero||0).padStart(2,'0')} — ${d.nome || id}`;
+        opt.textContent = `${String(d.numero || 0).padStart(2, '0')} — ${d.nome || id}`;
         el.appendChild(opt);
       });
     });
 
-    VMAP.forEach(({ key, sel, list }) => renderVinculadosList(key, list, sel));
+    vmap.forEach(({ key, sel, list }) => renderVinculadosList(key, list, sel));
 
     document.getElementById('vinculados-loading').style.display = 'none';
     document.getElementById('vinculados-grupos').style.display  = 'block';
@@ -874,9 +1034,7 @@ window.salvarCard = async function (publicar) {
     objetivo:         document.getElementById('f-objetivo')?.value?.trim() || '',
     tutorial_url:     document.getElementById('f-tutorial')?.value?.trim() || '',
     imagem_url:       imagemURL,
-    links_desafios:   tagsState.links_desafios,
-    links_componentes: tagsState.links_componentes,
-    links_conexoes:   tagsState.links_conexoes,
+    ...Object.fromEntries(Object.entries(tagsState).filter(([k]) => k.startsWith('links_'))),
     curiosidades:     document.getElementById('f-curiosidades')?.value?.trim() || '',
     atividade_descricao:  document.getElementById('f-ativ-descricao')?.value?.trim() || '',
     atividade_imagem_url: document.getElementById('f-ativ-imagem-url')?.value?.trim() || atividadeImagemURL,
@@ -916,16 +1074,25 @@ window.salvarCard = async function (publicar) {
       data:  new Date().toISOString()
     };
 
-    // Busca histórico anterior para preservar (setDoc substituiria tudo)
+    // Busca dados anteriores para preservar campos que o form não gerencia
     let historicoAnterior = [];
-    if (cardAtivo) {
-      const snap = await getDoc(doc(db, 'cards', id));
-      if (snap.exists()) historicoAnterior = snap.data().historico || [];
+    let iaConteudoAnterior = '';
+    let iaDescAnterior = '';
+    let iaPromptAnterior = '';
+    const snapAnterior = await getDoc(doc(db, 'cards', id));
+    if (snapAnterior.exists()) {
+      historicoAnterior  = snapAnterior.data().historico   || [];
+      iaConteudoAnterior = snapAnterior.data().ia_conteudo             || '';
+      iaDescAnterior     = snapAnterior.data().ia_desc_complementar   || '';
+      iaPromptAnterior   = snapAnterior.data().ia_prompt_usado         || '';
     }
 
     await setDoc(doc(db, 'cards', id), {
       ...data,
-      historico: [...historicoAnterior, entrada]
+      historico: [...historicoAnterior, entrada],
+      ...(iaConteudoAnterior ? { ia_conteudo: iaConteudoAnterior }               : {}),
+      ...(iaDescAnterior     ? { ia_desc_complementar: iaDescAnterior }           : {}),
+      ...(iaPromptAnterior   ? { ia_prompt_usado: iaPromptAnterior }              : {})
     });
     cardAtivo = id;
     showToast(publicar ? '🚀 Card publicado!' : '💾 Rascunho salvo!', 'success');
@@ -1061,14 +1228,14 @@ function makeGlossarioRow(i, codigo, descricao) {
   const inputCodigo = document.createElement('input');
   inputCodigo.type = 'text';
   inputCodigo.className = 'glossario-input';
-  inputCodigo.value = codigo || '';
+  inputCodigo.value = (codigo || '').replace(/^`+|`+$/g, '').trim();
   inputCodigo.placeholder = 'ex: pinMode(13, OUTPUT)';
   inputCodigo.oninput = function() { updateGlossario(i, 'codigo', this.value); };
 
   const inputDescricao = document.createElement('input');
   inputDescricao.type = 'text';
   inputDescricao.className = 'glossario-input';
-  inputDescricao.value = descricao || '';
+  inputDescricao.value = (descricao || '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1');
   inputDescricao.placeholder = 'ex: Define o pino 13 como saída';
   inputDescricao.oninput = function() { updateGlossario(i, 'descricao', this.value); };
 
@@ -1125,7 +1292,7 @@ window.copiarLink = function (url) {
   navigator.clipboard.writeText(url).then(() => showToast('🔗 Link copiado!', 'success'));
 };
 
-listarCards();
+carregarTiposCard().then(() => listarCards());
 
 // ==============================
 // ---- QUIZ ----
@@ -2414,3 +2581,989 @@ function renderBinarioLista() {
     </div>`;
   }).join('');
 }
+
+// ── Prompt IA ──────────────────────────────────────────────────────────
+const PROMPT_IA_DEFAULT_FALLBACK = `Crie o conteúdo educacional de um card para a plataforma MakerLab 3D com base nos dados abaixo:
+
+- ID do Card: {id_do_card}
+- Número: {numero}
+- Nome do Desafio: {nome_do_desafio}
+- Nível: {nivel}
+- Tipo do Card: {tipo_do_card}
+- Tema do Card: {tema_do_card}
+- Descrição Complementar: {descricao complementar}
+
+O conteúdo deve seguir o padrão dos cards MakerLab 3D, com foco em aprendizagem prática, clareza e aplicação real.
+
+## Estrutura obrigatória do card
+
+1. Objetivo
+Explique o que o aluno vai aprender de forma clara e direta.
+Use linguagem simples, sem termos técnicos excessivos.
+
+2. Definição
+- Título da definição
+- Explicação do conceito principal tecnicamente de forma didática
+Use analogias quando fizer sentido (ex: "cérebro do projeto").
+
+3. Curiosidades
+Liste de 3 a 5 curiosidades interessantes sobre o tema.
+Formato com lista iniciando com "*".
+
+4. Avaliação — Questões Reflexivas (Diário Maker)
+Crie de 3 a 5 perguntas que façam o aluno pensar sobre o que aprendeu.
+
+5. Atividade Rápida
+Crie uma atividade prática simples, no estilo "mão na massa".
+
+Estrutura:
+- Descrição breve da atividade
+- Imagem do Circuito (descreva como será esta imagem)
+- Código Arduino IDE (Se necessário)
+- Tabela com o glossário de código:
+     Código   |   O que faz?
+
+
+6. Desafio Extra
+Proponha uma pequena modificação ou evolução da atividade.
+
+7. Prompt para Imagem de Capa
+Gere um prompt em inglês para criar a imagem de capa do card usando um gerador de imagens (Midjourney, Dall-E, Stable Diffusion).
+O prompt deve descrever visualmente o conceito do card de forma criativa e atraente para alunos do ensino maker.
+Exemplo de formato: "Illustration of [concept], [style], [colors], educational, vibrant, digital art"
+
+
+## Diretrizes de linguagem (MUITO IMPORTANTE)
+
+- NÃO usar linguagem técnica complexa
+- NÃO usar linguagem infantilizada
+- Escrever como um professor explicando de forma clara e prática
+- Usar frases curtas e objetivas
+- Priorizar exemplos e aplicação real
+- Estimular experimentação e curiosidade
+- Sempre que possível, conectar com o mundo real`;
+
+window.abrirPromptIA = async function() {
+  const id     = document.getElementById('f-id')?.value?.trim()     || '—';
+  const numero = document.getElementById('f-numero')?.value?.trim() || '—';
+  const nome   = document.getElementById('f-nome')?.value?.trim()   || '—';
+  const nivel  = document.getElementById('f-nivel')?.value          || '—';
+  const tipo   = document.getElementById('f-tipo')?.value           || '—';
+  const tema   = document.getElementById('f-tema')?.value?.trim()   || '—';
+
+  let template = PROMPT_IA_DEFAULT_FALLBACK;
+  try {
+    const snap = await getDoc(doc(db, 'configuracoes', 'prompt_ia'));
+    if (snap.exists() && snap.data().template) template = snap.data().template;
+  } catch(_) {}
+
+  const prompt = template
+    .replace(/\{id_do_card\}/g,      id)
+    .replace(/\{numero\}/g,          numero)
+    .replace(/\{nome_do_desafio\}/g, nome)
+    .replace(/\{nivel\}/g,           nivel)
+    .replace(/\{tipo_do_card\}/g,    tipo)
+    .replace(/\{tema_do_card\}/g,    tema);
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-prompt-ia';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-box modal-box-lg">
+      <div class="modal-header">
+        <div class="modal-title">🤖 Prompt IA — ${nome}</div>
+        <button class="modal-close" onclick="document.getElementById('modal-prompt-ia').remove()">×</button>
+      </div>
+      <div class="modal-body" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+        <textarea id="prompt-ia-texto" readonly
+          style="width:100%;min-height:420px;font-family:monospace;font-size:12px;line-height:1.6;
+                 border:1.5px solid #ddd;border-radius:10px;padding:14px;resize:vertical;
+                 background:#f8f8f8;color:#2f3447;outline:none;">${prompt.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+        <button onclick="copiarPromptIA()"
+          style="align-self:flex-end;background:#2F3447;color:#fff;border:none;border-radius:10px;
+                 padding:10px 24px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;
+                 cursor:pointer;transition:background 0.2s;" id="btn-copiar-prompt">
+          📋 Copiar Prompt
+        </button>
+      </div>
+    </div>
+  `;
+  document.getElementById('modal-prompt-ia')?.remove();
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+};
+
+window.copiarPromptIA = function() {
+  const ta = document.getElementById('prompt-ia-texto');
+  navigator.clipboard.writeText(ta.value).then(() => {
+    const btn = document.getElementById('btn-copiar-prompt');
+    btn.textContent = '✅ Copiado!';
+    btn.style.background = '#27ae60';
+    setTimeout(() => { btn.textContent = '📋 Copiar Prompt'; btn.style.background = '#2F3447'; }, 2000);
+  });
+};
+
+// ── Helpers de markdown para o modal IA ────────────────────────────────
+function _escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function _mdToHtml(md) {
+  if (!md) return '<span style="color:#bbb;font-style:italic;">Sem conteúdo</span>';
+
+  // Preserva blocos de código antes de escapar
+  const blocosCodigo = [];
+  md = md.replace(/```(?:\w+)?\n?([\s\S]*?)```/g, (_, code) => {
+    blocosCodigo.push(_escHtml(code.trim()));
+    return `%%CODIGO_${blocosCodigo.length - 1}%%`;
+  });
+
+  // Escapa HTML
+  md = _escHtml(md);
+
+  // Formatação
+  md = md
+    .replace(/^#{3,}\s*(.+)$/gm, '<div style="font-size:11px;font-weight:800;color:#5f6480;text-transform:uppercase;letter-spacing:1px;margin:10px 0 4px;">$1</div>')
+    .replace(/^#{1,2}\s*(.+)$/gm, '<div style="font-size:13px;font-weight:800;color:#23314d;margin:8px 0 4px;">$1</div>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid #e8eaf0;margin:6px 0;">')
+    .replace(/^&gt;\s*(.+)$/gm, '<div style="border-left:3px solid #ddd;padding-left:10px;color:#777;margin:3px 0;font-style:italic;">$1</div>')
+    .replace(/^\*\s+(.+)$/gm, '<li style="margin:2px 0;">$1</li>')
+    .replace(/^-\s+(.+)$/gm, '<li style="margin:2px 0;">$1</li>')
+    .replace(/(<li[^>]*>[\s\S]*?<\/li>)(\n(<li[^>]*>[\s\S]*?<\/li>))*/g,
+      m => `<ul style="padding-left:20px;margin:4px 0;">${m}</ul>`)
+    .replace(/\n{2,}/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+
+  // Restaura blocos de código
+  blocosCodigo.forEach((code, i) => {
+    md = md.replace(`%%CODIGO_${i}%%`,
+      `<pre style="background:#1e1e1e;color:#d4d4d4;border-radius:8px;padding:12px;
+                   font-size:11px;white-space:pre;overflow-x:auto;margin:8px 0;"><code>${code}</code></pre>`);
+  });
+
+  return md;
+}
+
+function _renderPreviewIA(secId) {
+  const el = document.getElementById('ia-preview-' + secId);
+  if (!el) return;
+  const v = id => document.getElementById('ia-' + id)?.value || '';
+  let html = '';
+
+  if (secId === 'definicao') {
+    const t = v('def-titulo');
+    if (t) html += `<div style="font-weight:800;font-size:14px;color:#23314d;margin-bottom:6px;">${_escHtml(t)}</div>`;
+    html += _mdToHtml(v('def-texto'));
+  } else if (secId === 'ativ-descricao') {
+    html = _mdToHtml(v('ativ-descricao'));
+  } else if (secId === 'ativ-imagem') {
+    html = _mdToHtml(v('ativ-imagem'));
+  } else if (secId === 'ativ-codigo') {
+    const cod = v('ativ-codigo');
+    html = cod
+      ? `<pre style="background:#1e1e1e;color:#d4d4d4;border-radius:8px;padding:12px;font-size:11px;white-space:pre;overflow-x:auto;margin:0;"><code>${_escHtml(cod)}</code></pre>`
+      : '';
+  } else if (secId === 'ativ-glossario') {
+    if (window._iaGlossario?.length > 0) {
+      html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <tr><th style="text-align:left;padding:5px 8px;background:#f5f5f5;border:1px solid #ddd;">Código</th>
+            <th style="text-align:left;padding:5px 8px;background:#f5f5f5;border:1px solid #ddd;">O que faz?</th></tr>
+        ${window._iaGlossario.map(g => {
+          const cod = _escHtml((g.codigo || '').replace(/^`+|`+$/g, '').trim());
+          const desc = _escHtml(g.descricao || '')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`([^`]+)`/g, '<code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:11px;">$1</code>');
+          return `<tr><td style="padding:5px 8px;border:1px solid #ddd;font-family:monospace;font-size:11px;">${cod}</td>
+               <td style="padding:5px 8px;border:1px solid #ddd;">${desc}</td></tr>`;
+        }).join('')}
+      </table>`;
+    } else {
+      html = '<span style="color:#aaa;font-size:12px;">Nenhum glossário gerado.</span>';
+    }
+  } else if (secId === 'imagem-capa') {
+    const txt = v('imagem-capa');
+    html = txt
+      ? `<div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:8px;padding:10px 14px;font-family:monospace;font-size:12px;color:#3730a3;white-space:pre-wrap;">${_escHtml(txt)}</div>`
+      : '<span style="color:#bbb;font-style:italic;">Sem conteúdo</span>';
+  } else {
+    const taMap = { objetivo:'objetivo', curiosidades:'curiosidades', avaliacao:'avaliacao', desafio_extra:'desafio-extra' };
+    html = _mdToHtml(v(taMap[secId] || secId));
+  }
+
+  el.innerHTML = html;
+}
+
+window.toggleModoIA = function(secId) {
+  const preview = document.getElementById('ia-preview-' + secId);
+  const edit    = document.getElementById('ia-edit-'    + secId);
+  const btn     = document.getElementById('ia-toggle-'  + secId);
+  if (!preview || !edit || !btn) return;
+  const mostrando = preview.style.display !== 'none';
+  if (mostrando) {
+    preview.style.display = 'none';
+    edit.style.display    = '';
+    btn.textContent = '👁️ Preview';
+  } else {
+    _renderPreviewIA(secId);
+    preview.style.display = '';
+    edit.style.display    = 'none';
+    btn.textContent = '✏️ Editar';
+  }
+};
+
+// ── Gerar por IA (Claude) ───────────────────────────────────────────────
+function _abrirModalGerarIA(nome) {
+  document.getElementById('modal-gerar-ia')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'modal-gerar-ia';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-box modal-box-lg">
+      <div class="modal-header">
+        <div class="modal-title">✨ Gerar por IA — ${nome}</div>
+        <button class="modal-close" onclick="document.getElementById('modal-gerar-ia').remove()">×</button>
+      </div>
+      <div class="modal-body" id="gerar-ia-body"
+           style="padding:20px;display:flex;flex-direction:column;gap:14px;
+                  align-items:center;justify-content:center;min-height:200px;">
+        <div style="font-size:36px;">⏳</div>
+        <div style="font-size:14px;color:#666;font-weight:600;">Gerando conteúdo com Claude...</div>
+        <div style="font-size:12px;color:#aaa;">Isso pode levar alguns segundos.</div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  return modal;
+}
+
+function _renderModalIA(d, doCacheado, descComplementar) {
+  window._iaGlossario = d.glossario;
+
+  const body = document.getElementById('gerar-ia-body');
+  if (!body) return;
+  body.style.alignItems     = 'stretch';
+  body.style.justifyContent = 'flex-start';
+  body.style.padding        = '16px';
+  body.style.overflowY      = 'auto';
+  body.style.maxHeight      = '72vh';
+
+  const lblStyle = 'display:block;font-size:11px;font-weight:700;color:#8B9BB4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;';
+  const taBase   = 'display:block;width:100%;font-size:12px;line-height:1.6;border:1.5px solid #ddd;border-radius:8px;padding:10px;resize:vertical;outline:none;box-sizing:border-box;';
+
+  const secao = (secId, titulo, campos) => {
+    const camposHTML = campos.map(c => {
+      const bg  = c.mono ? '#1e1e1e' : '#fafafa';
+      const cor = c.mono ? '#d4d4d4' : '#2f3447';
+      const ff  = c.mono ? 'monospace' : 'inherit';
+      const h   = (c.rows || 4) * 22 + 24;
+      return (c.label ? `<label style="${lblStyle}">${c.label}</label>` : '') +
+        `<textarea id="ia-${c.id}" style="${taBase}font-family:${ff};min-height:${h}px;background:${bg};color:${cor};"></textarea>`;
+    }).join('');
+
+    return `<div style="border:1.5px solid #e8eaf0;border-radius:12px;margin-bottom:10px;">
+      <div style="background:#f5f7fb;border-bottom:1px solid #e8eaf0;padding:10px 16px;border-radius:11px 11px 0 0;
+                  display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;font-weight:800;color:#23314d;">${titulo}</span>
+        <div style="display:flex;gap:8px;">
+          <button id="ia-toggle-${secId}" onclick="toggleModoIA('${secId}')"
+            style="background:#fff;color:#555;border:1.5px solid #ddd;padding:5px 12px;
+                   border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;
+                   font-family:'Inter Tight',sans-serif;">✏️ Editar</button>
+          <button id="btn-sec-${secId}" onclick="carregarSecaoIA('${secId}')"
+            style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;
+                   padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;
+                   cursor:pointer;font-family:'Inter Tight',sans-serif;">📥 Carregar</button>
+        </div>
+      </div>
+      <div id="ia-preview-${secId}" style="padding:14px 16px;font-size:13px;line-height:1.7;color:#2f3447;min-height:60px;"></div>
+      <div id="ia-edit-${secId}" style="padding:12px 16px;display:none;">${camposHTML}</div>
+    </div>`;
+  };
+
+  // Sub-painel para a seção 5 (mais compacto, sem label nos campos)
+  const subSecao = (secId, titulo, campos) => {
+    const camposHTML = campos.map(c => {
+      const bg  = c.mono ? '#1e1e1e' : '#fafafa';
+      const cor = c.mono ? '#d4d4d4' : '#2f3447';
+      const ff  = c.mono ? 'monospace' : 'inherit';
+      const h   = (c.rows || 4) * 22 + 20;
+      return `<textarea id="ia-${c.id}" style="${taBase}font-family:${ff};min-height:${h}px;background:${bg};color:${cor};"></textarea>`;
+    }).join('');
+    return `<div style="border:1px solid #e2e5ef;border-radius:8px;">
+      <div style="background:#f9fafb;border-bottom:1px solid #e2e5ef;padding:7px 12px;border-radius:7px 7px 0 0;
+                  display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:12px;font-weight:700;color:#23314d;">${titulo}</span>
+        <div style="display:flex;gap:6px;">
+          <button id="ia-toggle-${secId}" onclick="toggleModoIA('${secId}')"
+            style="background:#fff;color:#555;border:1.5px solid #ddd;padding:3px 10px;
+                   border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;
+                   font-family:'Inter Tight',sans-serif;">✏️ Editar</button>
+          <button id="btn-sec-${secId}" onclick="carregarSecaoIA('${secId}')"
+            style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;
+                   padding:4px 12px;border-radius:5px;font-size:11px;font-weight:700;
+                   cursor:pointer;font-family:'Inter Tight',sans-serif;">📥 Carregar</button>
+        </div>
+      </div>
+      <div id="ia-preview-${secId}" style="padding:10px 12px;font-size:13px;line-height:1.7;color:#2f3447;min-height:40px;"></div>
+      <div id="ia-edit-${secId}" style="padding:8px 12px;display:none;">${camposHTML}</div>
+    </div>`;
+  };
+
+  const subSecaoGlossario = () => `
+    <div style="border:1px solid #e2e5ef;border-radius:8px;">
+      <div style="background:#f9fafb;border-bottom:1px solid #e2e5ef;padding:7px 12px;border-radius:7px 7px 0 0;
+                  display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:12px;font-weight:700;color:#23314d;">5.4 Glossário de Código</span>
+        <button id="btn-sec-ativ-glossario" onclick="carregarSecaoIA('ativ-glossario')"
+          style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;
+                 padding:4px 12px;border-radius:5px;font-size:11px;font-weight:700;
+                 cursor:pointer;font-family:'Inter Tight',sans-serif;">📥 Carregar</button>
+      </div>
+      <div id="ia-preview-ativ-glossario" style="padding:10px 12px;font-size:13px;color:#2f3447;min-height:40px;"></div>
+    </div>`;
+
+  const avisoDescComplementar = descComplementar
+    ? `<div style="background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:12px 16px;
+                   font-size:12px;color:#1e3a5f;margin-bottom:4px;display:flex;gap:10px;align-items:flex-start;">
+        <span style="font-size:15px;line-height:1;">📝</span>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#3b82f6;">
+              Descrição Complementar
+            </span>
+            <button onclick="mostrarPromptIA()"
+              style="background:#fff;color:#3b82f6;border:1.5px solid #bfdbfe;padding:3px 10px;
+                     border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;
+                     font-family:'Inter Tight',sans-serif;">
+              🔍 Mostrar Prompt
+            </button>
+          </div>
+          <div style="line-height:1.6;white-space:pre-wrap;">${_escHtml(descComplementar)}</div>
+        </div>
+       </div>`
+    : '';
+
+  const avisoCache = doCacheado
+    ? `<div style="background:#fff8ec;border:1px solid #f39c12;border-radius:8px;padding:10px 14px;font-size:12px;color:#7a5200;margin-bottom:4px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span>⚡ Conteúdo gerado anteriormente.</span>
+        <button onclick="verTextoOriginalIA()"
+          style="background:none;border:1.5px solid #c87700;color:#7a5200;font-weight:700;cursor:pointer;font-size:11px;padding:3px 10px;border-radius:6px;">
+          📄 Original
+        </button>
+        <button onclick="gerarPorIA(true)"
+          style="background:none;border:none;color:#2f3447;font-weight:700;cursor:pointer;font-size:12px;text-decoration:underline;">
+          Regenerar com Claude
+        </button>
+       </div>` : '';
+
+  const atividadeBloco = `
+    <div style="border:1.5px solid #e8eaf0;border-radius:12px;margin-bottom:10px;">
+      <div style="background:#f5f7fb;padding:10px 16px;border-radius:11px 11px 0 0;border-bottom:1px solid #e8eaf0;">
+        <span style="font-size:13px;font-weight:800;color:#23314d;">5. Atividade Rápida</span>
+      </div>
+      <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+        ${subSecao('ativ-descricao', '5.1 Descrição da Atividade',  [{id:'ativ-descricao', rows:4}])}
+        <div style="border:1px solid #e2e5ef;border-radius:8px;">
+          <div style="background:#f9fafb;border-bottom:1px solid #e2e5ef;padding:7px 12px;border-radius:7px 7px 0 0;
+                      display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:12px;font-weight:700;color:#23314d;">5.2 Imagem do Circuito</span>
+            <div style="display:flex;gap:6px;">
+              <button id="ia-toggle-ativ-imagem" onclick="toggleModoIA('ativ-imagem')"
+                style="background:#fff;color:#555;border:1.5px solid #ddd;padding:3px 10px;
+                       border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;
+                       font-family:'Inter Tight',sans-serif;">✏️ Editar</button>
+              <button id="btn-sec-ativ-imagem" onclick="copiarPromptIA('ativ-imagem')"
+                style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;
+                       padding:4px 12px;border-radius:5px;font-size:11px;font-weight:700;
+                       cursor:pointer;font-family:'Inter Tight',sans-serif;">📋 Copiar Prompt</button>
+            </div>
+          </div>
+          <div id="ia-preview-ativ-imagem" style="padding:10px 12px;font-size:13px;line-height:1.7;color:#2f3447;min-height:40px;"></div>
+          <div id="ia-edit-ativ-imagem" style="padding:8px 12px;display:none;">
+            <textarea id="ia-ativ-imagem" style="${taBase}min-height:${3*22+20}px;background:#fafafa;color:#2f3447;"></textarea>
+          </div>
+        </div>
+        ${subSecao('ativ-codigo',    '5.3 Código Arduino IDE',       [{id:'ativ-codigo',    rows:7, mono:true}])}
+        ${subSecaoGlossario()}
+      </div>
+    </div>`;
+
+  body.innerHTML =
+    avisoDescComplementar +
+    avisoCache +
+    secao('objetivo',     '1. Objetivo',        [{id:'objetivo',     rows:5}]) +
+    secao('definicao',    '2. Definição',        [{id:'def-titulo', label:'Título', rows:2},
+                                                   {id:'def-texto',  label:'Texto',  rows:5}]) +
+    secao('curiosidades', '3. Curiosidades',     [{id:'curiosidades', rows:6}]) +
+    secao('avaliacao',    '4. Avaliação',        [{id:'avaliacao',    rows:6}]) +
+    atividadeBloco +
+    secao('desafio_extra','6. Desafio Extra',    [{id:'desafio-extra', rows:5}]) +
+    `<div style="border:1.5px solid #e0e7ff;border-radius:12px;margin-bottom:10px;">
+      <div style="background:#eef2ff;border-bottom:1px solid #e0e7ff;padding:10px 16px;border-radius:11px 11px 0 0;
+                  display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <span style="font-size:13px;font-weight:800;color:#3730a3;">7. Prompt para Imagem de Capa</span>
+          <span style="font-size:11px;color:#818cf8;margin-left:8px;">Use no Midjourney, Dall-E, Stable Diffusion</span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button id="ia-toggle-imagem-capa" onclick="toggleModoIA('imagem-capa')"
+            style="background:#fff;color:#555;border:1.5px solid #ddd;padding:5px 12px;
+                   border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;
+                   font-family:'Inter Tight',sans-serif;">✏️ Editar</button>
+          <button id="btn-sec-imagem-capa" onclick="copiarPromptIA('imagem-capa')"
+            style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;
+                   padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;
+                   cursor:pointer;font-family:'Inter Tight',sans-serif;">📋 Copiar Prompt</button>
+        </div>
+      </div>
+      <div id="ia-preview-imagem-capa" style="padding:14px 16px;font-size:13px;line-height:1.7;color:#2f3447;min-height:60px;"></div>
+      <div id="ia-edit-imagem-capa" style="padding:12px 16px;display:none;">
+        <textarea id="ia-imagem-capa" style="${taBase}min-height:${4*22+24}px;background:#fafafa;color:#2f3447;"></textarea>
+      </div>
+    </div>` +
+    `<div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px;">
+      <button onclick="document.getElementById('modal-gerar-ia').remove()"
+        style="background:#fff;color:#555;border:1.5px solid #ddd;padding:9px 18px;
+               border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter Tight',sans-serif;">
+        Fechar
+      </button>
+      <button onclick="carregarDadosIA()"
+        style="background:#23314d;color:#fff;border:none;padding:10px 24px;
+               border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Inter Tight',sans-serif;">
+        📥 Carregar Tudo
+      </button>
+    </div>`;
+
+  // Preenche valores via .value — seguro para qualquer caractere incluindo backticks
+  const setTA = (elId, val) => { const el = document.getElementById('ia-' + elId); if (el) el.value = val || ''; };
+  setTA('objetivo',       d.objetivo);
+  setTA('def-titulo',     d.definicao_titulo);
+  setTA('def-texto',      d.definicao_texto);
+  setTA('curiosidades',   d.curiosidades);
+  setTA('avaliacao',      d.avaliacao);
+  setTA('ativ-descricao', d.atividade_descricao);
+  setTA('ativ-imagem',    d.atividade_imagem);
+  setTA('ativ-codigo',    d.atividade_codigo);
+  setTA('desafio-extra',  d.desafio_extra);
+  setTA('imagem-capa',    d.imagem_capa);
+
+  // Renderiza preview formatado para todas as seções
+  ['objetivo','definicao','curiosidades','avaliacao',
+   'ativ-descricao','ativ-imagem','ativ-codigo','ativ-glossario',
+   'desafio_extra','imagem-capa']
+    .forEach(s => _renderPreviewIA(s));
+}
+
+window.copiarPromptIA = function(secId) {
+  const el = document.getElementById('ia-' + secId);
+  const texto = el?.value || '';
+  if (!texto) { showToast('Nenhum conteúdo para copiar', ''); return; }
+  navigator.clipboard.writeText(texto).then(() => {
+    showToast('✅ Prompt copiado! Cole no gerador de imagem.', 'success');
+    const btn = document.getElementById('btn-sec-' + secId);
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✅ Copiado!';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    }
+  }).catch(() => showToast('Erro ao copiar — tente manualmente', 'error'));
+};
+
+window.mostrarPromptIA = async function() {
+  const cardId = cardAtivo || document.getElementById('f-id')?.value?.trim().toLowerCase().replace(/\s+/g,'-') || '';
+  const nome   = document.getElementById('f-nome')?.value?.trim()   || '—';
+  const id     = cardId || '—';
+  const numero = document.getElementById('f-numero')?.value?.trim() || '—';
+  const nivel  = document.getElementById('f-nivel')?.value          || '—';
+  const tipo   = document.getElementById('f-tipo')?.value           || '—';
+  const tema   = document.getElementById('f-tema')?.value?.trim()   || '—';
+  const desc   = window._iaDescComplementar || '';
+
+  let template = PROMPT_IA_DEFAULT_FALLBACK;
+  try {
+    const tSnap = await getDoc(doc(db, 'configuracoes', 'prompt_ia'));
+    if (tSnap.exists() && tSnap.data().template) template = tSnap.data().template;
+  } catch(_) {}
+
+  const prompt = template
+    .replace(/\{id_do_card\}/g,             id)
+    .replace(/\{numero\}/g,                 numero)
+    .replace(/\{nome_do_desafio\}/g,        nome)
+    .replace(/\{nivel\}/g,                  nivel)
+    .replace(/\{tipo_do_card\}/g,           tipo)
+    .replace(/\{tema_do_card\}/g,           tema)
+    .replace(/\{descricao[_ ]complementar\}/g, desc || '(não informado)');
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-ia-prompt';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;width:min(820px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.22);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee;">
+        <span style="font-weight:800;font-size:15px;color:#23314d;">🔍 Prompt para o Claude</span>
+        <button onclick="document.getElementById('modal-ia-prompt').remove()"
+          style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;">×</button>
+      </div>
+      <div style="padding:20px;overflow-y:auto;flex:1;">
+        <pre id="ia-prompt-pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px;line-height:1.7;color:#2f3447;margin:0;background:#f8f9fa;border-radius:8px;padding:16px;"></pre>
+      </div>
+      <div style="padding:12px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end;">
+        <button onclick="document.getElementById('modal-ia-prompt').remove()"
+          style="background:#23314d;color:#fff;border:none;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter Tight',sans-serif;">
+          Fechar
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById('ia-prompt-pre').textContent = prompt;
+};
+
+window.verTextoOriginalIA = function() {
+  const texto = window._iaTextoRaw || '';
+  if (!texto) return;
+  const modal = document.createElement('div');
+  modal.id = 'modal-ia-original';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;width:min(820px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.22);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee;">
+        <span style="font-weight:800;font-size:15px;color:#23314d;">📄 Texto Original da IA</span>
+        <button onclick="document.getElementById('modal-ia-original').remove()"
+          style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;">×</button>
+      </div>
+      <div style="padding:20px;overflow-y:auto;flex:1;">
+        <pre id="ia-original-pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px;line-height:1.7;color:#2f3447;margin:0;"></pre>
+      </div>
+      <div style="padding:12px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end;">
+        <button onclick="document.getElementById('modal-ia-original').remove()"
+          style="background:#23314d;color:#fff;border:none;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter Tight',sans-serif;">
+          Fechar
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById('ia-original-pre').textContent = texto;
+};
+
+// Abre o modal de descrição complementar + preview do prompt antes de gerar
+window.gerarPorIA = async function(forcarRegerar = false) {
+  const nome   = document.getElementById('f-nome')?.value?.trim() || '—';
+  const cardId = cardAtivo || document.getElementById('f-id')?.value?.trim().toLowerCase().replace(/\s+/g,'-') || '';
+  document.getElementById('modal-desc-complementar')?.remove();
+
+  // Sempre carrega do Firestore — evita contaminação entre cards
+  let descSalva = '';
+  let template  = PROMPT_IA_DEFAULT_FALLBACK;
+  try {
+    const [snapCard, snapTpl] = await Promise.all([
+      cardId ? getDoc(doc(db, 'cards', cardId)) : Promise.resolve(null),
+      getDoc(doc(db, 'configuracoes', 'prompt_ia'))
+    ]);
+    if (snapCard?.exists()) descSalva = snapCard.data().ia_desc_complementar || '';
+    if (snapTpl.exists() && snapTpl.data().template) template = snapTpl.data().template;
+  } catch(_) {}
+
+  window._iaDescComplementar = descSalva;
+  window._iaCardIdAtual      = cardId;
+  window._iaTemplateAtual    = template;
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-desc-complementar';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-box modal-box-lg" style="max-width:680px;">
+      <div class="modal-header">
+        <div class="modal-title">✨ Gerar por IA — ${_escHtml(nome)}</div>
+        <button class="modal-close" onclick="_salvarDescComplementar();document.getElementById('modal-desc-complementar').remove()">×</button>
+      </div>
+      <div class="modal-body" style="padding:20px;display:flex;flex-direction:column;gap:14px;max-height:80vh;overflow-y:auto;">
+
+        <!-- Descrição complementar -->
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#23314d;margin-bottom:6px;">
+            📝 Descrição Complementar
+          </label>
+          <textarea id="ia-desc-complementar" rows="4"
+            style="width:100%;font-size:13px;line-height:1.6;border:1.5px solid #ddd;border-radius:10px;
+                   padding:12px;resize:vertical;outline:none;box-sizing:border-box;
+                   font-family:inherit;background:#fafafa;color:#2f3447;transition:border-color .2s;"
+            onfocus="this.style.borderColor='#23314d'"
+            onblur="this.style.borderColor='#ddd'; window._salvarDescComplementar();"
+            oninput="window._atualizarPreviewPrompt()"
+            placeholder="Ex: Componentes: Arduino Uno, LED vermelho, resistor 220Ω, protoboard, botão push..."></textarea>
+        </div>
+
+        <!-- Preview do prompt -->
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <label style="font-size:12px;font-weight:700;color:#23314d;">🔍 Prompt para o Claude</label>
+            <span style="font-size:11px;color:#8B9BB4;">Verifique antes de gerar</span>
+          </div>
+          <pre id="ia-prompt-preview"
+            style="white-space:pre-wrap;font-family:monospace;font-size:11px;line-height:1.6;
+                   color:#2f3447;margin:0;background:#f8f9fa;border:1.5px solid #e8eaf0;
+                   border-radius:10px;padding:14px;max-height:320px;overflow-y:auto;"></pre>
+        </div>
+
+        <!-- Botões -->
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button onclick="_salvarDescComplementar();document.getElementById('modal-desc-complementar').remove()"
+            style="background:#fff;color:#555;border:1.5px solid #ddd;padding:9px 18px;
+                   border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter Tight',sans-serif;">
+            Cancelar
+          </button>
+          <button onclick="window._executarGerarIA(${forcarRegerar})"
+            style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;
+                   padding:10px 24px;border-radius:8px;font-size:13px;font-weight:800;
+                   cursor:pointer;font-family:'Inter Tight',sans-serif;">
+            ✨ Gerar com Claude
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) { _salvarDescComplementar(); modal.remove(); } });
+
+  setTimeout(() => {
+    const ta = document.getElementById('ia-desc-complementar');
+    if (ta) { ta.value = descSalva; ta.focus(); }
+    window._atualizarPreviewPrompt();
+  }, 80);
+};
+
+window._salvarDescComplementar = function() {
+  const desc   = document.getElementById('ia-desc-complementar')?.value?.trim() || '';
+  const cardId = cardAtivo || document.getElementById('f-id')?.value?.trim().toLowerCase().replace(/\s+/g,'-') || '';
+  window._iaDescComplementar = desc;
+  if (cardId && desc) {
+    setDoc(doc(db, 'cards', cardId), { ia_desc_complementar: desc }, { merge: true })
+      .catch(() => {});
+  }
+};
+
+window._atualizarPreviewPrompt = function() {
+  const preview = document.getElementById('ia-prompt-preview');
+  if (!preview || !window._iaTemplateAtual) return;
+  const desc   = document.getElementById('ia-desc-complementar')?.value?.trim() || '';
+  const cardId = cardAtivo || document.getElementById('f-id')?.value?.trim().toLowerCase().replace(/\s+/g,'-') || '—';
+  const prompt = window._iaTemplateAtual
+    .replace(/\{id_do_card\}/g,             cardId)
+    .replace(/\{numero\}/g,                 document.getElementById('f-numero')?.value?.trim() || '—')
+    .replace(/\{nome_do_desafio\}/g,        document.getElementById('f-nome')?.value?.trim()   || '—')
+    .replace(/\{nivel\}/g,                  document.getElementById('f-nivel')?.value           || '—')
+    .replace(/\{tipo_do_card\}/g,           document.getElementById('f-tipo')?.value            || '—')
+    .replace(/\{tema_do_card\}/g,           document.getElementById('f-tema')?.value?.trim()    || '—')
+    .replace(/\{descricao[_ ]complementar\}/g, desc || '(não informado)');
+  preview.textContent = prompt;
+};
+
+window._executarGerarIA = async function(forcarRegerar = false) {
+  const descComplementar = document.getElementById('ia-desc-complementar')?.value?.trim() || '';
+  document.getElementById('modal-desc-complementar')?.remove();
+
+  const cardId = cardAtivo || document.getElementById('f-id')?.value?.trim().toLowerCase().replace(/\s+/g,'-') || '';
+  const nome   = document.getElementById('f-nome')?.value?.trim() || '—';
+
+  _abrirModalGerarIA(nome);
+
+  try {
+    // Verifica cache (ia_conteudo no card) — evita chamar a API novamente
+    if (!forcarRegerar && cardId) {
+      const cardSnap = await getDoc(doc(db, 'cards', cardId));
+      const cached      = cardSnap.exists() ? cardSnap.data().ia_conteudo             : null;
+      const cachedDesc  = cardSnap.exists() ? cardSnap.data().ia_desc_complementar || '' : '';
+      const cachedPrompt = cardSnap.exists() ? cardSnap.data().ia_prompt_usado      || '' : '';
+      if (cached) {
+        window._iaTextoRaw = cached;
+        window._iaDescComplementar = cachedDesc;
+        window._iaPromptUsado = cachedPrompt;
+        _renderModalIA(parsearConteudoIA(cached), true, cachedDesc);
+        return;
+      }
+    }
+
+    const id     = cardId || '—';
+    const numero = document.getElementById('f-numero')?.value?.trim() || '—';
+    const nivel  = document.getElementById('f-nivel')?.value          || '—';
+    const tipo   = document.getElementById('f-tipo')?.value           || '—';
+    const tema   = document.getElementById('f-tema')?.value?.trim()   || '—';
+
+    let template = PROMPT_IA_DEFAULT_FALLBACK;
+    try {
+      const tSnap = await getDoc(doc(db, 'configuracoes', 'prompt_ia'));
+      if (tSnap.exists() && tSnap.data().template) template = tSnap.data().template;
+    } catch(_) {}
+
+    const prompt = template
+      .replace(/\{id_do_card\}/g,             id)
+      .replace(/\{numero\}/g,                 numero)
+      .replace(/\{nome_do_desafio\}/g,        nome)
+      .replace(/\{nivel\}/g,                  nivel)
+      .replace(/\{tipo_do_card\}/g,           tipo)
+      .replace(/\{tema_do_card\}/g,           tema)
+      .replace(/\{descricao[_ ]complementar\}/g, descComplementar || '(não informado)');
+
+    const keySnap = await getDoc(doc(db, 'configuracoes', 'api_keys'));
+    const apiKey  = keySnap.data()?.anthropic;
+    if (!apiKey) throw new Error('Chave da API não encontrada em configuracoes/api_keys');
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8096,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `Erro HTTP ${resp.status}`);
+    }
+
+    const data        = await resp.json();
+    const textoGerado = data.content?.[0]?.text || '';
+
+    window._iaTextoRaw = textoGerado;
+    window._iaDescComplementar = descComplementar;
+    window._iaPromptUsado = prompt;
+
+    // Salva ANTES de renderizar — garante o cache mesmo se _renderModalIA lançar erro
+    if (cardId) {
+      setDoc(doc(db, 'cards', cardId), {
+        ia_conteudo: textoGerado,
+        ia_desc_complementar: descComplementar,
+        ia_prompt_usado: prompt
+      }, { merge: true })
+        .catch(e => console.warn('Não foi possível salvar ia_conteudo:', e.message));
+    }
+
+    _renderModalIA(parsearConteudoIA(textoGerado), false, descComplementar);
+
+  } catch(err) {
+    const body = document.getElementById('gerar-ia-body');
+    if (body) body.innerHTML = `
+      <div style="color:#e74c3c;font-weight:700;font-size:14px;margin-bottom:8px;">❌ Erro ao gerar conteúdo</div>
+      <div style="color:#666;font-size:13px;">${err.message}</div>
+      <button onclick="document.getElementById('modal-gerar-ia').remove()"
+        style="margin-top:12px;background:#eee;color:#333;border:none;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:12px;">
+        Fechar
+      </button>`;
+  }
+};
+
+function _semAcento(s) {
+  return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+function _detectarSecao(linha) {
+  // Remove markdown (##, **, *) e espaços iniciais
+  const limpa = linha.replace(/^\s*#{1,6}\s*/, '').replace(/\*+/g, '').trim();
+  // Só considera seções principais: linha começa com dígito 1-7 + ponto/parêntese
+  const m = limpa.match(/^([1-7])\s*[.)]\s*(.+)/);
+  if (!m) return null;
+
+  // Remove emojis e outros caracteres não-latinos para não quebrar startsWith
+  const tituloLimpo = m[2]
+    .replace(/[^ -ɏ\s]/g, ' ')  // mantém apenas Latin Basic + Extended
+    .trim();
+  const titulo = _semAcento(tituloLimpo.split(/[—\-–(]/)[0].trim());
+
+  // Detecta apenas pelos nomes esperados — sem fallback por número
+  // (fallback por número causava conflito com listas numeradas dentro das seções)
+  if (titulo.startsWith('objetivo'))    return 'objetivo';
+  if (titulo.startsWith('defini'))      return 'definicao';
+  if (titulo.startsWith('curiosidade'))return 'curiosidades';
+  if (titulo.startsWith('avali'))       return 'avaliacao';
+  if (titulo.startsWith('atividade'))   return 'atividade';
+  if (titulo.startsWith('desafio'))     return 'desafio_extra';
+  if (titulo.startsWith('prompt') || titulo.startsWith('imagem') || titulo.startsWith('capa')) return 'imagem_capa';
+  return null;
+}
+
+function parsearConteudoIA(texto) {
+  const r = {
+    objetivo: '', definicao_titulo: '', definicao_texto: '',
+    curiosidades: '', avaliacao: '',
+    atividade_descricao: '', atividade_imagem: '', atividade_codigo: '', glossario: [],
+    desafio_extra: '', imagem_capa: ''
+  };
+
+  // Divide linha a linha e agrupa por seção
+  const secoes = {};
+  let secaoAtual = null;
+  let buffer = [];
+
+  for (const linha of texto.split('\n')) {
+    const secao = _detectarSecao(linha);
+    if (secao) {
+      if (secaoAtual) secoes[secaoAtual] = buffer.join('\n').trim();
+      secaoAtual = secao;
+      buffer = [];
+    } else if (secaoAtual) {
+      buffer.push(linha);
+    }
+  }
+  if (secaoAtual) secoes[secaoAtual] = buffer.join('\n').trim();
+
+  r.objetivo      = secoes.objetivo      || '';
+  r.curiosidades  = secoes.curiosidades  || '';
+  r.avaliacao     = secoes.avaliacao     || '';
+  r.desafio_extra = secoes.desafio_extra || '';
+
+  // Imagem de capa: extrai só o texto do prompt (remove **labels:** e code fences)
+  if (secoes.imagem_capa) {
+    const icCode = secoes.imagem_capa.match(/```[^\n]*\n?([\s\S]*?)```/);
+    if (icCode) {
+      r.imagem_capa = icCode[1].trim();
+    } else {
+      r.imagem_capa = secoes.imagem_capa
+        .replace(/^\*\*[^*\n]+\*\*\s*[:\-]?\s*\n?/gm, '')
+        .trim();
+    }
+  }
+
+  // Definição: separa título do texto
+  if (secoes.definicao) {
+    const def = secoes.definicao;
+    const tM  = def.match(/(?:t[íi]tulo[^:\n]*:\s*)(.+)/i);
+    if (tM) {
+      r.definicao_titulo = tM[1].replace(/\*+/g, '').trim();
+      r.definicao_texto  = def.replace(/.*t[íi]tulo[^:\n]*:.*\n?/i, '').trim();
+    } else {
+      const linhas = def.split('\n').map(l => l.trim()).filter(Boolean);
+      r.definicao_titulo = (linhas[0] || '').replace(/^[-*#\s]+/, '').replace(/\*+/g, '').trim();
+      r.definicao_texto  = linhas.slice(1).join('\n').trim();
+    }
+  }
+
+  // Atividade: código, glossário e descrição
+  if (secoes.atividade) {
+    const at = secoes.atividade;
+
+    // Extrai bloco de código Arduino — prefere blocos com linguagem explícita (arduino/cpp)
+    let codeM = at.match(/```(?:arduino|cpp|c\+\+|sketch)\n?([\s\S]*?)```/i);
+    if (!codeM) {
+      // Fallback: procura qualquer bloco de código somente após o sub-cabeçalho de código
+      const codeHdrM = at.match(/#{2,}[^\n]*[Cc][oó]d(?:igo)?[^\n]*/);
+      const atCod = codeHdrM ? at.slice(at.indexOf(codeHdrM[0]) + codeHdrM[0].length) : null;
+      if (atCod) codeM = atCod.match(/```[^\n]*\n?([\s\S]*?)```/);
+    }
+    if (codeM) r.atividade_codigo = codeM[1].trim();
+
+    // Extrai glossário (tabela markdown) — busca depois do sub-cabeçalho de glossário
+    // para não confundir com tabelas de materiais que aparecem antes
+    const glossHdrM = at.match(/#{2,}[^\n]*[Gg]loss[^\n]*/);
+    const atGloss   = glossHdrM ? at.slice(at.indexOf(glossHdrM[0]) + glossHdrM[0].length) : at;
+    const tabM = atGloss.match(/\|[^\n]+\|\n\s*\|[-:\s|]+\|\n((?:\|[^\n]+\|\n?)+)/);
+    if (tabM) {
+      r.glossario = tabM[1].trim().split('\n').map(l => {
+        const cols = l.split('|').map(c => c.trim()).filter(Boolean);
+        return { codigo: cols[0] || '', descricao: cols[1] || '' };
+      }).filter(g => g.codigo || g.descricao);
+    }
+
+    // Parse sub-seções da atividade linha a linha
+    const linhasAt = at.split('\n');
+    let subSec = 'descricao';
+    const subBuf = { descricao: [], imagem: [] };
+
+    for (const l of linhasAt) {
+      if (/^\s*#{2,}/.test(l)) {
+        const lLimpa = _semAcento(
+          l.replace(/^\s*#{2,}\s*/, '').replace(/[^ -ɏ\s]/g, ' ').toLowerCase().trim()
+        );
+        if (/circu|imagem|montagem|esquema/.test(lLimpa)) {
+          subSec = 'imagem';
+        } else if (/descri/.test(lLimpa)) {
+          subSec = 'descricao';
+        } else {
+          subSec = null; // código e glossário tratados pelos regex acima
+        }
+      } else if (subSec) {
+        subBuf[subSec].push(l);
+      }
+    }
+
+    r.atividade_descricao = subBuf.descricao.join('\n').trim();
+    r.atividade_imagem    = subBuf.imagem.join('\n').trim();
+  }
+
+  return r;
+}
+
+function _iaVal(id) { return document.getElementById('ia-' + id)?.value || ''; }
+
+function _marcarCarregado(secaoId) {
+  const btn = document.getElementById('btn-sec-' + secaoId);
+  if (!btn) return;
+  btn.textContent = '✅ Carregado';
+  btn.style.background = '#059669';
+  btn.disabled = true;
+}
+
+window.carregarSecaoIA = function(secao) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+
+  if (secao === 'objetivo') {
+    set('f-objetivo', _iaVal('objetivo'));
+
+  } else if (secao === 'definicao') {
+    set('f-def-titulo', _iaVal('def-titulo'));
+    set('f-def-texto',  _iaVal('def-texto'));
+
+  } else if (secao === 'curiosidades') {
+    set('f-curiosidades', _iaVal('curiosidades'));
+
+  } else if (secao === 'avaliacao') {
+    set('f-avaliacao', _iaVal('avaliacao'));
+
+  } else if (secao === 'ativ-descricao') {
+    set('f-ativ-descricao', _iaVal('ativ-descricao'));
+
+  } else if (secao === 'ativ-imagem') {
+    set('f-ativ-imagem-url', _iaVal('ativ-imagem'));
+
+  } else if (secao === 'ativ-codigo') {
+    set('f-ativ-codigo', _iaVal('ativ-codigo'));
+
+  } else if (secao === 'ativ-glossario') {
+    if (window._iaGlossario?.length > 0) {
+      window.glossarioState = window._iaGlossario;
+      rebuildGlossario();
+    }
+
+  } else if (secao === 'desafio_extra') {
+    set('f-desafio-extra', _iaVal('desafio-extra'));
+  }
+
+  _marcarCarregado(secao);
+  showToast('✅ Tópico carregado!', 'success');
+};
+
+window.carregarDadosIA = function() {
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  set('f-objetivo',       _iaVal('objetivo'));
+  set('f-def-titulo',     _iaVal('def-titulo'));
+  set('f-def-texto',      _iaVal('def-texto'));
+  set('f-curiosidades',   _iaVal('curiosidades'));
+  set('f-avaliacao',      _iaVal('avaliacao'));
+  set('f-ativ-descricao',  _iaVal('ativ-descricao'));
+  set('f-ativ-codigo',     _iaVal('ativ-codigo'));
+  set('f-desafio-extra',   _iaVal('desafio-extra'));
+
+  if (window._iaGlossario?.length > 0) {
+    window.glossarioState = window._iaGlossario;
+    rebuildGlossario();
+  }
+
+  document.getElementById('modal-gerar-ia')?.remove();
+  showToast('✅ Todos os dados carregados no card!', 'success');
+};

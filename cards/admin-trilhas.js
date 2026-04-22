@@ -24,7 +24,7 @@ let todosCardsDB = {}; // cache id -> data
 
 // ---- TAB SWITCH ----
 window.switchTab = function(tab) {
-  ['cards','trilhas','secoes','usuarios','escolas'].forEach(t => {
+  ['cards','trilhas','secoes','tipos','usuarios','escolas','config'].forEach(t => {
     const view = document.getElementById('view-' + t);
     const btn  = document.getElementById('tab-' + t);
     if (view) view.style.display = t === tab ? '' : 'none';
@@ -32,8 +32,10 @@ window.switchTab = function(tab) {
   });
   if (tab === 'trilhas')  { listarTrilhas(); carregarTodosCards(); }
   if (tab === 'secoes')   { listarSecoes(); }
+  if (tab === 'tipos')    { if (window.listarTipos) window.listarTipos(); }
   if (tab === 'usuarios') { carregarUsuarios(); }
   if (tab === 'escolas')  { carregarEscolas(); }
+  if (tab === 'config')   { if (window.carregarConfig) window.carregarConfig(); }
 };
 
 // ---- TOAST (reutiliza do admin.js) ----

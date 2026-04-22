@@ -63,9 +63,12 @@
         </div>
 
         <div class="conquistado-box" id="stat-pontos-conquistados" style="display:none;">
-          <div class="conquistado-icon">🏅</div>
-          <strong class="conquistado-val" id="pontos-conquistados">—</strong>
+          <div class="conquistado-top">
+            <span class="conquistado-icon" id="conquistado-icon">🏅</span>
+            <strong class="conquistado-val" id="pontos-conquistados">—</strong>
+          </div>
           <span class="conquistado-lbl">Pontos Conquistados</span>
+          <span class="conquistado-concluido-badge" id="conquistado-concluido-badge" style="display:none;">🏆 Card Concluído</span>
         </div>
       </div>
     </div>
@@ -109,7 +112,10 @@
       </div>
       <div class="ativ-codigo-wrap" id="ativ-codigo-wrap" style="display:none;">
         <div class="ativ-codigo-label">💻 Código Arduino IDE</div>
-        <pre class="ativ-codigo" id="ativ-codigo"></pre>
+        <div class="ativ-codigo-container">
+          <button class="btn-copiar-codigo" onclick="copiarCodigo()" id="btn-copiar-codigo">📋</button>
+          <pre class="ativ-codigo" id="ativ-codigo"></pre>
+        </div>
       </div>
       <div class="ativ-glossario-wrap" id="ativ-glossario-wrap" style="display:none;">
         <div class="ativ-codigo-label">📋 Glossário de Código</div>
@@ -518,6 +524,13 @@
         <strong>Método Maker Cognitivo</strong>
         <span>Tecnologia Educacional</span>
       </div>
+    </div>
+
+    <!-- VOLTAR -->
+    <div class="voltar-wrap">
+      <button class="btn-voltar" onclick="history.length > 1 ? history.back() : window.close()">
+        ← Voltar
+      </button>
     </div>
 
   </div>

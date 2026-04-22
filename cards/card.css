@@ -105,6 +105,30 @@ body {
   gap: 8px;
 }
 
+.voltar-wrap {
+  padding: 12px 0 4px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-voltar {
+  background: none;
+  border: 2px solid var(--cinza-medio, #ddd);
+  color: var(--azul-dark);
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.btn-voltar:hover {
+  border-color: var(--azul-dark);
+  background: rgba(47,52,71,0.05);
+}
+
 .nivel-pill {
   background: var(--azul-dark);
   color: var(--amarelo);
@@ -132,7 +156,7 @@ body {
 /* ---- Hero body: texto + imagem lado a lado ---- */
 .hero-body {
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: 1fr 280px;
   gap: 0;
   align-items: stretch;
   border-bottom: 1.5px solid var(--cinza-borda);
@@ -161,26 +185,24 @@ body {
   line-height: 1.7;
 }
 
-/* ---- Imagem ao lado do texto — proporção 3:2 ---- */
+/* ---- Imagem ao lado do texto — proporção 2:1 ---- */
 .hero-imagem-wrap {
-  width: 360px;
-  aspect-ratio: 3 / 2;
-  background: var(--off-white);
-  border-left: 1.5px solid var(--cinza-borda);
+  width: 280px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  overflow: hidden;
-  position: relative;
   flex-shrink: 0;
 }
 
 .hero-imagem {
-  width: 100%;
-  height: 100%;
+  width: calc(100% - 28px);
+  height: auto;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
-  object-position: center;
   display: block;
+  margin: 28px 28px 0 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
 }
 
 /* Placeholder quando não há imagem */
@@ -237,23 +259,31 @@ body {
 .conquistado-box {
   background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
   border: 2px solid #34d399;
-  border-radius: 16px;
-  padding: 14px 28px;
+  border-radius: 14px;
+  padding: 14px 24px;
   text-align: center;
   min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.conquistado-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .conquistado-icon {
-  font-size: 24px;
-  margin-bottom: 4px;
+  font-size: 18px;
 }
 
 .conquistado-val {
   font-family: 'Nunito', sans-serif;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 900;
   color: #065f46;
-  display: block;
   line-height: 1.1;
 }
 
@@ -265,6 +295,24 @@ body {
   font-weight: 700;
   display: block;
   margin-top: 3px;
+}
+
+.conquistado-box--concluido {
+  background: linear-gradient(135deg, #d1fae5 0%, #fef3c7 100%);
+  border-color: #f59e0b;
+}
+
+.conquistado-concluido-badge {
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  display: block;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(245,158,11,0.3);
 }
 
 .stat-val {
@@ -535,9 +583,10 @@ body {
 
   .hero-imagem-wrap {
     width: 100%;
-    aspect-ratio: 3 / 2;
-    border-left: none;
-    border-top: 1.5px solid var(--cinza-borda);
+  }
+  .hero-imagem {
+    width: calc(100% - 40px);
+    margin: 0 20px 20px;
   }
 }
 
@@ -614,6 +663,23 @@ body {
 .texto-lista li {
   margin-bottom: 6px;
   line-height: 1.7;
+}
+
+.texto-subtitulo {
+  font-size: 12px;
+  font-weight: 800;
+  color: #5f6480;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 12px 0 4px;
+}
+
+.texto-blockquote {
+  border-left: 3px solid #dde0ea;
+  padding-left: 12px;
+  color: #8B9BB4;
+  font-style: italic;
+  margin: 6px 0;
 }
 
 /* ---- Chip clicável (cards vinculados) ---- */
@@ -858,6 +924,30 @@ body {
   margin-bottom: 10px;
 }
 
+.ativ-codigo-container {
+  position: relative;
+}
+
+.btn-copiar-codigo {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #ccc;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  z-index: 1;
+}
+
+.btn-copiar-codigo:hover {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
 .ativ-codigo {
   background: #1e1e1e;
   color: #d4d4d4;
@@ -941,6 +1031,20 @@ body {
 
 .desafio-extra-body .texto-lista li {
   color: rgba(255,255,255,0.85);
+}
+
+code.inline-code {
+  background: #e8eaf0;
+  color: #1e2a45;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.88em;
+  font-family: monospace;
+}
+
+.desafio-extra-body code.inline-code {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fde68a;
 }
 
 

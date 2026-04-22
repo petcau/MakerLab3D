@@ -14,8 +14,10 @@
       <button class="tab-btn active" id="tab-cards"    onclick="switchTab('cards')">🃏 Cards</button>
       <button class="tab-btn"        id="tab-trilhas"  onclick="switchTab('trilhas')">🗺️ Trilhas</button>
       <button class="tab-btn"        id="tab-secoes"   onclick="switchTab('secoes')">📚 Seções</button>
+      <button class="tab-btn"        id="tab-tipos"    onclick="switchTab('tipos')">🏷️ Tipos</button>
       <button class="tab-btn"        id="tab-usuarios" onclick="switchTab('usuarios')" style="display:none;">👥 Usuários</button>
       <button class="tab-btn"        id="tab-escolas"  onclick="switchTab('escolas')"  style="display:none;">🏫 Escolas</button>
+      <button class="tab-btn"        id="tab-config"   onclick="switchTab('config')"   style="display:none;">⚙️ Configurações</button>
     </div>
     <div class="header-right">
       <span class="header-user" id="header-user"></span>
@@ -30,6 +32,11 @@
         <div class="sidebar-header">
           <span class="sidebar-title">Cards</span>
           <button class="btn-novo" onclick="novoCard()">+ Novo Card</button>
+        </div>
+        <div class="sidebar-filter">
+          <select id="card-tipo-filtro" onchange="filtrarCardsTipo(this.value)">
+            <option value="">Todos os tipos</option>
+          </select>
         </div>
         <div class="card-list" id="card-list">
           <div class="list-loading">Carregando cards...</div>
@@ -86,6 +93,22 @@
     </div>
   </div>
 
+  <!-- ABA TIPOS -->
+  <div id="view-tipos" class="tab-view" style="display:none;">
+    <div style="max-width:740px; margin:32px auto; padding:0 24px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+        <div>
+          <h2 style="font-size:20px; font-weight:800; color:#23314d; margin:0;">🏷️ Tipos de Card</h2>
+          <p style="font-size:13px; color:#8B9BB4; margin:4px 0 0;">Gerencie os tipos usados no cadastro de cards.</p>
+        </div>
+        <button class="btn-novo" onclick="novoTipo()">+ Novo Tipo</button>
+      </div>
+      <div id="tipos-list">
+        <div class="list-loading">Carregando tipos...</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ABA USUÁRIOS -->
   <div id="view-usuarios" class="tab-view" style="display:none;">
     <div class="layout">
@@ -134,6 +157,55 @@
     </div>
   </div>
 
+  <!-- ABA CONFIGURAÇÕES -->
+  <div id="view-config" class="tab-view" style="display:none;">
+    <div style="max-width:760px; margin:32px auto; padding:0 24px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+        <div>
+          <h2 style="font-size:18px; font-weight:800; color:#2f3447;">⚙️ Configurações</h2>
+          <p style="font-size:12px; color:#888; margin-top:4px;">Apenas gestores podem editar estas configurações.</p>
+        </div>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #ddd; border-radius:16px; overflow:hidden;">
+        <div style="background:#f5f3ee; border-bottom:1px solid #ddd; padding:12px 20px; font-size:11px; font-weight:800; color:#5f6480; text-transform:uppercase; letter-spacing:1.5px;">
+          🤖 Prompt para Geração de Conteúdo (IA)
+        </div>
+        <div style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+          <p style="font-size:12px; color:#666; line-height:1.6;">
+            Este é o prompt usado pelo botão <strong>Prompt IA</strong> no cadastro de cards.
+            Os campos <code style="background:#f0f0f0; padding:2px 6px; border-radius:4px;">{id_do_card}</code>,
+            <code style="background:#f0f0f0; padding:2px 6px; border-radius:4px;">{numero}</code>,
+            <code style="background:#f0f0f0; padding:2px 6px; border-radius:4px;">{nome_do_desafio}</code>,
+            <code style="background:#f0f0f0; padding:2px 6px; border-radius:4px;">{nivel}</code>,
+            <code style="background:#f0f0f0; padding:2px 6px; border-radius:4px;">{tipo_do_card}</code> e
+            <code style="background:#f0f0f0; padding:2px 6px; border-radius:4px;">{tema_do_card}</code> e
+            <code style="background:#f0f0f0; padding:2px 6px; border-radius:4px;">{descricao complementar}</code>
+            são substituídos automaticamente pelos dados do card.
+          </p>
+          <textarea id="config-prompt-template" rows="28"
+            style="width:100%; font-family:monospace; font-size:12px; line-height:1.6;
+                   border:1.5px solid #ddd; border-radius:10px; padding:14px; resize:vertical;
+                   background:#fafafa; color:#2f3447; outline:none; transition:border-color 0.2s;"
+            onfocus="this.style.borderColor='#2f3447'" onblur="this.style.borderColor='#ddd'"
+            placeholder="Carregando..."></textarea>
+          <div style="display:flex; gap:10px; justify-content:flex-end; align-items:center;">
+            <button onclick="restaurarPromptPadrao()"
+              style="background:#fff; color:#555; border:1.5px solid #ddd; padding:9px 18px;
+                     border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; font-family:'Inter Tight',sans-serif;">
+              ↺ Restaurar Padrão
+            </button>
+            <button onclick="salvarConfig()"
+              style="background:#2f3447; color:#fff; border:none; padding:10px 24px;
+                     border-radius:8px; font-size:13px; font-weight:800; cursor:pointer; font-family:'Inter Tight',sans-serif;">
+              💾 Salvar Configurações
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
@@ -142,5 +214,7 @@
   <script type="module" src="admin-trilhas.js"></script>
   <script type="module" src="admin-secoes.js"></script>
   <script type="module" src="admin-escolas.js"></script>
+  <script type="module" src="admin-tipos.js"></script>
+  <script type="module" src="admin-config.js"></script>
 </body>
 </html>

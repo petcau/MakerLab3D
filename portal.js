@@ -129,7 +129,7 @@ onAuthStateChanged(auth, async user => {
       }
 
       if (perfil === 'aluno' || perfil === 'gestor' || perfil === 'conteudista') {
-        carregarTrilhasAluno(trilhasDaSecao);
+        carregarTrilhasAluno(trilhasDaSecao, user.uid);
       }
       if (perfil === 'professor' || perfil === 'gestor' || perfil === 'conteudista') {
         carregarTrilhasProfessor(trilhasDaSecao);
@@ -383,6 +383,7 @@ function inicializarPaineis(perfil) {
 }
 
 // Seletor de visualização (apenas gestor)
+let visaoAtual = 'gestor';
 
 window.mudarVisao = function(visao) {
   visaoAtual = visao;
@@ -511,16 +512,9 @@ function desenharSelo(pts) {
 // Selo será atualizado após login com pontos reais
 
 // ── Carregar trilhas do Firestore ──────────────────────────────────────
-async function carregarTrilhasAluno(filtroIds = null) {
+async function carregarTrilhasAluno(filtroIds = null, uid = null) {
   const container = document.getElementById('trilhas-aluno-container');
   if (!container) return;
-
-  // Dados simulados de progresso do aluno
-  const progressoSimulado = {
-    'pensamento-computacional': ['card-01', 'card-02', 'card-03'],
-    'eletronica-basica':        ['card-04'],
-    'robotica-criativa':        [],
-  };
 
   try {
     const trilhasSnap = await getDocs(collection(db, 'trilhas'));
@@ -552,11 +546,60 @@ async function carregarTrilhasAluno(filtroIds = null) {
     const cardsDB   = {};
     cardsSnap.forEach(d => { cardsDB[d.id] = d.data(); });
 
+    // Buscar progresso real do aluno (cards com concluido:true em qualquer jogo)
+    const cardsConcluidos = new Set();
+    if (uid) {
+      const colsResultados = [
+        'resultados_quiz', 'resultados_bug', 'resultados_comp', 'resultados_ordena',
+        'resultados_complete', 'resultados_conecta', 'resultados_box', 'resultados_binario',
+      ];
+      await Promise.allSettled(colsResultados.map(async col => {
+        try {
+          const snap = await getDocs(query(collection(db, col), where('aluno_id', '==', uid)));
+          snap.forEach(d => { if (d.data().concluido) cardsConcluidos.add(d.data().card_id); });
+        } catch(e) {}
+      }));
+    }
+
+    // Determina se um card está concluído considerando seus cards vinculados
+    function cardEstaConcluido(cid) {
+      const c = cardsDB[cid] || {};
+      const temJogos = ['quiz','bug_codigos','comp_perguntas','ordena_desafios',
+        'complete_desafios','conecta_desafios','box_desafios','binario_desafios']
+        .some(f => (c[f] || []).length > 0);
+
+      // Coleta IDs vinculados
+      const vinculadosComJogos = [];
+      ['links_desafios','links_componentes','links_conexoes'].forEach(k => {
+        (c[k] || []).forEach(vid => {
+          const vc = cardsDB[vid] || {};
+          const temJ = ['quiz','bug_codigos','comp_perguntas','ordena_desafios',
+            'complete_desafios','conecta_desafios','box_desafios','binario_desafios']
+            .some(f => (vc[f] || []).length > 0);
+          if (temJ) vinculadosComJogos.push(vid);
+        });
+      });
+
+      const semNadaParaJogar = !temJogos && vinculadosComJogos.length === 0;
+      if (semNadaParaJogar) return false;
+
+      const cardProprioOk = !temJogos || cardsConcluidos.has(cid);
+      const vinculadosOk  = vinculadosComJogos.every(vid => cardsConcluidos.has(vid));
+      return cardProprioOk && vinculadosOk;
+    }
+
     container.innerHTML = '';
     trilhas.forEach(trilha => {
-      const concluidos = (progressoSimulado[trilha.id] || []).length;
-      const total      = (trilha.cards || []).length;
-      const pct        = total ? Math.round((concluidos / total) * 100) : 0;
+      const cardIds = trilha.cards || [];
+      const total   = cardIds.length;
+
+      // Calcula quantos cards estão concluídos na ordem da trilha
+      let concluidos = 0;
+      for (const cid of cardIds) {
+        if (cardEstaConcluido(cid)) concluidos++;
+        else break; // para na primeira lacuna (desbloqueio sequencial)
+      }
+      const pct = total ? Math.round((concluidos / total) * 100) : 0;
 
       const bloco = document.createElement('div');
       bloco.className = 'trilha-bloco';
@@ -572,9 +615,9 @@ async function carregarTrilhasAluno(filtroIds = null) {
           <div class="trilha-progress-fill" style="width:${pct}%"></div>
         </div>
         <div class="trilha-cards-row">
-          ${(trilha.cards || []).map((cid, i) => {
+          ${cardIds.map((cid, i) => {
             const c    = cardsDB[cid] || {};
-            const done = (progressoSimulado[trilha.id] || []).includes(cid);
+            const done = cardEstaConcluido(cid);
             const next = !done && i === concluidos;
             const cls  = done ? 'concluido' : next ? 'proximo' : 'bloqueado';
             const ico  = done ? '✅' : next ? '&#9654;' : '🔒';
@@ -582,16 +625,15 @@ async function carregarTrilhasAluno(filtroIds = null) {
             const clicavel = cls !== 'bloqueado';
             const tag      = clicavel ? 'a' : 'div';
             const href     = clicavel ? ' href="' + url + '" target="_blank"' : '';
-            const imgHtml = c.imagem_url
+            const imgHtml  = c.imagem_url
               ? '<div class="trilha-card-img"><img src="' + c.imagem_url + '" alt="" loading="lazy" onerror="this.parentNode.style.display=\'none\'"></div>'
               : '';
-            const div = '<' + tag + ' class="trilha-card-item ' + cls + '"' + href + ' style="text-decoration:none;">'
+            return '<' + tag + ' class="trilha-card-item ' + cls + '"' + href + ' style="text-decoration:none;">'
               + '<div class="trilha-card-status">' + ico + '</div>'
               + '<div class="trilha-card-num">' + (c.tipo || 'Desafio') + ' ' + String(c.numero || (i+1)).padStart(2,'0') + '</div>'
               + '<div class="trilha-card-nome">' + (c.nome || cid) + '</div>'
               + imgHtml
               + '</' + tag + '>';
-            return div;
           }).join('')}
         </div>
       `;

@@ -57,6 +57,8 @@ onAuthStateChanged(auth, async user => {
     if (perfilAtual === 'gestor') {
       const tabUsers = document.getElementById('tab-usuarios');
       if (tabUsers) tabUsers.style.display = '';
+      const tabConfig = document.getElementById('tab-config');
+      if (tabConfig) tabConfig.style.display = '';
     }
 
   } catch(err) {

@@ -103,6 +103,29 @@ body {
 
 .btn-novo:hover { background: #e6b800; transform: scale(1.02); }
 
+/* ---- Filtro de tipo na aba Cards ---- */
+.sidebar-filter {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--cinza-medio);
+  background: var(--cinza-claro);
+}
+.sidebar-filter select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1.5px solid var(--cinza-medio);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  font-family: 'Inter Tight', sans-serif;
+}
+.sidebar-filter select:focus {
+  border-color: var(--azul);
+}
+
 /* ---- Filtro de perfil na aba Usuários ---- */
 .usuarios-filter-tabs {
   display: grid;
@@ -300,6 +323,42 @@ body {
   font-family: 'Inter Tight', sans-serif;
 }
 .btn-historico:hover { background: #f0f4ff; border-color: #7b9de8; color: #2c5fc3; }
+
+.btn-ver-card {
+  background: #fff;
+  color: #2c7a4b;
+  border: 1px solid #a3d4b8;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 600;
+}
+.btn-ver-card:hover { background: #f0fbf5; border-color: #2c7a4b; }
+
+.btn-prompt-ia,
+.btn-gerar-ia {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #6c47ff 0%, #a855f7 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter Tight', sans-serif;
+  transition: opacity 0.2s;
+}
+.btn-gerar-ia {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+.btn-prompt-ia:hover,
+.btn-gerar-ia:hover { opacity: 0.85; }
 
 /* ---- Seções do formulário ---- */
 .form-section {
@@ -1322,6 +1381,78 @@ textarea { resize: vertical; min-height: 80px; }
   padding-bottom: 8px;
   border-bottom: 1px solid var(--cinza-medio);
   margin-bottom: 12px;
+}
+
+/* ---- Painel Jogos ---- */
+.painel-jogos {
+  border: 2px solid #d0d4e8;
+  border-radius: 14px;
+  padding: 4px 16px 16px;
+  margin: 0 0 20px;
+  background: #f8f9fc;
+}
+.painel-jogos-titulo {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #5F6480;
+  padding: 14px 4px 10px;
+  border-bottom: 1px solid #d0d4e8;
+  margin-bottom: 12px;
+}
+.painel-jogos .form-section {
+  margin-bottom: 10px;
+}
+.painel-jogos .form-section:last-child {
+  margin-bottom: 0;
+}
+
+.jogos-nav-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 0 14px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #d0d4e8;
+}
+
+.jogo-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1.5px solid #d0d4e8;
+  background: #fff;
+  color: #8B9BB4;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.jogo-nav-btn:hover {
+  border-color: #5F6480;
+  color: #5F6480;
+  background: #f5f6fa;
+}
+.jogo-nav-btn.tem-dados {
+  border-color: #b0b8d8;
+  color: #5F6480;
+}
+.jogo-nav-btn.ativo {
+  background: #2F3447;
+  border-color: #2F3447;
+  color: #fff;
+}
+.jogo-nav-count {
+  background: #f5c400;
+  color: #2F3447;
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 800;
 }
 
 /* ---- Quiz ---- */
