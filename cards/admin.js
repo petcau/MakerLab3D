@@ -2644,7 +2644,8 @@ Exemplo de formato: "Illustration of [concept], [style], [colors], educational, 
 - Sempre que possível, conectar com o mundo real`;
 
 window.abrirPromptIA = async function() {
-  const id     = document.getElementById('f-id')?.value?.trim()     || '—';
+  const cardId = cardAtivo || document.getElementById('f-id')?.value?.trim().toLowerCase().replace(/\s+/g,'-') || '';
+  const id     = cardId || '—';
   const numero = document.getElementById('f-numero')?.value?.trim() || '—';
   const nome   = document.getElementById('f-nome')?.value?.trim()   || '—';
   const nivel  = document.getElementById('f-nivel')?.value          || '—';
@@ -2652,18 +2653,24 @@ window.abrirPromptIA = async function() {
   const tema   = document.getElementById('f-tema')?.value?.trim()   || '—';
 
   let template = PROMPT_IA_DEFAULT_FALLBACK;
+  let desc = '';
   try {
-    const snap = await getDoc(doc(db, 'configuracoes', 'prompt_ia'));
-    if (snap.exists() && snap.data().template) template = snap.data().template;
+    const [snapTpl, snapCard] = await Promise.all([
+      getDoc(doc(db, 'configuracoes', 'prompt_ia')),
+      cardId ? getDoc(doc(db, 'cards', cardId)) : Promise.resolve(null)
+    ]);
+    if (snapTpl.exists() && snapTpl.data().template) template = snapTpl.data().template;
+    if (snapCard?.exists()) desc = snapCard.data().ia_desc_complementar || '';
   } catch(_) {}
 
   const prompt = template
-    .replace(/\{id_do_card\}/g,      id)
-    .replace(/\{numero\}/g,          numero)
-    .replace(/\{nome_do_desafio\}/g, nome)
-    .replace(/\{nivel\}/g,           nivel)
-    .replace(/\{tipo_do_card\}/g,    tipo)
-    .replace(/\{tema_do_card\}/g,    tema);
+    .replace(/\{id_do_card\}/g,                  id)
+    .replace(/\{numero\}/g,                      numero)
+    .replace(/\{nome_do_desafio\}/g,             nome)
+    .replace(/\{nivel\}/g,                       nivel)
+    .replace(/\{tipo_do_card\}/g,                tipo)
+    .replace(/\{tema_do_card\}/g,                tema)
+    .replace(/\{descricao[_ ]complementar\}/g,   desc || '(não informado)');
 
   const modal = document.createElement('div');
   modal.id = 'modal-prompt-ia';
