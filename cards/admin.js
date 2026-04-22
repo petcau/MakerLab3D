@@ -309,8 +309,9 @@ function renderForm(id, d) {
 
     <!-- Imagem -->
     <div class="form-section">
-      <div class="section-title">Imagem do Desafio</div>
-      <div class="upload-area ${imagemURL ? 'tem-imagem' : ''}" id="upload-area">
+      <div class="section-title">Imagem de Capa</div>
+      <p style="font-size:11px;color:#8B9BB4;margin:0 0 10px;">A imagem deve ser 1×1 — tamanho recomendado: <strong>800×800px</strong></p>
+      <div class="upload-area upload-area-capa ${imagemURL ? 'tem-imagem' : ''}" id="upload-area">
         ${imagemURL
           ? `<img src="${imagemURL}" alt="Imagem" class="upload-preview">
              <div class="upload-overlay" onclick="document.getElementById('f-imagem').click()">
@@ -413,8 +414,9 @@ function renderForm(id, d) {
       </div>
 
       <div class="form-group" style="margin-top:16px;">
-        <label>Imagem do Circuito</label>
-        <div class="upload-area ${d.atividade_imagem_url ? 'tem-imagem' : ''}" id="upload-area-ativ">
+        <label>Imagem</label>
+        <p style="font-size:11px;color:#8B9BB4;margin:2px 0 8px;">A imagem deve ser 2×1 — tamanho recomendado: <strong>800×400px</strong></p>
+        <div class="upload-area upload-area-ativ ${d.atividade_imagem_url ? 'tem-imagem' : ''}" id="upload-area-ativ">
           ${d.atividade_imagem_url
             ? `<img src="${d.atividade_imagem_url}" alt="Imagem do circuito" class="upload-preview">
                <div class="upload-overlay" onclick="document.getElementById('f-ativ-imagem').click()">
@@ -2659,7 +2661,12 @@ window.abrirPromptIA = async function() {
       getDoc(doc(db, 'configuracoes', 'prompt_ia')),
       cardId ? getDoc(doc(db, 'cards', cardId)) : Promise.resolve(null)
     ]);
-    if (snapTpl.exists() && snapTpl.data().template) template = snapTpl.data().template;
+    const tipoObj = (window._tiposCard || []).find(t => t.nome === tipo);
+    if (tipoObj?.prompt_ia) {
+      template = tipoObj.prompt_ia;
+    } else if (snapTpl.exists() && snapTpl.data().template) {
+      template = snapTpl.data().template;
+    }
     if (snapCard?.exists()) desc = snapCard.data().ia_desc_complementar || '';
   } catch(_) {}
 
@@ -3218,7 +3225,14 @@ window.gerarPorIA = async function(forcarRegerar = false) {
       getDoc(doc(db, 'configuracoes', 'prompt_ia'))
     ]);
     if (snapCard?.exists()) descSalva = snapCard.data().ia_desc_complementar || '';
-    if (snapTpl.exists() && snapTpl.data().template) template = snapTpl.data().template;
+    // Prompt do tipo tem prioridade; fallback para o prompt global
+    const tipoNome = document.getElementById('f-tipo')?.value || '';
+    const tipoObj  = (window._tiposCard || []).find(t => t.nome === tipoNome);
+    if (tipoObj?.prompt_ia) {
+      template = tipoObj.prompt_ia;
+    } else if (snapTpl.exists() && snapTpl.data().template) {
+      template = snapTpl.data().template;
+    }
   } catch(_) {}
 
   window._iaDescComplementar = descSalva;

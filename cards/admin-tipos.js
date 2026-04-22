@@ -201,10 +201,10 @@ async function abrirModalTipo(id, tipo) {
 
   const modal = document.createElement('div');
   modal.id = 'modal-tipo';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;overflow-y:auto;';
   modal.innerHTML = `
-    <div style="background:#fff;border-radius:18px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid #F0EDE6;">
+    <div style="background:#fff;border-radius:18px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid #F0EDE6;position:sticky;top:0;background:#fff;z-index:1;">
         <div style="font-size:16px;font-weight:800;color:#2F3447;">${id ? '✏️ Editar Tipo' : '🏷️ Novo Tipo'}</div>
         <button onclick="document.getElementById('modal-tipo').remove()"
           style="width:32px;height:32px;border-radius:50%;border:none;background:#f5f3ee;font-size:18px;cursor:pointer;color:#555;">×</button>
@@ -257,8 +257,29 @@ async function abrirModalTipo(id, tipo) {
           </div>
         </div>
 
+        <!-- Prompt IA -->
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#5F6480;display:block;margin-bottom:5px;">
+            🤖 Prompt para Geração IA
+            <span style="font-weight:400;color:#aaa;font-size:11px;margin-left:6px;">Deixe vazio para usar o prompt padrão</span>
+          </label>
+          <p style="font-size:11px;color:#aaa;margin:0 0 6px;line-height:1.5;">
+            Use os mesmos placeholders: <code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;">{id_do_card}</code>,
+            <code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;">{nome_do_desafio}</code>,
+            <code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;">{nivel}</code>,
+            <code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;">{tipo_do_card}</code>,
+            <code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;">{tema_do_card}</code>,
+            <code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;">{descricao complementar}</code>
+          </p>
+          <textarea id="mt-prompt-ia" rows="10"
+            style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #DDD8CC;
+              border-radius:9px;font-size:12px;font-family:monospace;line-height:1.6;
+              outline:none;resize:vertical;background:#fafafa;color:#2F3447;"
+            placeholder="Deixe vazio para usar o prompt padrão de Configurações...">${t.prompt_ia || ''}</textarea>
+        </div>
+
       </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end;padding:14px 22px;border-top:1px solid #F0EDE6;">
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding:14px 22px;border-top:1px solid #F0EDE6;position:sticky;bottom:0;background:#fff;">
         <button onclick="document.getElementById('modal-tipo').remove()"
           style="padding:9px 18px;border:1.5px solid #DDD8CC;background:#fff;border-radius:9px;
             font-size:13px;font-weight:600;cursor:pointer;color:#5F6480;">
@@ -278,11 +299,12 @@ async function abrirModalTipo(id, tipo) {
 
 // ---- SALVAR ----
 window.salvarTipo = async function(tipoId) {
-  const secao_id = document.getElementById('mt-secao')?.value || '';
-  const nome     = document.getElementById('mt-nome')?.value?.trim();
-  const icone    = document.getElementById('mt-icone')?.value?.trim();
-  const ordem    = parseInt(document.getElementById('mt-ordem')?.value) || 1;
-  const ativo    = document.getElementById('mt-ativo')?.value !== 'false';
+  const secao_id  = document.getElementById('mt-secao')?.value || '';
+  const nome      = document.getElementById('mt-nome')?.value?.trim();
+  const icone     = document.getElementById('mt-icone')?.value?.trim();
+  const ordem     = parseInt(document.getElementById('mt-ordem')?.value) || 1;
+  const ativo     = document.getElementById('mt-ativo')?.value !== 'false';
+  const prompt_ia = document.getElementById('mt-prompt-ia')?.value?.trim() || '';
 
   if (!secao_id) { alert('Selecione a seção do tipo.'); return; }
   if (!nome)     { alert('Informe o nome do tipo.'); return; }
@@ -294,7 +316,9 @@ window.salvarTipo = async function(tipoId) {
 
   const docId = tipoId && tipoId !== '' ? tipoId : `tipo-${Date.now()}`;
   try {
-    await setDoc(doc(db, 'tipos_card', docId), { nome, icone: icone || '📌', ordem, ativo, secao_id });
+    const dados = { nome, icone: icone || '📌', ordem, ativo, secao_id };
+    if (prompt_ia) dados.prompt_ia = prompt_ia;
+    await setDoc(doc(db, 'tipos_card', docId), dados);
     document.getElementById('modal-tipo')?.remove();
     showToast('Tipo salvo com sucesso!', 'success');
     await window.listarTipos();

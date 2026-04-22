@@ -633,6 +633,32 @@ textarea { resize: vertical; min-height: 80px; }
   display: block;
 }
 
+.upload-area-capa {
+  width: 300px;
+  height: 300px;
+  min-height: unset;
+}
+
+.upload-area-capa .upload-preview {
+  width: 300px;
+  height: 300px;
+  max-height: unset;
+  object-fit: cover;
+}
+
+.upload-area-ativ {
+  width: 600px;
+  height: 300px;
+  min-height: unset;
+}
+
+.upload-area-ativ .upload-preview {
+  width: 600px;
+  height: 300px;
+  max-height: unset;
+  object-fit: cover;
+}
+
 /* Progress bar */
 .upload-progress {
   margin-top: 10px;

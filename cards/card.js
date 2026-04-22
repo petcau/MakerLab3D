@@ -65,14 +65,54 @@ function renderTextoLivre(texto, containerId) {
     `\x00PRE\x00${escHtml(code.trim())}\x00/PRE\x00`
   );
 
-  const linhas   = texto.split('\n');
-  let html       = '';
-  let emLista    = false;
+  // Agrupa blocos de tabela em tokens \x00TABLE\x00...\x00/TABLE\x00
+  const linhasRaw = texto.split('\n');
+  const linhas = [];
+  let i = 0;
+  while (i < linhasRaw.length) {
+    const t = linhasRaw[i].trim();
+    if (t.startsWith('|') && t.endsWith('|')) {
+      const bloco = [];
+      while (i < linhasRaw.length && linhasRaw[i].trim().startsWith('|')) {
+        bloco.push(linhasRaw[i].trim());
+        i++;
+      }
+      linhas.push('\x00TABLE\x00' + bloco.join('\n') + '\x00/TABLE\x00');
+    } else {
+      linhas.push(linhasRaw[i]);
+      i++;
+    }
+  }
+
+  let html     = '';
+  let emLista  = false;
 
   const fecharLista = () => { if (emLista) { html += '</ul>'; emLista = false; } };
 
   linhas.forEach(linha => {
     const t = linha.trim();
+
+    // Tabela markdown
+    if (t.startsWith('\x00TABLE\x00')) {
+      fecharLista();
+      const blocoLinhas = t.replace('\x00TABLE\x00','').replace('\x00/TABLE\x00','').split('\n');
+      const separador   = /^\|[\s\-:|]+\|/;
+      const linhasTab   = blocoLinhas.filter(l => !separador.test(l.trim()));
+      const cabecalho   = linhasTab[0];
+      const corpo       = linhasTab.slice(1);
+      const parseCells  = l => l.replace(/^\||\|$/g,'').split('|').map(c => aplicarInline(escHtml(c.trim())));
+      const thCells     = parseCells(cabecalho).map(c => `<th style="padding:8px 12px;text-align:left;font-size:12px;font-weight:700;color:#5f6480;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;">${c}</th>`).join('');
+      const trRows      = corpo.map((l, idx) => {
+        const cells = parseCells(l).map(c => `<td style="padding:8px 12px;font-size:13px;color:#2f3447;border-top:1px solid #f0f0f0;">${c}</td>`).join('');
+        return `<tr style="background:${idx%2===0?'#fff':'#f9f9fb'};">${cells}</tr>`;
+      }).join('');
+      html += `<div style="overflow-x:auto;margin:10px 0;">
+        <table style="width:100%;border-collapse:collapse;border:1.5px solid #e8eaf0;border-radius:10px;overflow:hidden;">
+          <thead><tr style="background:#f5f7fb;">${thCells}</tr></thead>
+          <tbody>${trRows}</tbody>
+        </table></div>`;
+      return;
+    }
 
     // Separador horizontal
     if (/^---+$/.test(t)) {
