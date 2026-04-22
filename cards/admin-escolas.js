@@ -122,9 +122,23 @@ async function renderEscolaForm(id, e = {}) {
   content.innerHTML = `
     <div class="form-header" style="position:relative; top:0; margin:0 -32px 20px; flex-direction:column; gap:0; align-items:stretch; padding:0; background:var(--cinza-claro); border-bottom:1px solid var(--cinza-medio);">
       ${id ? `
-      <div style="display:flex; justify-content:flex-end; gap:8px; padding:12px 24px 10px; border-bottom:1px solid var(--cinza-medio); background:var(--off-white);">
-        <button class="btn-convidar" onclick="abrirModalConvite('${id}')">📩 Convidar Professor</button>
-        <button class="btn-convidar" style="background:#8e44ad;" onclick="abrirModalConviteAluno('${id}')">🎒 Convidar Aluno</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:12px 24px 10px; border-bottom:1px solid var(--cinza-medio); background:var(--off-white);">
+        ${window._perfilAtual === 'gestor' ? `
+        <div style="position:relative;" id="escola-config-wrap">
+          <button onclick="toggleConfigEscola()" style="padding:5px 12px;border:1px solid #ccc;border-radius:7px;background:#f5f5f5;color:#555;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;">
+            ⚙ Config
+          </button>
+          <div id="escola-config-menu" style="display:none;position:absolute;left:0;top:calc(100% + 4px);background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:100;min-width:220px;overflow:hidden;">
+            <button onclick="toggleConfigEscola();abrirLimparHistorico('${id}','professor')" style="display:block;width:100%;padding:10px 16px;border:none;background:#fff;text-align:left;font-size:13px;cursor:pointer;color:#333;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='#fff'">🗂 Limpar Histórico Professores</button>
+            <button onclick="toggleConfigEscola();abrirLimparHistorico('${id}','aluno')" style="display:block;width:100%;padding:10px 16px;border:none;background:#fff;text-align:left;font-size:13px;cursor:pointer;color:#333;border-top:1px solid #f0f0f0;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='#fff'">🗂 Limpar Histórico Alunos</button>
+            <button onclick="toggleConfigEscola();abrirLimparMeuHistorico()" style="display:block;width:100%;padding:10px 16px;border:none;background:#fff;text-align:left;font-size:13px;cursor:pointer;color:#333;border-top:1px solid #f0f0f0;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='#fff'">🧹 Limpar Meu Histórico</button>
+          </div>
+        </div>
+        ` : '<div></div>'}
+        <div style="display:flex;gap:8px;">
+          <button class="btn-convidar" onclick="abrirModalConvite('${id}')">📩 Convidar Professor</button>
+          <button class="btn-convidar" style="background:#8e44ad;" onclick="abrirModalConviteAluno('${id}')">🎒 Convidar Aluno</button>
+        </div>
       </div>` : ''}
       <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 24px;">
         <div class="form-title" style="margin:0;">${id ? `Escola ${e.id_escola || ''}` : 'Nova Escola'}</div>
@@ -1332,4 +1346,230 @@ window.abrirModalConviteAluno = async function(escolaId) {
     </div>
   `;
   document.body.appendChild(modal);
+};
+
+// ── LIMPAR HISTÓRICO ──────────────────────────────────────────────────────────
+window.abrirLimparHistorico = function(escolaId, perfil) {
+  const label = perfil === 'aluno' ? 'Alunos' : 'Professores';
+  const cor   = perfil === 'aluno' ? '#c0392b' : '#e67e22';
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-limpar-historico';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:32px;max-width:440px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+      <div style="font-size:20px;font-weight:700;margin-bottom:8px;color:${cor};">⚠️ Limpar Histórico de ${label}</div>
+      <p style="font-size:14px;color:#555;margin-bottom:16px;line-height:1.6;">
+        Todos os resultados de jogos dos <strong>${label.toLowerCase()}</strong> desta escola serão <strong>apagados permanentemente</strong>.<br>
+        Esta ação não pode ser desfeita.
+      </p>
+      <div style="margin-bottom:20px;">
+        <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:6px;">Confirme digitando sua senha:</label>
+        <input type="password" id="lh-senha" placeholder="Digite sua senha" autocomplete="new-password" readonly
+          style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;">
+        <div id="lh-erro" style="color:#c0392b;font-size:12px;margin-top:6px;display:none;"></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button onclick="document.getElementById('modal-limpar-historico').remove()"
+          style="padding:9px 20px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;">Cancelar</button>
+        <button onclick="confirmarLimparHistorico('${escolaId}','${perfil}')"
+          style="padding:9px 20px;border:none;border-radius:8px;background:${cor};color:#fff;font-weight:700;cursor:pointer;font-size:13px;">Confirmar e Apagar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  setTimeout(() => {
+    const inp = document.getElementById('lh-senha');
+    if (!inp) return;
+    inp.removeAttribute('readonly');
+    inp.value = '';
+    inp.focus();
+  }, 150);
+};
+
+window.confirmarLimparHistorico = async function(escolaId, perfil) {
+  const senhaInput = document.getElementById('lh-senha');
+  const erroEl    = document.getElementById('lh-erro');
+  const senha = senhaInput?.value?.trim();
+
+  if (!senha) {
+    erroEl.textContent = 'Digite sua senha para confirmar.';
+    erroEl.style.display = 'block';
+    return;
+  }
+  erroEl.style.display = 'none';
+
+  try {
+    const { getAuth, reauthenticateWithCredential, EmailAuthProvider } =
+      await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js");
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) throw new Error('Sessão expirada. Faça login novamente.');
+    const credencial = EmailAuthProvider.credential(user.email, senha);
+    await reauthenticateWithCredential(user, credencial);
+  } catch(e) {
+    const erroEl2 = document.getElementById('lh-erro');
+    if (erroEl2) {
+      erroEl2.textContent = (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
+        ? 'Senha incorreta.' : (e.message || 'Erro ao verificar senha.');
+      erroEl2.style.display = 'block';
+    }
+    return;
+  }
+
+  document.getElementById('modal-limpar-historico').remove();
+  showToast('Apagando histórico...', '');
+
+  const colsResultados = [
+    'resultados_quiz', 'resultados_bug', 'resultados_comp', 'resultados_ordena',
+    'resultados_complete', 'resultados_conecta', 'resultados_box', 'resultados_binario',
+  ];
+
+  try {
+    const usuariosSnap = await getDocs(
+      query(collection(db, 'usuarios'), where('escola_id', '==', escolaId), where('perfil', '==', perfil))
+    );
+    const uids = [];
+    usuariosSnap.forEach(d => uids.push(d.id));
+
+    if (uids.length === 0) {
+      showToast('Nenhum usuário encontrado para limpar.', '');
+      return;
+    }
+
+    let totalApagados = 0;
+    for (const uid of uids) {
+      for (const col of colsResultados) {
+        try {
+          const snap = await getDocs(query(collection(db, col), where('aluno_id', '==', uid)));
+          for (const d of snap.docs) {
+            await deleteDoc(d.ref);
+            totalApagados++;
+          }
+        } catch(e) {}
+      }
+      try {
+        const firestoreModule = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js");
+        await firestoreModule.updateDoc(doc(db, 'usuarios', uid), { pontos_total: 0 });
+      } catch(e) {}
+    }
+
+    const label = perfil === 'aluno' ? 'alunos' : 'professores';
+    showToast(`✅ Histórico de ${uids.length} ${label} apagado (${totalApagados} registros).`, 'success');
+  } catch(err) {
+    showToast('Erro ao apagar histórico: ' + err.message, 'error');
+  }
+};
+
+window.toggleConfigEscola = function() {
+  const menu = document.getElementById('escola-config-menu');
+  if (!menu) return;
+  const aberto = menu.style.display === 'block';
+  menu.style.display = aberto ? 'none' : 'block';
+  if (!aberto) {
+    const fechar = (e) => {
+      if (!document.getElementById('escola-config-wrap')?.contains(e.target)) {
+        menu.style.display = 'none';
+        document.removeEventListener('click', fechar);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', fechar), 10);
+  }
+};
+
+window.abrirLimparMeuHistorico = function() {
+  const modal = document.createElement('div');
+  modal.id = 'modal-limpar-historico';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:32px;max-width:440px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+      <div style="font-size:20px;font-weight:700;margin-bottom:8px;color:#555;">🧹 Limpar Meu Histórico</div>
+      <p style="font-size:14px;color:#555;margin-bottom:16px;line-height:1.6;">
+        Todos os seus resultados de jogos serão <strong>apagados permanentemente</strong>.<br>
+        Esta ação não pode ser desfeita.
+      </p>
+      <div style="margin-bottom:20px;">
+        <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:6px;">Confirme digitando sua senha:</label>
+        <input type="password" id="lh-senha" placeholder="Digite sua senha" autocomplete="new-password" readonly
+          style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;">
+        <div id="lh-erro" style="color:#c0392b;font-size:12px;margin-top:6px;display:none;"></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button onclick="document.getElementById('modal-limpar-historico').remove()"
+          style="padding:9px 20px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;">Cancelar</button>
+        <button onclick="confirmarLimparMeuHistorico()"
+          style="padding:9px 20px;border:none;border-radius:8px;background:#555;color:#fff;font-weight:700;cursor:pointer;font-size:13px;">Confirmar e Apagar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  setTimeout(() => {
+    const inp = document.getElementById('lh-senha');
+    if (!inp) return;
+    inp.removeAttribute('readonly');
+    inp.value = '';
+    inp.focus();
+  }, 150);
+};
+
+window.confirmarLimparMeuHistorico = async function() {
+  const senhaInput = document.getElementById('lh-senha');
+  const erroEl    = document.getElementById('lh-erro');
+  const senha = senhaInput?.value?.trim();
+
+  if (!senha) {
+    erroEl.textContent = 'Digite sua senha para confirmar.';
+    erroEl.style.display = 'block';
+    return;
+  }
+  erroEl.style.display = 'none';
+
+  let uid = null;
+  try {
+    const { getAuth, reauthenticateWithCredential, EmailAuthProvider } =
+      await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js");
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) throw new Error('Sessão expirada. Faça login novamente.');
+    uid = user.uid;
+    const credencial = EmailAuthProvider.credential(user.email, senha);
+    await reauthenticateWithCredential(user, credencial);
+  } catch(e) {
+    const erroEl2 = document.getElementById('lh-erro');
+    if (erroEl2) {
+      erroEl2.textContent = (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
+        ? 'Senha incorreta.' : (e.message || 'Erro ao verificar senha.');
+      erroEl2.style.display = 'block';
+    }
+    return;
+  }
+
+  document.getElementById('modal-limpar-historico').remove();
+  showToast('Apagando seu histórico...', '');
+
+  const colsResultados = [
+    'resultados_quiz', 'resultados_bug', 'resultados_comp', 'resultados_ordena',
+    'resultados_complete', 'resultados_conecta', 'resultados_box', 'resultados_binario',
+  ];
+
+  try {
+    let totalApagados = 0;
+    for (const col of colsResultados) {
+      try {
+        const snap = await getDocs(query(collection(db, col), where('aluno_id', '==', uid)));
+        for (const d of snap.docs) {
+          await deleteDoc(d.ref);
+          totalApagados++;
+        }
+      } catch(e) {}
+    }
+    try {
+      const firestoreModule = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js");
+      await firestoreModule.updateDoc(doc(db, 'usuarios', uid), { pontos_total: 0 });
+    } catch(e) {}
+
+    showToast(`✅ Seu histórico foi apagado (${totalApagados} registros).`, 'success');
+  } catch(err) {
+    showToast('Erro ao apagar histórico: ' + err.message, 'error');
+  }
 };

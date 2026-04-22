@@ -236,6 +236,7 @@ function renderForm(id, d) {
   window.boxState      = d.box_desafios      ? JSON.parse(JSON.stringify(d.box_desafios))      : [];
   window.binarioState  = d.binario_desafios  ? JSON.parse(JSON.stringify(d.binario_desafios))  : [];
   window.glossarioState = d.glossario ? JSON.parse(JSON.stringify(d.glossario)) : [];
+  window.anexosState   = d.anexos ? JSON.parse(JSON.stringify(d.anexos)) : [];
   // Carrega links de todos os tipos dinâmicos (com fallback para legado)
   tagsState = {};
   getVMAP().forEach(({ key }) => {
@@ -696,6 +697,14 @@ function renderForm(id, d) {
 
     </div><!-- /painel-jogos -->
 
+    <!-- Anexos -->
+    <div class="form-section">
+      <div class="section-title">Anexos</div>
+      <div id="anexos-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+      <button class="vg-btn-add" onclick="adicionarAnexo()" style="margin-top:4px;">+ Adicionar Anexo</button>
+      <span class="helper-text" style="display:block;margin-top:6px;">Links externos: PDF, Google Drive, sites, documentos, etc.</span>
+    </div>
+
     ${id ? `
     <div class="form-section">
       <div class="section-title">Link do Card</div>
@@ -707,6 +716,7 @@ function renderForm(id, d) {
   `;
 
   carregarCardsVinculados();
+  renderAnexos();
   renderQuizLista();
   recalcularPontos();
   renderBugLista();
@@ -1043,6 +1053,7 @@ window.salvarCard = async function (publicar) {
     atividade_codigo:     document.getElementById('f-ativ-codigo')?.value?.trim() || '',
     glossario:            window.glossarioState.filter(g => g.codigo || g.descricao),
     avaliacao:        document.getElementById('f-avaliacao')?.value?.trim() || '',
+    anexos:           window.anexosState.filter(a => a.titulo || a.url),
     desafio_extra:    document.getElementById('f-desafio-extra')?.value?.trim() || '',
     quiz:             window.quizState || [],
     bug_codigos:      window.bugState || [],
@@ -1269,6 +1280,44 @@ function rebuildGlossario() {
   window.glossarioState.forEach((g, i) => {
     tbody.appendChild(makeGlossarioRow(i, g.codigo, g.descricao));
   });
+}
+
+// ---- ANEXOS ----
+window.anexosState = [];
+
+window.adicionarAnexo = function() {
+  window.anexosState.push({ titulo: '', url: '' });
+  renderAnexos();
+};
+
+window.removerAnexo = function(i) {
+  window.anexosState.splice(i, 1);
+  renderAnexos();
+};
+
+window.renderAnexos = function() {
+  const lista = document.getElementById('anexos-lista');
+  if (!lista) return;
+  lista.innerHTML = '';
+  window.anexosState.forEach((a, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;align-items:center;';
+    row.innerHTML = `
+      <input type="text" placeholder="Título (ex: Guia do Projeto)" value="${a.titulo || ''}"
+        oninput="window.anexosState[${i}].titulo=this.value"
+        style="flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px;">
+      <input type="url" placeholder="https://..." value="${a.url || ''}"
+        oninput="window.anexosState[${i}].url=this.value"
+        style="flex:2;padding:8px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px;">
+      <button onclick="removerAnexo(${i})" title="Remover"
+        style="padding:6px 10px;border:none;background:#fee;color:#c0392b;border-radius:7px;cursor:pointer;font-size:14px;">✕</button>
+    `;
+    lista.appendChild(row);
+  });
+};
+
+function initAnexos() {
+  renderAnexos();
 }
 
 // ---- DELETAR ----

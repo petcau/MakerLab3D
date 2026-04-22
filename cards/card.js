@@ -409,6 +409,30 @@ async function carregarCard() {
       show('sec-avaliacao');
     }
 
+    // ---- ANEXOS ----
+    if ((d.anexos || []).length > 0) {
+      const lista = document.getElementById('anexos-lista-card');
+      if (lista) {
+        lista.innerHTML = d.anexos.map(a => {
+          const url = a.url || '#';
+          const titulo = a.titulo || url;
+          const ico = /\.pdf$/i.test(url) ? '📄'
+            : /docs\.google\.com\/document/i.test(url) ? '📄'
+            : /docs\.google\.com\/spreadsheets/i.test(url) ? '📊'
+            : /docs\.google\.com\/presentation/i.test(url) ? '📊'
+            : /drive\.google\.com/i.test(url) ? '📁'
+            : /(youtube\.com|youtu\.be)/i.test(url) ? '🎥'
+            : '🔗';
+          return `<a href="${url}" target="_blank" rel="noopener"
+            style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;background:#f0f4ff;border:1px solid #c7d4f5;border-radius:20px;font-size:13px;color:#2c5fdd;text-decoration:none;font-weight:500;transition:background .15s;"
+            onmouseover="this.style.background='#dce6ff'" onmouseout="this.style.background='#f0f4ff'">
+            <span>${ico}</span><span>${titulo}</span>
+          </a>`;
+        }).join('');
+        show('sec-anexos');
+      }
+    }
+
     // ---- DESAFIO EXTRA ----
     if (d.desafio_extra) {
       renderTextoLivre(d.desafio_extra, 'desafio-extra');
