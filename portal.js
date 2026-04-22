@@ -128,6 +128,10 @@ onAuthStateChanged(auth, async user => {
         await carregarSeletorSecaoGestor();
       }
 
+      window._uidAtual      = user.uid;
+      window._perfilPortal  = perfil;
+      window._trilhasFiltro = trilhasDaSecao;
+
       if (perfil === 'aluno' || perfil === 'gestor' || perfil === 'conteudista') {
         carregarTrilhasAluno(trilhasDaSecao, user.uid);
       }
@@ -556,7 +560,10 @@ async function carregarTrilhasAluno(filtroIds = null, uid = null) {
       await Promise.allSettled(colsResultados.map(async col => {
         try {
           const snap = await getDocs(query(collection(db, col), where('aluno_id', '==', uid)));
-          snap.forEach(d => { if (d.data().concluido) cardsConcluidos.add(d.data().card_id); });
+          snap.forEach(d => {
+            const dados = d.data();
+            if (dados.card_id) cardsConcluidos.add(dados.card_id);
+          });
         } catch(e) {}
       }));
     }
@@ -1249,3 +1256,17 @@ window.fecharModalCards = function(e) {
     document.getElementById('modal-cards-pts').style.display = 'none';
   }
 };
+
+// Recarrega trilhas quando o aluno volta ao portal (mensagem direta do card)
+window.addEventListener('message', (e) => {
+  if (e.data === 'makerlab-reload-trilhas' && window._uidAtual && window._perfilPortal === 'aluno') {
+    carregarTrilhasAluno(window._trilhasFiltro || null, window._uidAtual);
+  }
+});
+
+// Fallback: recarrega quando o tab volta a ficar visível
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && window._uidAtual && window._perfilPortal === 'aluno') {
+    carregarTrilhasAluno(window._trilhasFiltro || null, window._uidAtual);
+  }
+});

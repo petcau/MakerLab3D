@@ -717,3 +717,14 @@ async function carregarCard() {
 }
 
 carregarCard();
+
+window.voltarPortal = function() {
+  if (window.opener && !window.opener.closed) {
+    window.opener.postMessage('makerlab-reload-trilhas', '*');
+    window.close();
+  } else if (history.length > 1) {
+    history.back();
+  } else {
+    window.close();
+  }
+};

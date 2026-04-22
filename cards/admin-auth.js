@@ -25,6 +25,7 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 let perfilAtual = null;
+window._perfilAtual = null;
 
 // ---- VERIFICAÇÃO DE ACESSO ----
 onAuthStateChanged(auth, async user => {
@@ -42,6 +43,7 @@ onAuthStateChanged(auth, async user => {
     }
 
     perfilAtual = snap.data().perfil;
+    window._perfilAtual = perfilAtual;
 
     // Mostra nome do usuário no header
     const nomeEl = document.getElementById('header-user');

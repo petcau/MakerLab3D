@@ -3,7 +3,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import {
   getFirestore, collection, doc,
-  getDocs, setDoc, deleteDoc, getDoc, arrayUnion
+  getDocs, setDoc, deleteDoc, getDoc, arrayUnion, arrayRemove
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import {
@@ -1273,15 +1273,150 @@ function rebuildGlossario() {
 
 // ---- DELETAR ----
 window.deletarCard = async function (id) {
-  if (!confirm(`Deletar o card "${id}"? Esta ação não pode ser desfeita.`)) return;
+  // Apenas gestores podem excluir
+  if (window._perfilAtual !== 'gestor') {
+    showToast('❌ Apenas gestores podem excluir cards.', 'error');
+    return;
+  }
+
+  showToast('🔍 Verificando vínculos...', '');
+
   try {
+    const COLECOES_RESULTADO = [
+      'resultados_quiz','resultados_bug','resultados_comp',
+      'resultados_ordena','resultados_complete','resultados_conecta',
+      'resultados_box','resultados_binario'
+    ];
+
+    // Trilhas que contêm este card
+    const trilhasVinculadas = [];
+    try {
+      const trilhasSnap = await getDocs(collection(db, 'trilhas'));
+      trilhasSnap.forEach(d => {
+        if ((d.data().cards || []).includes(id))
+          trilhasVinculadas.push({ id: d.id, nome: d.data().nome || d.id });
+      });
+    } catch(_) {}
+
+    // Resultados de alunos por coleção (ignora se sem permissão)
+    const resultadosVinculados = [];
+    for (const colecao of COLECOES_RESULTADO) {
+      try {
+        const snap = await getDocs(collection(db, colecao));
+        let qtd = 0;
+        snap.forEach(d => { if (d.id.includes(id)) qtd++; });
+        if (qtd > 0) resultadosVinculados.push({ colecao, qtd });
+      } catch(_) {}
+    }
+
+    // Monta modal de confirmação
+    document.getElementById('modal-deletar-card')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'modal-deletar-card';
+    modal.className = 'modal-overlay';
+
+    const trilhasHTML = trilhasVinculadas.length > 0
+      ? `<div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#e74c3c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">
+            🗺️ Trilhas vinculadas (${trilhasVinculadas.length})
+          </div>
+          ${trilhasVinculadas.map(t =>
+            `<div style="padding:5px 10px;background:#fff5f5;border-radius:6px;font-size:13px;color:#2f3447;margin-bottom:4px;">
+              ${t.nome}
+            </div>`
+          ).join('')}
+          <div style="font-size:11px;color:#e67e22;margin-top:4px;">→ O card será removido dessas trilhas.</div>
+        </div>`
+      : `<div style="font-size:13px;color:#27ae60;margin-bottom:8px;">✅ Nenhuma trilha vinculada.</div>`;
+
+    const resultadosHTML = resultadosVinculados.length > 0
+      ? `<div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#e74c3c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">
+            📊 Resultados de alunos
+          </div>
+          ${resultadosVinculados.map(r =>
+            `<div style="padding:5px 10px;background:#fff5f5;border-radius:6px;font-size:13px;color:#2f3447;margin-bottom:4px;">
+              ${r.colecao} — <strong>${r.qtd}</strong> registro(s)
+            </div>`
+          ).join('')}
+          <div style="font-size:11px;color:#e67e22;margin-top:4px;">→ Todos os resultados serão excluídos permanentemente.</div>
+        </div>`
+      : `<div style="font-size:13px;color:#27ae60;margin-bottom:8px;">✅ Nenhum resultado de aluno.</div>`;
+
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width:500px;">
+        <div class="modal-header" style="border-bottom:2px solid #fdd;">
+          <div class="modal-title" style="color:#e74c3c;">🗑 Excluir Card: ${id}</div>
+          <button class="modal-close" onclick="document.getElementById('modal-deletar-card').remove()">×</button>
+        </div>
+        <div class="modal-body" style="padding:20px;display:flex;flex-direction:column;gap:8px;">
+          <div style="background:#fff8f8;border:1.5px solid #fdd;border-radius:10px;padding:14px;margin-bottom:4px;">
+            ${trilhasHTML}
+            ${resultadosHTML}
+          </div>
+          <p style="font-size:13px;color:#666;margin:0;">
+            Esta ação <strong>não pode ser desfeita</strong>. Todo o conteúdo do card será removido permanentemente.
+          </p>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #eee;">
+          <button onclick="document.getElementById('modal-deletar-card').remove()"
+            style="background:#fff;color:#555;border:1.5px solid #ddd;padding:9px 18px;
+                   border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter Tight',sans-serif;">
+            Cancelar
+          </button>
+          <button onclick="window._confirmarDeletarCard('${id}')"
+            style="background:#e74c3c;color:#fff;border:none;padding:10px 24px;
+                   border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Inter Tight',sans-serif;">
+            🗑 Confirmar Exclusão
+          </button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+    // Guarda os vínculos para usar na confirmação
+    window._deletarCardVinculos = { trilhas: trilhasVinculadas, resultados: resultadosVinculados };
+
+  } catch (err) {
+    showToast(`❌ Erro: ${err.message}`, 'error');
+  }
+};
+
+window._confirmarDeletarCard = async function(id) {
+  document.getElementById('modal-deletar-card')?.remove();
+  const { trilhas, resultados } = window._deletarCardVinculos || { trilhas: [], resultados: [] };
+
+  const COLECOES_RESULTADO = [
+    'resultados_quiz','resultados_bug','resultados_comp',
+    'resultados_ordena','resultados_complete','resultados_conecta',
+    'resultados_box','resultados_binario'
+  ];
+
+  try {
+    showToast('⏳ Excluindo...', '');
+
+    // 1. Remove card das trilhas
+    await Promise.all(trilhas.map(t =>
+      setDoc(doc(db, 'trilhas', t.id), { cards: arrayRemove(id) }, { merge: true })
+    ));
+
+    // 2. Deleta resultados de alunos
+    const deleteOps = [];
+    for (const colecao of COLECOES_RESULTADO) {
+      const snap = await getDocs(collection(db, colecao));
+      snap.forEach(d => { if (d.id.includes(id)) deleteOps.push(deleteDoc(doc(db, colecao, d.id))); });
+    }
+    await Promise.all(deleteOps);
+
+    // 3. Deleta o card
     await deleteDoc(doc(db, 'cards', id));
-    showToast('🗑 Card deletado', '');
+
+    showToast('🗑 Card excluído e todos os vínculos removidos.', 'success');
     cardAtivo = null;
     document.getElementById('main-content').innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">🃏</div>
-        <p>Card deletado.<br>Selecione outro ou crie um novo.</p>
+        <p>Card excluído.<br>Selecione outro ou crie um novo.</p>
       </div>`;
     await listarCards();
   } catch (err) {
