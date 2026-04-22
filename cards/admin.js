@@ -301,7 +301,7 @@ function renderForm(id, d) {
         </div>
 
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;padding-top:20px;border-top:1px solid #eee;">
         <button class="btn-prompt-ia"  onclick="abrirPromptIA()" type="button">🤖 Prompt IA</button>
         <button class="btn-gerar-ia"   onclick="gerarPorIA()"    type="button">✨ Gerar por IA (Claude)</button>
       </div>
@@ -2675,34 +2675,84 @@ window.abrirPromptIA = async function() {
   const modal = document.createElement('div');
   modal.id = 'modal-prompt-ia';
   modal.className = 'modal-overlay';
+  // guarda estado para atualização ao vivo
+  window._promptIATemplate = template;
+  window._promptIAFields   = { id, numero, nome, nivel, tipo, tema };
+
   modal.innerHTML = `
-    <div class="modal-box modal-box-lg">
+    <div class="modal-box modal-box-lg" style="max-width:680px;">
       <div class="modal-header">
-        <div class="modal-title">🤖 Prompt IA — ${nome}</div>
-        <button class="modal-close" onclick="document.getElementById('modal-prompt-ia').remove()">×</button>
+        <div class="modal-title">🤖 Prompt IA — ${_escHtml(nome)}</div>
+        <button class="modal-close" onclick="_salvarDescComplementar();document.getElementById('modal-prompt-ia').remove()">×</button>
       </div>
-      <div class="modal-body" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
-        <textarea id="prompt-ia-texto" readonly
-          style="width:100%;min-height:420px;font-family:monospace;font-size:12px;line-height:1.6;
-                 border:1.5px solid #ddd;border-radius:10px;padding:14px;resize:vertical;
-                 background:#f8f8f8;color:#2f3447;outline:none;">${prompt.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
-        <button onclick="copiarPromptIA()"
-          style="align-self:flex-end;background:#2F3447;color:#fff;border:none;border-radius:10px;
-                 padding:10px 24px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;
-                 cursor:pointer;transition:background 0.2s;" id="btn-copiar-prompt">
-          📋 Copiar Prompt
-        </button>
+      <div class="modal-body" style="padding:20px;display:flex;flex-direction:column;gap:14px;max-height:80vh;overflow-y:auto;">
+
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#23314d;margin-bottom:6px;">
+            📝 Descrição Complementar
+          </label>
+          <textarea id="ia-desc-complementar" rows="3"
+            style="width:100%;font-size:13px;line-height:1.6;border:1.5px solid #ddd;border-radius:10px;
+                   padding:12px;resize:vertical;outline:none;box-sizing:border-box;
+                   font-family:inherit;background:#fafafa;color:#2f3447;transition:border-color .2s;"
+            onfocus="this.style.borderColor='#23314d'"
+            onblur="this.style.borderColor='#ddd'; window._salvarDescComplementar();"
+            oninput="window._atualizarPreviewPromptIA()"
+            placeholder="Ex: Componentes: Arduino Uno, LED vermelho, resistor 220Ω..."></textarea>
+        </div>
+
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <label style="font-size:12px;font-weight:700;color:#23314d;">🔍 Prompt para o Claude</label>
+            <span style="font-size:11px;color:#8B9BB4;">Copie e cole no Claude</span>
+          </div>
+          <pre id="prompt-ia-texto"
+            style="white-space:pre-wrap;font-family:monospace;font-size:11px;line-height:1.6;
+                   color:#2f3447;margin:0;background:#f8f9fa;border:1.5px solid #e8eaf0;
+                   border-radius:10px;padding:14px;max-height:340px;overflow-y:auto;"></pre>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;">
+          <button onclick="copiarPromptIA()" id="btn-copiar-prompt"
+            style="background:#2F3447;color:#fff;border:none;border-radius:8px;
+                   padding:10px 24px;font-size:13px;font-weight:800;cursor:pointer;
+                   font-family:'Inter Tight',sans-serif;">
+            📋 Copiar Prompt
+          </button>
+        </div>
       </div>
     </div>
   `;
   document.getElementById('modal-prompt-ia')?.remove();
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  modal.addEventListener('click', e => { if (e.target === modal) { _salvarDescComplementar(); modal.remove(); } });
+
+  setTimeout(() => {
+    const ta = document.getElementById('ia-desc-complementar');
+    if (ta) { ta.value = desc; ta.focus(); }
+    window._atualizarPreviewPromptIA();
+  }, 80);
+};
+
+window._atualizarPreviewPromptIA = function() {
+  const pre = document.getElementById('prompt-ia-texto');
+  if (!pre || !window._promptIATemplate) return;
+  const desc = document.getElementById('ia-desc-complementar')?.value?.trim() || '';
+  const f = window._promptIAFields || {};
+  pre.textContent = window._promptIATemplate
+    .replace(/\{id_do_card\}/g,                f.id     || '—')
+    .replace(/\{numero\}/g,                    f.numero || '—')
+    .replace(/\{nome_do_desafio\}/g,           f.nome   || '—')
+    .replace(/\{nivel\}/g,                     f.nivel  || '—')
+    .replace(/\{tipo_do_card\}/g,              f.tipo   || '—')
+    .replace(/\{tema_do_card\}/g,              f.tema   || '—')
+    .replace(/\{descricao[_ ]complementar\}/g, desc || '(não informado)');
 };
 
 window.copiarPromptIA = function() {
-  const ta = document.getElementById('prompt-ia-texto');
-  navigator.clipboard.writeText(ta.value).then(() => {
+  const pre = document.getElementById('prompt-ia-texto');
+  const texto = pre?.textContent || '';
+  navigator.clipboard.writeText(texto).then(() => {
     const btn = document.getElementById('btn-copiar-prompt');
     btn.textContent = '✅ Copiado!';
     btn.style.background = '#27ae60';

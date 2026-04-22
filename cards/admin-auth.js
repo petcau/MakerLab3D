@@ -198,7 +198,89 @@ function renderUsuarioForm(u) {
         </div>
       </div>
     </div>
+
+    ${u ? `
+    <div class="form-section" id="historico-cards-section">
+      <div class="section-title">Histórico de Cards</div>
+      <div id="historico-cards-body" style="font-size:13px;color:#8B9BB4;">Carregando...</div>
+    </div>` : ''}
   `;
+
+  if (u?.email) _carregarHistoricoCards(u.email);
+}
+
+async function _carregarHistoricoCards(email) {
+  const el = document.getElementById('historico-cards-body');
+  if (!el) return;
+  try {
+    const snap = await getDocs(collection(db, 'cards'));
+    const entradas = [];
+    snap.forEach(d => {
+      const data = d.data();
+      (data.historico || []).forEach(h => {
+        if ((h.email || '').toLowerCase() === email.toLowerCase()) {
+          entradas.push({ cardId: d.id, cardNome: data.nome || d.id, ...h });
+        }
+      });
+    });
+
+    if (entradas.length === 0) {
+      el.innerHTML = '<span style="color:#bbb;font-style:italic;">Nenhum card encontrado para este usuário.</span>';
+      return;
+    }
+
+    // Agrupa por card + dia
+    const grupos = {};
+    entradas.forEach(e => {
+      const dia = new Date(e.data).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+      const chave = `${e.cardId}__${dia}`;
+      if (!grupos[chave]) grupos[chave] = { cardNome: e.cardNome, dia, acao: e.acao, status: e.status, datas: [] };
+      grupos[chave].datas.push(new Date(e.data));
+      grupos[chave].status = e.status;
+      grupos[chave].acao   = e.acao;
+    });
+
+    const lista = Object.values(grupos).sort((a, b) => Math.max(...b.datas) - Math.max(...a.datas));
+
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="border-bottom:2px solid #eee;text-align:left;">
+          <th style="padding:8px 12px;font-size:11px;color:#8B9BB4;text-transform:uppercase;letter-spacing:.5px;">Card</th>
+          <th style="padding:8px 12px;font-size:11px;color:#8B9BB4;text-transform:uppercase;letter-spacing:.5px;">Ação</th>
+          <th style="padding:8px 12px;font-size:11px;color:#8B9BB4;text-transform:uppercase;letter-spacing:.5px;">Status</th>
+          <th style="padding:8px 12px;font-size:11px;color:#8B9BB4;text-transform:uppercase;letter-spacing:.5px;">Data</th>
+          <th style="padding:8px 12px;font-size:11px;color:#8B9BB4;text-transform:uppercase;letter-spacing:.5px;">Início</th>
+          <th style="padding:8px 12px;font-size:11px;color:#8B9BB4;text-transform:uppercase;letter-spacing:.5px;">Fim</th>
+          <th style="padding:8px 12px;font-size:11px;color:#8B9BB4;text-transform:uppercase;letter-spacing:.5px;text-align:center;">Edições</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lista.map(g => {
+          const sorted = g.datas.sort((a,b) => a - b);
+          const horaInicio = sorted[0].toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+          const horaFim    = sorted[sorted.length-1].toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+          const qtd        = g.datas.length;
+          const acaoColor  = g.acao === 'criado' ? '#27ae60' : '#2980b9';
+          const statusBadge = g.status === 'publicado'
+            ? '<span style="background:#e8f8f0;color:#27ae60;border:1px solid #a9e4c3;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;">Publicado</span>'
+            : '<span style="background:#f5f5f5;color:#888;border:1px solid #ddd;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;">Rascunho</span>';
+          return `<tr style="border-bottom:1px solid #f0f0f0;">
+            <td style="padding:9px 12px;font-weight:600;color:#23314d;">${g.cardNome}</td>
+            <td style="padding:9px 12px;"><span style="background:${acaoColor}20;color:${acaoColor};border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;text-transform:uppercase;">${g.acao}</span></td>
+            <td style="padding:9px 12px;">${statusBadge}</td>
+            <td style="padding:9px 12px;color:#666;font-size:12px;">${g.dia}</td>
+            <td style="padding:9px 12px;color:#999;font-size:12px;">${horaInicio}</td>
+            <td style="padding:9px 12px;color:#999;font-size:12px;">${horaFim}</td>
+            <td style="padding:9px 12px;text-align:center;">
+              <span style="background:#f0f4ff;color:#2c5fc3;border:1px solid #c2d1f5;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;">${qtd}x</span>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+  } catch(err) {
+    if (el) el.innerHTML = `<span style="color:#e74c3c;">Erro: ${err.message}</span>`;
+  }
 }
 
 window.salvarUsuario = async function(uid) {
