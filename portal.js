@@ -3,7 +3,7 @@ import {
   getAuth, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, updateDoc, setDoc, deleteDoc, collection, getDocs, query, where
+  getFirestore, doc, getDoc, updateDoc, setDoc, deleteDoc, collection, getDocs, query, where, arrayUnion, arrayRemove, onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1270,3 +1270,230 @@ document.addEventListener('visibilitychange', () => {
     carregarTrilhasAluno(window._trilhasFiltro || null, window._uidAtual);
   }
 });
+
+// ── ENTRAR EM JOGO DE ARENA (aluno) ──────────────────────────────────────────
+let _jogoAlunoListener = null;
+let _jogoAlunoCtx = null; // { jogoId, meuUid, meuNome, modo }
+
+window.confirmarEntrarJogo = async function() {
+  const codigo = document.getElementById('input-codigo-jogo')?.value?.trim();
+  const erroEl = document.getElementById('entrar-jogo-erro');
+  if (erroEl) erroEl.textContent = '';
+  if (!codigo || codigo.length < 6) {
+    if (erroEl) erroEl.textContent = 'Digite o código completo de 6 caracteres.';
+    return;
+  }
+  const btn = document.querySelector('#sub-arena-jogo button:last-child');
+  if (btn) { btn.disabled = true; btn.textContent = 'Buscando...'; }
+
+  try {
+    const snap = await getDocs(query(collection(db, 'jogos'), where('codigo', '==', codigo), where('status', '==', 'aguardando')));
+    if (snap.empty) {
+      if (erroEl) erroEl.textContent = 'Código inválido ou jogo não encontrado.';
+      if (btn) { btn.disabled = false; btn.textContent = 'Entrar no Jogo →'; }
+      return;
+    }
+
+    const jogoDoc  = snap.docs[0];
+    const jogoId   = jogoDoc.id;
+    const jogoData = jogoDoc.data();
+    const meuUid   = window._uidAtual;
+    const meuNome  = document.getElementById('user-name')?.textContent || 'Jogador';
+    const jogador  = { uid: meuUid, nome: meuNome };
+
+    // Adiciona jogador ao jogo
+    if (jogoData.modo === 'times') {
+      // Distribui no time com menos jogadores
+      const times = jogoData.times || [];
+      const jaEntrou = times.some(t => (t.jogadores || []).some(j => j.uid === meuUid));
+      if (!jaEntrou) {
+        let menorIdx = 0;
+        let menorQtd = (times[0]?.jogadores || []).length;
+        times.forEach((t, i) => {
+          const q = (t.jogadores || []).length;
+          if (q < menorQtd) { menorQtd = q; menorIdx = i; }
+        });
+        times[menorIdx].jogadores = [...(times[menorIdx].jogadores || []), jogador];
+        await updateDoc(doc(db, 'jogos', jogoId), { times });
+      }
+    } else {
+      const jaEntrou = (jogoData.jogadores || []).some(j => j.uid === meuUid);
+      if (!jaEntrou) {
+        await updateDoc(doc(db, 'jogos', jogoId), { jogadores: arrayUnion(jogador) });
+      }
+    }
+
+    if (btn) { btn.disabled = false; btn.textContent = 'Entrar no Jogo →'; }
+    _jogoAlunoCtx = { jogoId, meuUid, meuNome, modo: jogoData.modo };
+    abrirSalaEsperaAluno(jogoId, meuUid, meuNome);
+
+  } catch(err) {
+    if (erroEl) erroEl.textContent = 'Erro: ' + err.message;
+    if (btn) { btn.disabled = false; btn.textContent = 'Entrar no Jogo →'; }
+  }
+};
+
+function abrirSalaEsperaAluno(jogoId, meuUid, meuNome) {
+  document.getElementById('sala-espera-aluno')?.remove();
+  if (_jogoAlunoListener) { _jogoAlunoListener(); _jogoAlunoListener = null; }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'sala-espera-aluno';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#f0ede8;z-index:9999;display:flex;flex-direction:column;overflow:hidden;';
+  overlay.innerHTML = `
+    <style>
+      @keyframes pulse-verde { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+      @keyframes fadeInUp-aluno { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+      .chip-jogador-aluno {
+        display:flex;align-items:center;gap:10px;
+        background:#fff;border-radius:10px;padding:10px 14px;
+        border:1px solid #e0ddd8;animation:fadeInUp-aluno .25s ease;
+      }
+    </style>
+
+    <!-- TOPBAR -->
+    <div style="background:linear-gradient(135deg,#23314d,#30446f);padding:0 24px;flex-shrink:0;">
+      <div style="height:60px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+        <div style="font-family:'Poppins',sans-serif;font-size:17px;font-weight:800;color:#fff;">
+          MakerLab<span style="color:#f5c842;">3D</span>
+          <span style="font-size:12px;font-weight:400;color:rgba(255,255,255,.5);margin-left:10px;">🏟️ Sala de Espera</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="text-align:right;">
+            <div style="font-size:10px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Código do Jogo</div>
+            <div id="sala-aluno-codigo" style="font-family:'Courier New',monospace;font-size:20px;font-weight:900;letter-spacing:6px;color:#f5c842;">—</div>
+          </div>
+          <button onclick="sairSalaEsperaAluno()"
+            style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;">
+            ✕ Sair
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS -->
+    <div style="background:#fff;border-bottom:1px solid #e0ddd8;padding:10px 24px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <div id="sala-aluno-dot" style="width:8px;height:8px;border-radius:50%;background:#27ae60;animation:pulse-verde 1.5s ease-in-out infinite;flex-shrink:0;"></div>
+      <span id="sala-aluno-status-txt" style="font-size:13px;font-weight:600;color:#27ae60;">Aguardando o professor iniciar o jogo...</span>
+      <span id="sala-aluno-contador" style="font-size:13px;color:#bbb;margin-left:4px;"></span>
+    </div>
+
+    <!-- ÁREA -->
+    <div style="flex:1;overflow-y:auto;padding:24px;" id="sala-aluno-area">
+      <div style="text-align:center;color:#bbb;font-size:13px;padding:40px 0;">Carregando...</div>
+    </div>
+
+    <!-- MEU NOME (rodapé) -->
+    <div style="background:#fff;border-top:1px solid #e0ddd8;padding:14px 24px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <div style="width:34px;height:34px;border-radius:50%;background:#f5c842;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#23314d;flex-shrink:0;">
+        ${meuNome.charAt(0).toUpperCase()}
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#1a1a1a;">${meuNome}</div>
+        <div style="font-size:11px;color:#aaa;">Você está conectado</div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Listener em tempo real
+  _jogoAlunoListener = onSnapshot(doc(db, 'jogos', jogoId), (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+
+    document.getElementById('sala-aluno-codigo').textContent = data.codigo || '—';
+
+    if (data.status === 'em_andamento') {
+      const dot = document.getElementById('sala-aluno-dot');
+      const txt = document.getElementById('sala-aluno-status-txt');
+      if (dot) { dot.style.background = '#f5c842'; dot.style.animation = 'none'; }
+      if (txt) { txt.textContent = '🎮 O jogo começou!'; txt.style.color = '#f5c842'; }
+    }
+
+    renderSalaAlunoArea(data, meuUid);
+  });
+}
+
+function renderSalaAlunoArea(data, meuUid) {
+  const area = document.getElementById('sala-aluno-area');
+  if (!area) return;
+
+  if (data.modo === 'times') {
+    const times = data.times || [];
+    let total = 0;
+    const cols = times.length <= 4 ? times.length : Math.ceil(times.length / 2);
+    area.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:14px;align-items:start;">
+        ${times.map(t => {
+          const jogs = t.jogadores || [];
+          total += jogs.length;
+          const souDaqui = jogs.some(j => j.uid === meuUid);
+          return `
+            <div style="border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);${souDaqui ? 'outline:3px solid '+t.cor+';' : ''}">
+              <div style="background:${t.cor};padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:14px;font-weight:800;color:#fff;">${t.nome}</span>
+                <span style="background:rgba(255,255,255,.25);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;">${jogs.length}</span>
+              </div>
+              <div style="background:${t.bg};min-height:80px;padding:10px;display:flex;flex-direction:column;gap:7px;">
+                ${jogs.length === 0
+                  ? '<div style="text-align:center;color:#bbb;font-size:12px;padding:16px 0;">Aguardando...</div>'
+                  : jogs.map(j => `
+                      <div class="chip-jogador-aluno" style="${j.uid === meuUid ? 'border-color:'+t.cor+';background:'+t.bg+';' : ''}">
+                        <div style="width:28px;height:28px;border-radius:50%;background:${t.cor}33;color:${t.cor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;">
+                          ${(j.nome||'?').charAt(0).toUpperCase()}
+                        </div>
+                        <span style="font-size:12px;font-weight:${j.uid===meuUid?'800':'600'};color:#1a1a1a;">${j.nome}${j.uid===meuUid?' <span style="color:'+t.cor+';font-size:10px;">(você)</span>':''}</span>
+                      </div>`).join('')}
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+    const cnt = document.getElementById('sala-aluno-contador');
+    if (cnt) cnt.textContent = total + (total === 1 ? ' participante' : ' participantes');
+
+  } else {
+    const jogadores = data.jogadores || [];
+    const cnt = document.getElementById('sala-aluno-contador');
+    if (cnt) cnt.textContent = jogadores.length + (jogadores.length === 1 ? ' participante' : ' participantes');
+    area.innerHTML = jogadores.length === 0
+      ? '<div style="text-align:center;color:#bbb;font-size:13px;padding:60px 0;">Aguardando outros jogadores...</div>'
+      : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+          ${jogadores.map(j => `
+            <div class="chip-jogador-aluno" style="${j.uid===meuUid?'border-color:#f5c842;background:#fffbea;':''}">
+              <div style="width:32px;height:32px;border-radius:50%;background:${j.uid===meuUid?'#f5c842':'#e8f0fe'};color:${j.uid===meuUid?'#23314d':'#3b82f6'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">
+                ${(j.nome||'?').charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:${j.uid===meuUid?'800':'600'};color:#1a1a1a;">${j.nome}</div>
+                ${j.uid===meuUid?'<div style="font-size:10px;color:#f5a000;">você</div>':''}
+              </div>
+            </div>`).join('')}
+        </div>`;
+  }
+}
+
+window.sairSalaEsperaAluno = async function() {
+  if (_jogoAlunoListener) { _jogoAlunoListener(); _jogoAlunoListener = null; }
+  document.getElementById('sala-espera-aluno')?.remove();
+
+  if (!_jogoAlunoCtx) return;
+  const { jogoId, meuUid, meuNome, modo } = _jogoAlunoCtx;
+  _jogoAlunoCtx = null;
+
+  try {
+    if (modo === 'times') {
+      const snap = await getDoc(doc(db, 'jogos', jogoId));
+      if (!snap.exists()) return;
+      const times = snap.data().times || [];
+      times.forEach(t => {
+        t.jogadores = (t.jogadores || []).filter(j => j.uid !== meuUid);
+      });
+      await updateDoc(doc(db, 'jogos', jogoId), { times });
+    } else {
+      await updateDoc(doc(db, 'jogos', jogoId), {
+        jogadores: arrayRemove({ uid: meuUid, nome: meuNome })
+      });
+    }
+  } catch(e) {}
+};

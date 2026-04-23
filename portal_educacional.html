@@ -119,6 +119,30 @@
               <div class="ranking-user-escola" id="ranking-user-escola"></div>
               <div class="selo-nivel-nome" id="selo-nivel-nome">🔍 Nível 1 — Explorador Iniciante</div>
               <div class="selo-nivel-pts" id="selo-nivel-pts">0 pontos</div>
+
+              <!-- PAINEL JOGO DE ARENA -->
+              <div id="sub-arena-jogo" style="margin-top:20px;width:100%;background:#fff;border-radius:12px;border:1px solid #e8e4dc;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+                <div style="background:#f5c842;padding:20px 16px 18px;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                  <span style="font-size:52px;line-height:1;">🏟️</span>
+                  <span style="font-size:14px;font-weight:800;color:#1a1a1a;letter-spacing:.3px;">Jogo de Arena</span>
+                </div>
+                <div style="padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px;">
+                  <div style="font-size:11px;color:#888;text-align:center;">Digite o código do professor para entrar</div>
+                  <input id="input-codigo-jogo" type="text" maxlength="6" placeholder="XXXXXX"
+                    autocomplete="new-password" autocorrect="off" autocapitalize="characters" spellcheck="false"
+                    name="arena-codigo-jogo-x7k"
+                    oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"
+                    style="text-align:center;font-family:'Courier New',monospace;font-size:22px;font-weight:900;letter-spacing:8px;padding:11px;border:2px solid #e0ddd8;border-radius:9px;background:#fafaf8;color:#1a1a1a;outline:none;width:100%;transition:border .15s;"
+                    onfocus="this.style.borderColor='#f5c842'" onblur="this.style.borderColor='#e0ddd8'"
+                    onkeydown="if(event.key==='Enter')confirmarEntrarJogo()">
+                  <div id="entrar-jogo-erro" style="color:#e74c3c;font-size:11px;min-height:14px;text-align:center;"></div>
+                  <button onclick="confirmarEntrarJogo()"
+                    style="width:100%;padding:11px;border:none;border-radius:9px;background:#1a1a1a;color:#f5c842;font-size:13px;font-weight:800;cursor:pointer;letter-spacing:.3px;transition:opacity .15s;"
+                    onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+                    Entrar no Jogo →
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- Dados do ranking -->
@@ -247,6 +271,14 @@
             </div>
             <h4>Progresso dos Alunos</h4>
             <p>Visualize o desempenho coletivo e identifique pontos de atenção.</p>
+          </div>
+
+          <div class="acesso-card" onclick="window.open('arena.html','_blank')" style="cursor:pointer;">
+            <div class="acesso-card-top">
+              <div class="acesso-card-icon amarelo">🏟️</div>
+            </div>
+            <h4>Arena MakerLab 3D</h4>
+            <p>Gerencie e acompanhe as arenas de competição da sua escola.</p>
           </div>
 
         </div>

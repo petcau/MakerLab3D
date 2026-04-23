@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arena MakerLab 3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="arena.css">
+</head>
+<body>
+
+  <!-- ACESSO NEGADO -->
+  <div class="acesso-negado" id="acesso-negado" style="display:none;">
+    <div class="icon">🔒</div>
+    <h2>Acesso Restrito</h2>
+    <p>Esta página é exclusiva para Gestores e Professores.</p>
+    <button onclick="window.close()" style="margin-top:12px;padding:9px 24px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">Fechar</button>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading-auth" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:10px;font-size:14px;color:#aaa;">
+    <div style="width:32px;height:32px;border:3px solid #eee;border-top-color:#f5c842;border-radius:50%;animation:spin .7s linear infinite;"></div>
+    Verificando acesso...
+  </div>
+
+  <!-- APP PRINCIPAL -->
+  <div id="arena-app" style="display:none;">
+
+    <!-- HEADER -->
+    <div class="arena-topbar">
+      <div class="arena-topbar-inner">
+        <div class="arena-topbar-logo">
+          <span class="atb-bold">MakerLab</span><span class="atb-accent">3D</span>
+          <span class="atb-badge">🏟️ Arena</span>
+        </div>
+        <div class="arena-topbar-user">
+          <div class="atb-avatar" id="arena-user-avatar">?</div>
+          <div class="atb-info">
+            <div class="atb-name" id="arena-user-name">Carregando...</div>
+            <div class="atb-sub" id="arena-user-email"></div>
+            <div class="atb-escola" id="arena-user-escola" style="display:none;"></div>
+          </div>
+          <span class="atb-perfil" id="arena-user-perfil"></span>
+          <button class="atb-fechar" onclick="window.close()">← Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <div class="arena-layout">
+
+      <!-- SIDEBAR -->
+      <aside class="arena-sidebar">
+        <div class="arena-sidebar-header">
+          <div class="arena-sidebar-title">Arenas</div>
+          <button class="btn-nova-arena" onclick="novaArena()">+ Nova Arena</button>
+        </div>
+        <div class="arena-list" id="arena-list">
+          <div class="list-empty">Carregando...</div>
+        </div>
+      </aside>
+
+      <!-- CONTEÚDO -->
+      <main class="arena-content" id="arena-content">
+        <div class="arena-empty-state">
+          <div class="icon">🏟️</div>
+          <p>Selecione uma arena ou crie uma nova.</p>
+        </div>
+      </main>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer style="background:#23314d;color:rgba(255,255,255,.45);padding:20px 32px;text-align:center;font-size:12px;">
+      <span style="font-family:'Poppins',sans-serif;font-weight:800;color:#fff;">MakerLab</span><span style="font-family:'Poppins',sans-serif;font-weight:800;color:#f5c842;">3D</span>
+      <span style="margin-left:12px;">Arena · Plataforma Educacional Maker</span>
+    </footer>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    #arena-app { display: flex; flex-direction: column; min-height: 100vh; }
+    .arena-layout { flex: 1; }
+  </style>
+
+  <script type="module" src="arena.js"></script>
+</body>
+</html>
