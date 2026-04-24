@@ -1055,6 +1055,69 @@ window.removeVinculado = function (key, listId, selId, i) {
   renderVinculadosList(key, listId, selId);
 };
 
+// ---- DIFF DE CAMPOS ----
+const CAMPOS_DIFF = [
+  'nome','nivel','tipo','tema','definicao_titulo','definicao_texto','duracao','kit',
+  'objetivo','tutorial_url','curiosidades','atividade_descricao','atividade_codigo',
+  'avaliacao','desafio_extra','video_url','publicado',
+  'imagem_url','atividade_imagem_url',
+  'quiz','bug_codigos','comp_perguntas','ordena_desafios','complete_desafios',
+  'conecta_desafios','box_desafios','binario_desafios','glossario','anexos'
+];
+
+const DIFF_LABELS = {
+  nome:'Nome', nivel:'Nível', tipo:'Tipo', tema:'Tema',
+  definicao_titulo:'Definição — Título', definicao_texto:'Definição — Texto',
+  duracao:'Duração', kit:'Kit', objetivo:'Objetivo', tutorial_url:'URL Tutorial',
+  curiosidades:'Curiosidades', atividade_descricao:'Atividade — Descrição',
+  atividade_codigo:'Atividade — Código', avaliacao:'Avaliação',
+  desafio_extra:'Desafio Extra', video_url:'URL Vídeo', publicado:'Publicado',
+  imagem_url:'Imagem de Capa', atividade_imagem_url:'Imagem da Atividade',
+  quiz:'Quiz', bug_codigos:'Caça ao Bug', comp_perguntas:'Qual Componente',
+  ordena_desafios:'Ordena Código', complete_desafios:'Complete o Código',
+  conecta_desafios:'Conecta os Pontos', box_desafios:'BOX', binario_desafios:'Binário',
+  glossario:'Glossário', anexos:'Anexos',
+  pergunta:'Pergunta', resposta:'Resposta', respostas:'Respostas', correta:'Correta',
+  pontos:'Pontos', codigo:'Código', titulo:'Título', linhas:'Linhas',
+  componente:'Componente', pares:'Pares', a:'A', b:'B', descricao:'Descrição', url:'URL',
+};
+
+function humanizarCampo(path) {
+  return path
+    .replace(/\[(\d+)\]/g, (_, n) => `[${+n + 1}]`)
+    .split('.')
+    .map(p => {
+      const m = p.match(/^(.+?)(\[\d+\])$/);
+      if (m) return (DIFF_LABELS[m[1]] || m[1]) + ' ' + m[2];
+      return DIFF_LABELS[p] || p;
+    })
+    .join(' › ');
+}
+
+function gerarDiff(prev, curr, path = '') {
+  if (prev === undefined) prev = null;
+  if (curr === undefined) curr = null;
+  if (JSON.stringify(prev) === JSON.stringify(curr)) return [];
+  const diffs = [];
+  if (Array.isArray(prev) || Array.isArray(curr)) {
+    const a = Array.isArray(prev) ? prev : [];
+    const b = Array.isArray(curr) ? curr : [];
+    for (let i = 0; i < Math.max(a.length, b.length); i++)
+      diffs.push(...gerarDiff(a[i] ?? null, b[i] ?? null, `${path}[${i}]`));
+    return diffs;
+  }
+  if (prev !== null && curr !== null && typeof prev === 'object' && typeof curr === 'object') {
+    for (const k of new Set([...Object.keys(prev), ...Object.keys(curr)]))
+      diffs.push(...gerarDiff(prev[k] ?? null, curr[k] ?? null, path ? `${path}.${k}` : k));
+    return diffs;
+  }
+  const antes = prev === null ? '(vazio)' : String(prev);
+  const depois = curr === null ? '(vazio)' : String(curr);
+  if (antes !== depois)
+    diffs.push({ campo: path, label: humanizarCampo(path), antes: antes.slice(0, 300), depois: depois.slice(0, 300) });
+  return diffs;
+}
+
 // ---- SALVAR ----
 window.salvarCard = async function (publicar) {
   const id = cardAtivo || document.getElementById('f-id')?.value?.trim().toLowerCase().replace(/\s+/g, '-');
@@ -1127,10 +1190,26 @@ window.salvarCard = async function (publicar) {
     let iaPromptAnterior = '';
     const snapAnterior = await getDoc(doc(db, 'cards', id));
     if (snapAnterior.exists()) {
-      historicoAnterior  = snapAnterior.data().historico   || [];
-      iaConteudoAnterior = snapAnterior.data().ia_conteudo             || '';
-      iaDescAnterior     = snapAnterior.data().ia_desc_complementar   || '';
-      iaPromptAnterior   = snapAnterior.data().ia_prompt_usado         || '';
+      const dadosAnt      = snapAnterior.data();
+      historicoAnterior   = dadosAnt.historico   || [];
+      iaConteudoAnterior  = dadosAnt.ia_conteudo             || '';
+      iaDescAnterior      = dadosAnt.ia_desc_complementar   || '';
+      iaPromptAnterior    = dadosAnt.ia_prompt_usado         || '';
+      // Gera diff campo a campo
+      const CAMPOS_JOGOS = new Set(['quiz','bug_codigos','comp_perguntas','ordena_desafios','complete_desafios','conecta_desafios','box_desafios','binario_desafios']);
+      const diff = [];
+      CAMPOS_DIFF.forEach(k => {
+        if (CAMPOS_JOGOS.has(k)) {
+          const ant = (dadosAnt[k] || []).length;
+          const nov = (data[k] || []).length;
+          if (ant !== nov) diff.push({ campo: k, label: DIFF_LABELS[k] || k, antes: `${ant} fase${ant !== 1 ? 's' : ''}`, depois: `${nov} fase${nov !== 1 ? 's' : ''}` });
+        } else {
+          diff.push(...gerarDiff(dadosAnt[k] ?? null, data[k] ?? null, k));
+        }
+      });
+      entrada.diff = diff.slice(0, 150);
+    } else {
+      entrada.diff = [];
     }
 
     await setDoc(doc(db, 'cards', id), {
