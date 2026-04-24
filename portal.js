@@ -130,9 +130,9 @@ onAuthStateChanged(auth, async user => {
                 if (cardArenaProf) cardArenaProf.style.display = arenaAtiva ? '' : 'none';
                 // Banner de seção
                 const banner = document.getElementById('banner-secao');
-                if (banner && secaoData.descricao) {
-                  document.getElementById('banner-secao-nome').textContent = secaoData.nome || '';
-                  document.getElementById('banner-secao-desc').textContent = secaoData.descricao;
+                if (banner && secaoData.nome) {
+                  document.getElementById('banner-secao-nome').textContent = secaoData.nome;
+                  document.getElementById('banner-secao-desc').textContent = secaoData.descricao || '';
                   banner.style.display = '';
                 }
               }
@@ -865,10 +865,10 @@ window.filtrarPorSecao = async function(secaoId) {
         aplicarNiveisSecao(secaoData.niveis || null);
 
         const banner = document.getElementById('banner-secao');
-        if (banner) {
-          document.getElementById('banner-secao-nome').textContent = secaoData.nome || '';
+        if (banner && secaoData.nome) {
+          document.getElementById('banner-secao-nome').textContent = secaoData.nome;
           document.getElementById('banner-secao-desc').textContent = secaoData.descricao || '';
-          banner.style.display = secaoData.descricao ? '' : 'none';
+          banner.style.display = '';
         }
       }
     } catch(e) { console.warn(e); }
