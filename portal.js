@@ -115,9 +115,19 @@ onAuthStateChanged(auth, async user => {
           if (escolaSnap.exists()) {
             const secaoId = escolaSnap.data().secao_id || '';
             if (secaoId) {
+              window._secaoId = secaoId;
               const secaoSnap = await getDoc(doc(db, 'secoes', secaoId));
               if (secaoSnap.exists()) {
-                trilhasDaSecao = secaoSnap.data().trilhas || null;
+                const secaoData = secaoSnap.data();
+                trilhasDaSecao = secaoData.trilhas || null;
+                // Níveis customizados da seção
+                aplicarNiveisSecao(secaoData.niveis || null);
+                // Mostra/oculta Arena conforme configuração da seção
+                const arenaAtiva = secaoData.arena_ativa !== false;
+                const painelArena   = document.getElementById('sub-arena-jogo');
+                const cardArenaProf = document.querySelector('[onclick*="arena.html"]')?.closest('.acesso-card');
+                if (painelArena)   painelArena.style.display   = arenaAtiva ? '' : 'none';
+                if (cardArenaProf) cardArenaProf.style.display = arenaAtiva ? '' : 'none';
               }
             }
           }
@@ -148,6 +158,7 @@ onAuthStateChanged(auth, async user => {
 
       // Recalcula pontos somando todas as coleções de resultados
       let ptsReais = dados.pontos_total || 0;
+      window._ptsAtual = ptsReais;
       try {
         const cols = ['resultados_quiz','resultados_bug','resultados_comp','resultados_ordena','resultados_complete','resultados_conecta','resultados_box'];
         const results = await Promise.allSettled(cols.map(c => getDocs(query(collection(db, c), where('aluno_id', '==', user.uid)))));
@@ -162,6 +173,7 @@ onAuthStateChanged(auth, async user => {
         totalCalculado = Math.round(totalCalculado * 10) / 10;
         console.log('[PONTOS] calculado:', totalCalculado, '| salvo:', ptsReais);
         ptsReais = totalCalculado;
+        window._ptsAtual = ptsReais;
         await updateDoc(doc(db, 'usuarios', user.uid), { pontos_total: ptsReais });
       } catch(e) { console.warn('Recalculo pontos:', e); }
 
@@ -444,7 +456,7 @@ function renderSemanas(_concluidas, atual, total) {
 renderSemanas(2, 3, 40);
 
 // ── Selo Canvas ────────────────────────────────────────────────────────
-const NIVEIS = [
+let NIVEIS = [
   { nivel: 1,  nome: 'Explorador Iniciante', min: 0,    max: 99,   emoji: '🔍', cor1: '#5d8a6e', cor2: '#3a6b4f', desc: 'Primeiro contato com o mundo maker. Descobrindo conceitos básicos.'         },
   { nivel: 2,  nome: 'Curioso Digital',       min: 100,  max: 249,  emoji: '💡', cor1: '#2980b9', cor2: '#1a5276', desc: 'Começa a experimentar e entender como as coisas funcionam.'                },
   { nivel: 3,  nome: 'Aprendiz Maker',        min: 250,  max: 499,  emoji: '🧠', cor1: '#8e44ad', cor2: '#6c3483', desc: 'Já domina conceitos básicos e realiza pequenos desafios.'                  },
@@ -456,6 +468,32 @@ const NIVEIS = [
   { nivel: 9,  nome: 'Mentor Maker',          min: 3500, max: 4499, emoji: '🧑‍🏫', cor1: '#1e8449', cor2: '#145a32', desc: 'Ajuda outros alunos e compartilha conhecimento.'                       },
   { nivel: 10, nome: 'Mestre Maker',          min: 4500, max: 99999,emoji: '👑', cor1: '#b7950b', cor2: '#9a7d0a', desc: 'Domina todo o processo: cria, inova e inspira outros.'                   },
 ];
+
+function aplicarNiveisSecao(niveisCustom) {
+  if (!niveisCustom || niveisCustom.length !== 10) return;
+  // Atualiza nome e pontuação mantendo emoji, cores e desc originais
+  niveisCustom.forEach((nc, i) => {
+    if (!NIVEIS[i]) return;
+    NIVEIS[i].nome = nc.nome || NIVEIS[i].nome;
+    NIVEIS[i].min  = i === 0 ? 0 : (nc.pontos ?? NIVEIS[i].min);
+    if (i > 0) NIVEIS[i - 1].max = NIVEIS[i].min - 1;
+  });
+  // Atualiza texto da lista de níveis no HTML
+  const lista = document.getElementById('niveis-lista');
+  if (lista) {
+    const items = lista.querySelectorAll('.nivel-item');
+    items.forEach((item, i) => {
+      const n = NIVEIS[i];
+      if (!n) return;
+      const nomeEl = item.querySelector('.nivel-nome');
+      const ptsEl  = item.querySelector('.nivel-pts');
+      if (nomeEl) nomeEl.textContent = `Nível ${n.nivel} — ${n.nome}`;
+      if (ptsEl)  ptsEl.textContent  = n.min.toLocaleString('pt-BR') + ' pts';
+    });
+  }
+  // Re-desenha o painel de pontuação com os novos nomes/valores
+  if (window._ptsAtual !== undefined) desenharSelo(window._ptsAtual);
+}
 
 function getNivel(pts) {
   for (let i = NIVEIS.length - 1; i >= 0; i--) {
@@ -628,7 +666,7 @@ async function carregarTrilhasAluno(filtroIds = null, uid = null) {
             const next = !done && i === concluidos;
             const cls  = done ? 'concluido' : next ? 'proximo' : 'bloqueado';
             const ico  = done ? '✅' : next ? '&#9654;' : '🔒';
-            const url      = 'cards/card.html?id=' + cid;
+            const url      = 'cards/card.html?id=' + cid + (window._secaoId ? '&secao=' + window._secaoId : '');
             const clicavel = cls !== 'bloqueado';
             const tag      = clicavel ? 'a' : 'div';
             const href     = clicavel ? ' href="' + url + '" target="_blank"' : '';
@@ -705,7 +743,7 @@ async function carregarTrilhasProfessor(filtroIds = null) {
       // Cards — todos desbloqueados para professor
       const cardsHtml = cardIds.map((cid, i) => {
         const c   = cardsDB[cid] || {};
-        const url = 'cards/card.html?id=' + cid;
+        const url = 'cards/card.html?id=' + cid + (window._secaoId ? '&secao=' + window._secaoId : '');
         const imgHtmlP = c.imagem_url
           ? '<div class="trilha-card-img"><img src="' + c.imagem_url + '" alt="" loading="lazy" onerror="this.parentNode.style.display=\'none\'"></div>'
           : '';
@@ -805,17 +843,28 @@ async function carregarSeletorSecaoGestor() {
 }
 
 window.filtrarPorSecao = async function(secaoId) {
-  let filtroIds = null; // null = mostrar todas, sem filtro
+  let filtroIds  = null;
+  let arenaAtiva = true;
+
   if (secaoId) {
+    window._secaoId = secaoId;
     try {
       const snap = await getDoc(doc(db, 'secoes', secaoId));
       if (snap.exists()) {
-        const arr = snap.data().trilhas;
-        // Preserva a ordem exata definida no cadastro da seção
-        filtroIds = Array.isArray(arr) && arr.length > 0 ? arr : null;
+        const secaoData = snap.data();
+        const arr = secaoData.trilhas;
+        filtroIds  = Array.isArray(arr) && arr.length > 0 ? arr : null;
+        arenaAtiva = secaoData.arena_ativa !== false;
+        aplicarNiveisSecao(secaoData.niveis || null);
       }
     } catch(e) { console.warn(e); }
   }
+
+  const painelArena   = document.getElementById('sub-arena-jogo');
+  const cardArenaProf = document.querySelector('[onclick*="arena.html"]')?.closest('.acesso-card');
+  if (painelArena)   painelArena.style.display   = arenaAtiva ? '' : 'none';
+  if (cardArenaProf) cardArenaProf.style.display = arenaAtiva ? '' : 'none';
+
   carregarTrilhasAluno(filtroIds);
   carregarTrilhasProfessor(filtroIds);
 };

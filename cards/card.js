@@ -554,8 +554,22 @@ async function carregarCard() {
 
     // ---- AUTH — atualiza quiz e bug juntos ----
     if (temQuiz || temBug || temComp || temOrdena || temComplete || temConecta || temBox || temBinario || todosIds.length > 0) {
-      const NIVEL_NOMES  = ['Explorador Iniciante','Curioso Digital','Aprendiz Maker','Construtor Criativo','Inventor em Ação','Programador Maker','Engenheiro Criativo','Inovador Maker','Mentor Maker','Mestre Maker'];
-      const NIVEL_PONTOS = [0,100,250,500,900,1400,2000,2700,3500,4500];
+      // Carrega níveis customizados da seção (se houver)
+      let NIVEL_NOMES  = ['Explorador Iniciante','Curioso Digital','Aprendiz Maker','Construtor Criativo','Inventor em Ação','Programador Maker','Engenheiro Criativo','Inovador Maker','Mentor Maker','Mestre Maker'];
+      let NIVEL_PONTOS = [0,100,250,500,900,1400,2000,2700,3500,4500];
+      const secaoParam = new URLSearchParams(window.location.search).get('secao');
+      if (secaoParam) {
+        try {
+          const secaoSnap = await getDoc(doc(db, 'secoes', secaoParam));
+          if (secaoSnap.exists()) {
+            const niveis = secaoSnap.data().niveis;
+            if (Array.isArray(niveis) && niveis.length === 10) {
+              NIVEL_NOMES  = niveis.map(n => n.nome  || '');
+              NIVEL_PONTOS = niveis.map(n => n.pontos ?? 0);
+            }
+          }
+        } catch(e) {}
+      }
       let alunoLogado = null;
 
       async function atualizarDadosAluno() {
