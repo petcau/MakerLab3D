@@ -187,13 +187,46 @@ async function listarCards() {
         item.dataset.id = id;
         const tipoLabel = (d.tipo || 'Desafio').toUpperCase();
         const numPad    = String(d.numero || 0).padStart(2, '0');
-        item.innerHTML  = `
-          <div class="card-item-num">${tipoLabel} ${numPad}</div>
-          <div class="card-item-nome">${d.nome || 'Sem nome'}</div>
-          <div class="card-item-nivel">${d.nivel || '—'}</div>
-          <span class="card-item-status ${d.publicado ? 'status-publicado' : 'status-rascunho'}">
-            ${d.publicado ? 'Publicado' : 'Rascunho'}
-          </span>
+
+        // Conta jogos configurados
+        const jogoCampos = [
+          { k: 'quiz', def: 1.0 }, { k: 'bug_codigos', def: 1.0 },
+          { k: 'comp_perguntas', def: 1.0 }, { k: 'ordena_desafios', def: 1.0 },
+          { k: 'complete_desafios', def: 1.0 }, { k: 'conecta_desafios', def: 2.0 },
+          { k: 'box_desafios', def: 2.0 }, { k: 'binario_desafios', def: 1.0 },
+        ];
+        let qtdJogos = 0;
+        let qtdPontos = 0;
+        jogoCampos.forEach(({ k, def }) => {
+          const arr = d[k];
+          if (Array.isArray(arr) && arr.length > 0) {
+            qtdJogos++;
+            arr.forEach(item => { qtdPontos += parseFloat(item.pontos) || def; });
+          }
+        });
+        const ptsLabel = qtdPontos % 1 === 0 ? qtdPontos : qtdPontos.toFixed(1);
+
+        item.innerHTML = `
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            ${d.imagem_url
+              ? `<img src="${d.imagem_url}" style="width:38px;height:38px;object-fit:cover;border-radius:6px;flex-shrink:0;margin-top:2px;" onerror="this.style.display='none'">`
+              : `<div style="width:38px;height:38px;border-radius:6px;background:#f0ede8;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:16px;">🃏</div>`}
+            <div style="flex:1;min-width:0;">
+              <div class="card-item-num">${tipoLabel} ${numPad}</div>
+              <div class="card-item-nome">${d.nome || 'Sem nome'}</div>
+              <div style="margin-top:4px;">
+                <span class="card-item-status ${d.publicado ? 'status-publicado' : 'status-rascunho'}" style="margin:0;">
+                  ${d.publicado ? 'Publicado' : 'Rascunho'}
+                </span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:4px;flex-wrap:nowrap;overflow:hidden;">
+                <span title="Jogos configurados" style="font-size:10px;color:#888;background:#f5f5f5;border:1px solid #e0ddd8;border-radius:4px;padding:1px 6px;font-weight:600;white-space:nowrap;">🎮 ${qtdJogos}</span>
+                <span title="Pontuação total disponível" style="font-size:10px;color:#b7950b;background:#fef9e7;border:1px solid #f9e79f;border-radius:4px;padding:1px 6px;font-weight:600;white-space:nowrap;">⭐ ${ptsLabel} pts</span>
+                ${(() => { const qtdVinc = Object.keys(d).filter(k => k.startsWith('links_')).reduce((acc, k) => acc + (Array.isArray(d[k]) ? d[k].length : 0), 0); return `<span title="Cards vinculados" style="font-size:10px;color:${qtdVinc ? '#7d3c98' : '#bbb'};background:${qtdVinc ? '#f5eef8' : '#f5f5f5'};border:1px solid ${qtdVinc ? '#d7bde2' : '#e0ddd8'};border-radius:4px;padding:1px 6px;font-weight:600;white-space:nowrap;">🧩 ${qtdVinc}</span>`; })()}
+                ${(() => { const qtdAnexos = Array.isArray(d.anexos) ? d.anexos.filter(a => a.titulo || a.url).length : 0; return `<span title="Anexos" style="font-size:10px;color:${qtdAnexos ? '#1a6fa8' : '#bbb'};background:${qtdAnexos ? '#eaf4fd' : '#f5f5f5'};border:1px solid ${qtdAnexos ? '#aed6f1' : '#e0ddd8'};border-radius:4px;padding:1px 6px;font-weight:600;white-space:nowrap;">🗂️ ${qtdAnexos}</span>`; })()}
+              </div>
+            </div>
+          </div>
         `;
         item.onclick = () => abrirCard(id, d, item);
         listEl.appendChild(item);
@@ -3821,4 +3854,189 @@ window.carregarDadosIA = function() {
 
   document.getElementById('modal-gerar-ia')?.remove();
   showToast('✅ Todos os dados carregados no card!', 'success');
+};
+
+// ── ESTATÍSTICA DE CARDS ──────────────────────────────────────────────────────
+window.abrirEstatisticaCards = async function() {
+  const modal = document.createElement('div');
+  modal.id = 'modal-estatistica-cards';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;width:600px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.2);overflow:hidden;">
+      <div style="padding:18px 24px 14px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <div style="font-size:16px;font-weight:700;color:#23314d;">📊 Estatística de Cards</div>
+        <button onclick="document.getElementById('modal-estatistica-cards').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">✕</button>
+      </div>
+      <div id="estat-body" style="overflow-y:auto;flex:1;padding:20px 24px;">
+        <div style="text-align:center;color:#bbb;font-size:13px;padding:24px;">Carregando...</div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  try {
+    const [cardsSnap, trilhasSnap] = await Promise.all([
+      getDocs(collection(db, 'cards')),
+      getDocs(collection(db, 'trilhas'))
+    ]);
+
+    // IDs de cards vinculados a trilhas
+    const cardsEmTrilha = new Set();
+    trilhasSnap.forEach(t => (t.data().cards || []).forEach(cid => cardsEmTrilha.add(cid)));
+
+    const JOGOS = [
+      { key: 'quiz',              label: 'Quiz'             },
+      { key: 'bug_codigos',       label: 'Caça ao Bug'      },
+      { key: 'comp_perguntas',    label: 'Qual Componente?' },
+      { key: 'ordena_desafios',   label: 'Ordena Código'    },
+      { key: 'complete_desafios', label: 'Complete o Código'},
+      { key: 'conecta_desafios',  label: 'Conecta Pontos'   },
+      { key: 'box_desafios',      label: 'Simulador BOX'    },
+      { key: 'binario_desafios',  label: 'Código Binário'   },
+    ];
+
+    const tipos       = {};
+    const jogoCount   = Object.fromEntries(JOGOS.map(j => [j.key, 0]));
+    let total         = 0;
+    let publicados    = 0;
+    let semImagem     = 0;
+    let semJogo       = 0;
+    let comAnexos     = 0;
+    let ptsTotalDisp  = 0;
+    let comTrilha     = 0;
+
+    cardsSnap.forEach(d => {
+      const c   = d.data();
+      const pub = c.publicado === true;
+      const tipo = c.tipo?.trim() || 'Sem tipo';
+
+      total++;
+      if (pub) publicados++;
+      if (!c.imagem_url) semImagem++;
+      if (cardsEmTrilha.has(d.id)) comTrilha++;
+      if (c.anexos?.length > 0) comAnexos++;
+      if (pub) {
+        // Campos reais salvos no Firestore
+        const jogosFields = [
+          { campo: 'quiz',              def: 1.0 },
+          { campo: 'bug_codigos',       def: 1.0 },
+          { campo: 'comp_perguntas',    def: 1.0 },
+          { campo: 'ordena_desafios',   def: 1.0 },
+          { campo: 'complete_desafios', def: 1.0 },
+          { campo: 'conecta_desafios',  def: 2.0 },
+          { campo: 'box_desafios',      def: 2.0 },
+          { campo: 'binario_desafios',  def: 1.0 },
+        ];
+        jogosFields.forEach(({ campo, def }) => {
+          (c[campo] || []).forEach(item => { ptsTotalDisp += parseFloat(item.pontos) || def; });
+        });
+      }
+
+      if (!tipos[tipo]) tipos[tipo] = { total: 0, publicados: 0 };
+      tipos[tipo].total++;
+      if (pub) tipos[tipo].publicados++;
+
+      let temJogo = false;
+      JOGOS.forEach(j => {
+        const arr = c[j.key];
+        if (Array.isArray(arr) && arr.length > 0) { jogoCount[j.key]++; temJogo = true; }
+      });
+      if (!temJogo) semJogo++;
+    });
+
+    const semTrilha   = total - comTrilha;
+    const pctPub      = total ? Math.round((publicados / total) * 100) : 0;
+    const sortedTipos = Object.entries(tipos).sort((a, b) => b[1].total - a[1].total);
+    const cores       = ['#3b82f6','#22c55e','#f97316','#a855f7','#14b8a6','#ef4444','#eab308','#ec4899','#6366f1','#84cc16'];
+
+    function secTitle(t) {
+      return `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin:20px 0 10px;">${t}</div>`;
+    }
+    function statCard(icon, label, val, cor = '#23314d', sub = '') {
+      return `<div style="background:#f8f9fe;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:22px;line-height:1;">${icon}</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:#999;font-weight:600;">${label}</div>
+          ${sub ? `<div style="font-size:10px;color:#bbb;">${sub}</div>` : ''}
+        </div>
+        <div style="font-size:20px;font-weight:900;color:${cor};">${val}</div>
+      </div>`;
+    }
+
+    const body = document.getElementById('estat-body');
+    if (!body) return;
+    body.innerHTML = `
+
+      ${secTitle('Visão Geral')}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        ${statCard('🃏', 'Total de cards', total)}
+        ${statCard('🚀', 'Publicados', publicados + ' <span style="font-size:12px;font-weight:600;color:#27ae60;">(' + pctPub + '%)</span>', '#27ae60')}
+        ${statCard('📝', 'Rascunhos', total - publicados, '#e67e22')}
+        ${statCard('⭐', 'Pontuação total disponível', (ptsTotalDisp % 1 === 0 ? ptsTotalDisp : ptsTotalDisp.toFixed(1)).toLocaleString('pt-BR') + ' pts', '#b7950b', 'soma de todos os jogos publicados')}
+      </div>
+
+      ${secTitle('Cobertura de Publicação')}
+      <div style="background:#f8f9fe;border-radius:10px;padding:14px 16px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:12px;font-weight:700;color:#27ae60;">Publicados ${publicados}</span>
+          <span style="font-size:12px;font-weight:700;color:#e67e22;">Rascunhos ${total - publicados}</span>
+        </div>
+        <div style="height:10px;background:#f0e8d8;border-radius:5px;overflow:hidden;">
+          <div style="height:100%;width:${pctPub}%;background:linear-gradient(90deg,#27ae60,#2ecc71);border-radius:5px;"></div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:#aaa;margin-top:6px;">${pctPub}% publicado</div>
+      </div>
+
+      ${secTitle('Qualidade do Conteúdo')}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        ${statCard('🖼️', 'Sem imagem de capa', semImagem, semImagem > 0 ? '#e74c3c' : '#27ae60')}
+        ${statCard('🎮', 'Sem nenhum jogo', semJogo, semJogo > 0 ? '#e74c3c' : '#27ae60')}
+        ${statCard('📎', 'Com anexos', comAnexos, '#2980b9')}
+        ${statCard('🗺️', 'Sem trilha vinculada', semTrilha, semTrilha > 0 ? '#e67e22' : '#27ae60', 'não aparecem para alunos')}
+      </div>
+
+      ${secTitle('Jogos Cadastrados')}
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${JOGOS.map((j, i) => {
+          const n   = jogoCount[j.key];
+          const pct = total ? Math.round((n / total) * 100) : 0;
+          const cor = cores[i % cores.length];
+          return `<div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:12px;font-weight:600;color:#555;min-width:150px;">${j.label}</span>
+            <div style="flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden;">
+              <div style="height:100%;width:${pct}%;background:${cor};border-radius:4px;"></div>
+            </div>
+            <span style="font-size:12px;font-weight:700;color:${cor};min-width:28px;text-align:right;">${n}</span>
+          </div>`;
+        }).join('')}
+      </div>
+
+      ${secTitle('Cards por Tipo')}
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${sortedTipos.map(([tipo, dados], i) => {
+          const cor = cores[i % cores.length];
+          const pct = Math.round((dados.total / total) * 100);
+          return `<div style="background:#f8f9fe;border-radius:10px;padding:11px 14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:9px;height:9px;border-radius:50%;background:${cor};flex-shrink:0;"></div>
+                <span style="font-size:13px;font-weight:700;color:#1a1a1a;">${tipo}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:11px;color:#27ae60;background:#e8f8f0;border:1px solid #a9e4c3;border-radius:4px;padding:1px 6px;font-weight:700;">${dados.publicados} pub.</span>
+                <span style="font-size:11px;color:#888;background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:1px 6px;font-weight:700;">${dados.total - dados.publicados} rasc.</span>
+                <span style="font-size:14px;font-weight:900;color:${cor};min-width:24px;text-align:right;">${dados.total}</span>
+              </div>
+            </div>
+            <div style="height:5px;background:#e0e0e0;border-radius:3px;overflow:hidden;">
+              <div style="height:100%;width:${pct}%;background:${cor};border-radius:3px;"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+  } catch(err) {
+    const body = document.getElementById('estat-body');
+    if (body) body.innerHTML = `<div style="color:#e74c3c;font-size:13px;">Erro: ${err.message}</div>`;
+  }
 };

@@ -856,8 +856,18 @@ window.filtrarPorSecao = async function(secaoId) {
         filtroIds  = Array.isArray(arr) && arr.length > 0 ? arr : null;
         arenaAtiva = secaoData.arena_ativa !== false;
         aplicarNiveisSecao(secaoData.niveis || null);
+
+        const banner = document.getElementById('banner-secao');
+        if (banner) {
+          document.getElementById('banner-secao-nome').textContent = secaoData.nome || '';
+          document.getElementById('banner-secao-desc').textContent = secaoData.descricao || '';
+          banner.style.display = secaoData.descricao ? '' : 'none';
+        }
       }
     } catch(e) { console.warn(e); }
+  } else {
+    const banner = document.getElementById('banner-secao');
+    if (banner) banner.style.display = 'none';
   }
 
   const painelArena   = document.getElementById('sub-arena-jogo');

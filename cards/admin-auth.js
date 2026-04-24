@@ -236,7 +236,7 @@ async function _carregarHistoricoCards(email) {
     entradas.forEach(e => {
       const dia = new Date(e.data).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
       const chave = `${e.cardId}__${dia}`;
-      if (!grupos[chave]) grupos[chave] = { cardNome: e.cardNome, dia, acao: e.acao, status: e.status, datas: [] };
+      if (!grupos[chave]) grupos[chave] = { cardId: e.cardId, cardNome: e.cardNome, dia, acao: e.acao, status: e.status, datas: [] };
       grupos[chave].datas.push(new Date(e.data));
       grupos[chave].status = e.status;
       grupos[chave].acao   = e.acao;
@@ -267,7 +267,13 @@ async function _carregarHistoricoCards(email) {
             ? '<span style="background:#e8f8f0;color:#27ae60;border:1px solid #a9e4c3;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;">Publicado</span>'
             : '<span style="background:#f5f5f5;color:#888;border:1px solid #ddd;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;">Rascunho</span>';
           return `<tr style="border-bottom:1px solid #f0f0f0;">
-            <td style="padding:9px 12px;font-weight:600;color:#23314d;">${g.cardNome}</td>
+            <td style="padding:9px 12px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-weight:600;color:#23314d;">${g.cardNome}</span>
+                <a href="../cards/card.html?id=${g.cardId}" target="_blank"
+                  style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:#f0f4ff;color:#2c5fc3;border:1px solid #c2d1f5;text-decoration:none;white-space:nowrap;">Ver</a>
+              </div>
+            </td>
             <td style="padding:9px 12px;"><span style="background:${acaoColor}20;color:${acaoColor};border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;text-transform:uppercase;">${g.acao}</span></td>
             <td style="padding:9px 12px;">${statusBadge}</td>
             <td style="padding:9px 12px;color:#666;font-size:12px;">${g.dia}</td>
