@@ -128,6 +128,13 @@ onAuthStateChanged(auth, async user => {
                 const cardArenaProf = document.querySelector('[onclick*="arena.html"]')?.closest('.acesso-card');
                 if (painelArena)   painelArena.style.display   = arenaAtiva ? '' : 'none';
                 if (cardArenaProf) cardArenaProf.style.display = arenaAtiva ? '' : 'none';
+                // Banner de seção
+                const banner = document.getElementById('banner-secao');
+                if (banner && secaoData.descricao) {
+                  document.getElementById('banner-secao-nome').textContent = secaoData.nome || '';
+                  document.getElementById('banner-secao-desc').textContent = secaoData.descricao;
+                  banner.style.display = '';
+                }
               }
             }
           }
