@@ -112,6 +112,7 @@ onAuthStateChanged(auth, async user => {
       if ((perfil === 'aluno' || perfil === 'professor') && dados.escola_id) {
         try {
           const escolaSnap = await getDoc(doc(db, 'escolas', dados.escola_id));
+          console.log('[BANNER] escola exists:', escolaSnap.exists(), 'secao_id:', escolaSnap.data()?.secao_id);
           if (escolaSnap.exists()) {
             const secaoId = escolaSnap.data().secao_id || '';
             if (secaoId) {
