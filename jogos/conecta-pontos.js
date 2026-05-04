@@ -56,6 +56,7 @@ const TIPOS_COMP = {
   sensor_ult:    { nome: 'Sensor Ultrassônico',  img: 'sensor ultrassonico.png',  cor: '#20B2AA' },
   termistor:     { nome: 'Termistor',            img: 'termistor.png',            cor: '#DC143C' },
   matriz_led:    { nome: 'Matriz LED 8x8',       img: 'matriz de led 8x8.png',    cor: '#32CD32' },
+  buzzer:        { nome: 'Buzzer',               img: 'buzzer.png',               cor: '#E91E63' },
   gnd:           { nome: 'GND',                  img: null,                       cor: '#495057' },
   vcc:           { nome: '5V / VCC',             img: null,                       cor: '#CC0000' },
 };
@@ -449,13 +450,27 @@ window.testarCircuito = function() {
   }
 };
 
+function somBuzzer() {
+  try {
+    const c = getAudioCtx();
+    // beep curto repetido: 4 pulsos de 80ms com pausa
+    [0, 0.18, 0.36, 0.54].forEach(t => nota(c, 880, 'square', t, 0.10, 0.18));
+  } catch(e) {}
+}
+
 function animarLEDs() {
   const d = desafios[atual];
+  let temBuzzer = false;
   (d.componentes || []).forEach(c => {
     if (c.tipo === 'led' || c.tipo === 'led_rgb') {
       document.getElementById('card-' + c.id)?.classList.add('led-animado');
     }
+    if (c.tipo === 'buzzer') {
+      document.getElementById('card-' + c.id)?.classList.add('buzzer-animado');
+      temBuzzer = true;
+    }
   });
+  if (temBuzzer) somBuzzer();
 }
 
 window.proxDesafio = function() { atual++; renderDesafio(); };

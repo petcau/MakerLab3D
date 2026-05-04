@@ -2353,6 +2353,7 @@ const TIPOS_COMP_ADM = {
   sensor_ult:   { label: 'Sensor Ult.', cor: '#1abc9c' },
   termistor:    { label: 'Termistor', cor: '#e74c3c' },
   matriz_led:   { label: 'Matriz LED', cor: '#9b59b6' },
+  buzzer:       { label: 'Buzzer', cor: '#E91E63' },
   gnd:          { label: 'GND', cor: '#2c3e50' },
   vcc:          { label: 'VCC', cor: '#c0392b' },
 };
@@ -2407,7 +2408,8 @@ window.adicionarCompConecta = function(di) {
   if (!window.conectaState[di]) return;
   const sel   = document.getElementById(`conecta-tipo-novo-${di}`);
   const tipo  = sel ? sel.value : 'resistor';
-  const label = document.getElementById(`conecta-label-novo-${di}`)?.value.trim() || TIPOS_COMP_ADM[tipo]?.label || tipo;
+  const nomeDefault = (window._componentesList||[]).find(c=>c.id===tipo)?.nome || TIPOS_COMP_ADM[tipo]?.label || tipo;
+  const label = document.getElementById(`conecta-label-novo-${di}`)?.value.trim() || nomeDefault;
   const id    = 'c' + Date.now();
   window.conectaState[di].componentes.push({ id, tipo, label, pinos: [] });
   renderConectaLista();
@@ -2481,8 +2483,8 @@ function renderConectaLista() {
     return;
   }
 
-  const tiposOpts = Object.entries(TIPOS_COMP_ADM).map(([k, v]) =>
-    `<option value="${k}">${v.label}</option>`
+  const tiposOpts = (window._componentesList || []).map(c =>
+    `<option value="${c.id}">${c.nome}</option>`
   ).join('');
 
   lista.innerHTML = window.conectaState.map((d, di) => {
@@ -2502,11 +2504,20 @@ function renderConectaLista() {
     ).join('');
     const pinoOptsB = pinoOptsA;
 
+    // Helper: nome e cor do tipo de componente
+    const _compInfo = tipo => {
+      const fromList = (window._componentesList || []).find(c => c.id === tipo);
+      return {
+        nome: fromList?.nome || TIPOS_COMP_ADM[tipo]?.label || tipo,
+        cor:  TIPOS_COMP_ADM[tipo]?.cor || '#666',
+      };
+    };
+
     // HTML de cada componente com seus pinos
     const compsHTML = comps.length === 0
       ? '<div style="color:#aaa;font-size:12px;">Nenhum componente ainda.</div>'
       : comps.map((c, ci) => {
-          const cor = TIPOS_COMP_ADM[c.tipo]?.cor || '#666';
+          const info = _compInfo(c.tipo);
           const pinosHTML = (c.pinos || []).map(p =>
             `<span style="display:inline-flex;align-items:center;gap:4px;background:#f0f4ff;border:1px solid #c0cce0;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;color:#2d3436;">
               ⬤ ${p.label}
@@ -2517,8 +2528,8 @@ function renderConectaLista() {
           return `
           <div class="conecta-comp-item" style="flex-direction:column;align-items:flex-start;gap:6px;">
             <div style="display:flex;align-items:center;gap:8px;width:100%;">
-              <span style="background:${cor};color:#fff;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700;">${c.label}</span>
-              <span style="color:#888;font-size:11px;font-style:italic;">${TIPOS_COMP_ADM[c.tipo]?.label||c.tipo}</span>
+              <span style="background:${info.cor};color:#fff;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700;">${c.label}</span>
+              <span style="color:#888;font-size:11px;font-style:italic;">${info.nome}</span>
               <button onclick="removerCompConecta(${di},'${c.id}')" style="margin-left:auto;background:#e74c3c;color:#fff;border:none;border-radius:6px;padding:2px 8px;cursor:pointer;font-size:11px;">✕ Remover</button>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">

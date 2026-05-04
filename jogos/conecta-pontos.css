@@ -127,7 +127,7 @@ body {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: #0d1b2a;
+  background: #ffffff;
   border: 2.5px solid var(--comp-cor, #8892b0);
   display: flex;
   align-items: center;
@@ -147,14 +147,15 @@ body {
 }
 
 .comp-card-nome {
-  font-size: 9px;
-  font-weight: 800;
-  color: #ccd6f6;
+  font-size: 10px;
+  font-weight: 900;
+  color: #ffffff;
   text-align: center;
   font-family: 'Nunito', sans-serif;
   max-width: 86px;
   line-height: 1.2;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+  text-shadow: 0 1px 6px rgba(0,0,0,1), 0 0 2px rgba(0,0,0,1);
+  letter-spacing: 0.3px;
 }
 
 /* Linha divisória entre imagem e pinos */
@@ -210,14 +211,15 @@ body {
 
 /* Rótulo do pino */
 .pino-label {
-  font-size: 8px;
-  font-weight: 800;
-  color: rgba(204, 214, 246, 0.7);
+  font-size: 9px;
+  font-weight: 900;
+  color: #ffffff;
   font-family: 'Nunito', sans-serif;
   text-align: center;
   max-width: 38px;
   line-height: 1.1;
   pointer-events: none;
+  text-shadow: 0 1px 4px rgba(0,0,0,1);
 }
 
 /* Estado: pino selecionado */
@@ -259,6 +261,14 @@ body {
 }
 .led-animado .comp-card-circle { animation: pisca-led 0.55s ease-in-out infinite; }
 .led-animado { box-shadow: 0 0 20px rgba(255,215,0,0.6), 0 0 0 2px #FFD700 !important; }
+
+/* Buzzer blink no acerto */
+@keyframes pisca-buzzer {
+  0%, 100% { filter: drop-shadow(0 0 12px #E91E63) brightness(1.4); }
+  50%       { filter: none; }
+}
+.buzzer-animado .comp-card-circle { animation: pisca-buzzer 0.4s ease-in-out infinite; }
+.buzzer-animado { box-shadow: 0 0 20px rgba(233,30,99,0.6), 0 0 0 2px #E91E63 !important; }
 
 /* ---- Controls ---- */
 .conect-controles {

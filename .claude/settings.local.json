@@ -3,7 +3,8 @@
     "allow": [
       "Read(//c/Users/peterson.lobato/.claude/projects/c--Users-peterson-lobato-Documents-GitHub-MakerLab3D-MakerLab3D/memory/**)",
       "Bash(grep -v \"//\")",
-      "Bash(grep -v \"^.*//.*carregarVinculados\")"
+      "Bash(grep -v \"^.*//.*carregarVinculados\")",
+      "Bash(python3 -c ' *)"
     ]
   }
 }
