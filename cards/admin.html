@@ -204,6 +204,41 @@
           </div>
         </div>
       </div>
+
+      <!-- COMPONENTES ELETRÔNICOS -->
+      <div style="background:#fff; border:1.5px solid #ddd; border-radius:16px; overflow:hidden; margin-top:20px;">
+        <div style="background:#f5f3ee; border-bottom:1px solid #ddd; padding:12px 20px; font-size:11px; font-weight:800; color:#5f6480; text-transform:uppercase; letter-spacing:1.5px;">
+          🔌 Componentes Eletrônicos — Jogo "Qual Componente?"
+        </div>
+        <div style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+          <p style="font-size:12px; color:#666; line-height:1.6;">
+            Lista de componentes disponíveis no jogo <strong>Qual Componente?</strong>.<br>
+            Ao adicionar um novo arquivo em <code style="background:#f0f0f0; padding:2px 6px; border-radius:4px;">assets/eletronicos/</code>,
+            cadastre-o aqui para que apareça no admin e no jogo.
+          </p>
+          <div style="display:grid; grid-template-columns:1fr 1fr 36px; gap:8px; padding-bottom:6px; border-bottom:1px solid #eee;">
+            <span style="font-size:11px; font-weight:700; color:#8B9BB4; text-transform:uppercase;">Nome</span>
+            <span style="font-size:11px; font-weight:700; color:#8B9BB4; text-transform:uppercase;">Arquivo (.png)</span>
+            <span></span>
+          </div>
+          <div id="config-componentes-lista">
+            <div style="color:#bbb; font-size:12px;">Carregando...</div>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:space-between; align-items:center; margin-top:4px;">
+            <button onclick="adicionarComponente()"
+              style="background:#f0f4ff; color:#2c5fc3; border:1.5px solid #c2d1f5; padding:8px 16px;
+                     border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+              + Novo Componente
+            </button>
+            <button onclick="salvarComponentes()"
+              style="background:#2f3447; color:#fff; border:none; padding:10px 24px;
+                     border-radius:8px; font-size:13px; font-weight:800; cursor:pointer; font-family:'Inter Tight',sans-serif;">
+              💾 Salvar Componentes
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 

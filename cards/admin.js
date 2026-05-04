@@ -1590,6 +1590,7 @@ window.copiarLink = function (url) {
   navigator.clipboard.writeText(url).then(() => showToast('🔗 Link copiado!', 'success'));
 };
 
+carregarComponentesList();
 carregarTiposCard().then(() => listarCards());
 
 // ==============================
@@ -1886,21 +1887,35 @@ window.toggleLinhaBug = function(bi, li) {
 // ---- QUAL COMPONENTE ----
 // ==============================
 
-const COMPONENTES_LIST = [
-  { id: 'arduino',            nome: 'Arduino',              arquivo: 'arduino.png' },
-  { id: 'protoboard',         nome: 'Protoboard',           arquivo: 'protoboard.png' },
-  { id: 'led',                nome: 'LED',                  arquivo: 'led.png' },
-  { id: 'botao',              nome: 'Botão',                arquivo: 'botao.png' },
-  { id: 'resistor',           nome: 'Resistor',             arquivo: 'resistor.png' },
-  { id: 'potenciometro',      nome: 'Potenciômetro',        arquivo: 'potenciometro.png' },
-  { id: 'ldr',                nome: 'LDR',                  arquivo: 'ldr.png' },
-  { id: 'termistor',          nome: 'Termistor',            arquivo: 'termistor.png' },
-  { id: 'matriz de led 8x8',         nome: 'Matriz de LED 8x8',   arquivo: 'matriz de led 8x8.png' },
-  { id: 'sensor de som',         nome: 'Sensor de Som',        arquivo: 'sensor de som.png' },
-  { id: 'sensor ultrassonico',nome: 'Sensor Ultrassônico',  arquivo: 'sensor ultrassonico.png' },
-  { id: 'led rgb',            nome: 'LED RGB',              arquivo: 'led rgb.png' },
-  { id: 'jumpers', nome: 'Jumpers', arquivo: 'jumpers.png' },
-];
+// Lista carregada do Firestore em carregarComponentesList()
+window._componentesList = [];
+
+async function carregarComponentesList() {
+  try {
+    const snap = await getDoc(doc(db, 'configuracoes', 'componentes_eletronicos'));
+    if (snap.exists() && Array.isArray(snap.data().lista)) {
+      window._componentesList = snap.data().lista;
+      return;
+    }
+  } catch(e) {}
+  // fallback
+  window._componentesList = [
+    { id: 'arduino',             nome: 'Arduino',              arquivo: 'arduino.png' },
+    { id: 'protoboard',          nome: 'Protoboard',           arquivo: 'protoboard.png' },
+    { id: 'led',                 nome: 'LED',                  arquivo: 'led.png' },
+    { id: 'botao',               nome: 'Botão',                arquivo: 'botao.png' },
+    { id: 'resistor',            nome: 'Resistor',             arquivo: 'resistor.png' },
+    { id: 'potenciometro',       nome: 'Potenciômetro',        arquivo: 'potenciometro.png' },
+    { id: 'ldr',                 nome: 'LDR',                  arquivo: 'ldr.png' },
+    { id: 'termistor',           nome: 'Termistor',            arquivo: 'termistor.png' },
+    { id: 'matriz de led 8x8',   nome: 'Matriz de LED 8x8',    arquivo: 'matriz de led 8x8.png' },
+    { id: 'sensor de som',       nome: 'Sensor de Som',        arquivo: 'sensor de som.png' },
+    { id: 'sensor ultrassonico', nome: 'Sensor Ultrassônico',  arquivo: 'sensor ultrassonico.png' },
+    { id: 'led rgb',             nome: 'LED RGB',              arquivo: 'led rgb.png' },
+    { id: 'jumpers',             nome: 'Jumpers',              arquivo: 'jumpers.png' },
+    { id: 'buzzer',              nome: 'Buzzer',               arquivo: 'buzzer.png' },
+  ];
+}
 
 window.compState = [];
 
@@ -1938,7 +1953,7 @@ function renderCompLista() {
     card.className = 'quiz-card';
 
     // Grid de componentes — seleção múltipla para corretos
-    const gridHTML = COMPONENTES_LIST.map(c => {
+    const gridHTML = window._componentesList.map(c => {
       const correto = (q.corretos || []).includes(c.id);
       return `
         <div class="comp-opcao ${correto ? 'comp-correto' : ''}" onclick="toggleCompCorreto(${qi}, '${c.id}')">
@@ -1969,7 +1984,7 @@ function renderCompLista() {
       <div class="form-group">
         <label>Componentes — clique nos <strong>corretos</strong> (pode marcar mais de um)</label>
         <div class="comp-grid">${gridHTML}</div>
-        <span class="helper-text">Marcados: ${(q.corretos || []).length > 0 ? (q.corretos || []).map(id => COMPONENTES_LIST.find(c => c.id === id)?.nome || id).join(', ') : 'Nenhum'}</span>
+        <span class="helper-text">Marcados: ${(q.corretos || []).length > 0 ? (q.corretos || []).map(id => window._componentesList.find(c => c.id === id)?.nome || id).join(', ') : 'Nenhum'}</span>
       </div>
       <div class="form-group">
         <label>Feedback</label>

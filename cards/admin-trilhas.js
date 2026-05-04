@@ -35,7 +35,7 @@ window.switchTab = function(tab) {
   if (tab === 'tipos')    { if (window.listarTipos) window.listarTipos(); }
   if (tab === 'usuarios') { carregarUsuarios(); }
   if (tab === 'escolas')  { carregarEscolas(); }
-  if (tab === 'config')   { if (window.carregarConfig) window.carregarConfig(); }
+  if (tab === 'config')   { if (window.carregarConfig) window.carregarConfig(); if (window.carregarComponentes) window.carregarComponentes(); }
 };
 
 // ---- TOAST (reutiliza do admin.js) ----

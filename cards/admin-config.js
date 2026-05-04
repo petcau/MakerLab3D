@@ -110,3 +110,84 @@ window.restaurarPromptPadrao = function() {
   const ta = document.getElementById('config-prompt-template');
   if (ta) ta.value = PROMPT_IA_DEFAULT;
 };
+
+// ── COMPONENTES ELETRÔNICOS ────────────────────────────────────────────────
+
+export const COMPONENTES_DEFAULT = [
+  { id: 'arduino',             nome: 'Arduino',              arquivo: 'arduino.png' },
+  { id: 'protoboard',          nome: 'Protoboard',           arquivo: 'protoboard.png' },
+  { id: 'led',                 nome: 'LED',                  arquivo: 'led.png' },
+  { id: 'botao',               nome: 'Botão',                arquivo: 'botao.png' },
+  { id: 'resistor',            nome: 'Resistor',             arquivo: 'resistor.png' },
+  { id: 'potenciometro',       nome: 'Potenciômetro',        arquivo: 'potenciometro.png' },
+  { id: 'ldr',                 nome: 'LDR',                  arquivo: 'ldr.png' },
+  { id: 'termistor',           nome: 'Termistor',            arquivo: 'termistor.png' },
+  { id: 'matriz de led 8x8',   nome: 'Matriz de LED 8x8',    arquivo: 'matriz de led 8x8.png' },
+  { id: 'sensor de som',       nome: 'Sensor de Som',        arquivo: 'sensor de som.png' },
+  { id: 'sensor ultrassonico', nome: 'Sensor Ultrassônico',  arquivo: 'sensor ultrassonico.png' },
+  { id: 'led rgb',             nome: 'LED RGB',              arquivo: 'led rgb.png' },
+  { id: 'jumpers',             nome: 'Jumpers',              arquivo: 'jumpers.png' },
+  { id: 'buzzer',              nome: 'Buzzer',               arquivo: 'buzzer.png' },
+];
+
+let _compState = [];
+
+function renderComponentesList() {
+  const lista = document.getElementById('config-componentes-lista');
+  if (!lista) return;
+  if (_compState.length === 0) {
+    lista.innerHTML = '<p style="color:#bbb;font-size:12px;">Nenhum componente cadastrado.</p>';
+    return;
+  }
+  lista.innerHTML = _compState.map((c, i) => `
+    <div style="display:grid;grid-template-columns:1fr 1fr 36px;gap:8px;align-items:center;margin-bottom:8px;">
+      <input type="text" value="${c.nome}" oninput="updateComponente(${i},'nome',this.value)"
+        style="padding:7px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:12px;"
+        placeholder="Nome (ex: Buzzer)">
+      <input type="text" value="${c.arquivo}" oninput="updateComponente(${i},'arquivo',this.value)"
+        style="padding:7px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:12px;font-family:monospace;"
+        placeholder="ex: buzzer.png">
+      <button onclick="removerComponente(${i})"
+        style="background:#fee;color:#e74c3c;border:1px solid #f5c6cb;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;font-weight:700;">×</button>
+    </div>
+  `).join('');
+}
+
+window.carregarComponentes = async function() {
+  try {
+    const snap = await getDoc(doc(db, 'configuracoes', 'componentes_eletronicos'));
+    _compState = snap.exists() ? (snap.data().lista || [...COMPONENTES_DEFAULT]) : [...COMPONENTES_DEFAULT];
+  } catch(err) {
+    _compState = [...COMPONENTES_DEFAULT];
+  }
+  renderComponentesList();
+};
+
+window.adicionarComponente = function() {
+  _compState.push({ id: '', nome: '', arquivo: '' });
+  renderComponentesList();
+};
+
+window.removerComponente = function(i) {
+  _compState.splice(i, 1);
+  renderComponentesList();
+};
+
+window.updateComponente = function(i, field, value) {
+  if (!_compState[i]) return;
+  _compState[i][field] = value;
+  _compState[i].id = _compState[i].arquivo.replace(/\.png$/i, '').toLowerCase().trim();
+};
+
+window.salvarComponentes = async function() {
+  const lista = _compState.filter(c => c.nome.trim() && c.arquivo.trim());
+  try {
+    await setDoc(doc(db, 'configuracoes', 'componentes_eletronicos'), {
+      lista,
+      atualizado_em: new Date().toISOString()
+    });
+    showToast('✅ Componentes salvos!', 'success');
+  } catch(err) {
+    showToast('❌ Erro ao salvar: ' + err.message, 'error');
+  }
+};

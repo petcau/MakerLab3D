@@ -16,21 +16,34 @@ const db   = getFirestore(app);
 const NIVEL_NOMES  = ['Explorador Iniciante','Curioso Digital','Aprendiz Maker','Construtor Criativo','Inventor em Ação','Programador Maker','Engenheiro Criativo','Inovador Maker','Mentor Maker','Mestre Maker'];
 const NIVEL_PONTOS = [0,100,250,500,900,1400,2000,2700,3500,4500];
 
-const COMPONENTES = [
-  { id: 'arduino',             nome: 'Arduino',              arquivo: 'arduino.png' },
-  { id: 'protoboard',          nome: 'Protoboard',           arquivo: 'protoboard.png' },
-  { id: 'led',                 nome: 'LED',                  arquivo: 'led.png' },
-  { id: 'botao',               nome: 'Botão',                arquivo: 'botao.png' },
-  { id: 'resistor',            nome: 'Resistor',             arquivo: 'resistor.png' },
-  { id: 'potenciometro',       nome: 'Potenciômetro',        arquivo: 'potenciometro.png' },
-  { id: 'ldr',                 nome: 'LDR',                  arquivo: 'ldr.png' },
-  { id: 'termistor',           nome: 'Termistor',            arquivo: 'termistor.png' },
-  { id: 'matriz de led 8x8',          nome: 'Matriz de LED 8x8',   arquivo: 'matriz de led 8x8.png' },
-  { id: 'sensor de som',          nome: 'Sensor de Som',        arquivo: 'sensor de som.png' },
-  { id: 'sensor ultrassonico', nome: 'Sensor Ultrassônico',  arquivo: 'sensor ultrassonico.png' },
-  { id: 'led rgb',             nome: 'LED RGB',              arquivo: 'led rgb.png' },
-  { id: 'jumpers', nome: 'Jumpers', arquivo: 'jumpers.png' },
-];
+// Carregado do Firestore em carregarComponentes()
+let COMPONENTES = [];
+
+async function carregarComponentes() {
+  try {
+    const snap = await getDoc(doc(db, 'configuracoes', 'componentes_eletronicos'));
+    if (snap.exists() && Array.isArray(snap.data().lista)) {
+      COMPONENTES = snap.data().lista;
+      return;
+    }
+  } catch(e) {}
+  COMPONENTES = [
+    { id: 'arduino',             nome: 'Arduino',              arquivo: 'arduino.png' },
+    { id: 'protoboard',          nome: 'Protoboard',           arquivo: 'protoboard.png' },
+    { id: 'led',                 nome: 'LED',                  arquivo: 'led.png' },
+    { id: 'botao',               nome: 'Botão',                arquivo: 'botao.png' },
+    { id: 'resistor',            nome: 'Resistor',             arquivo: 'resistor.png' },
+    { id: 'potenciometro',       nome: 'Potenciômetro',        arquivo: 'potenciometro.png' },
+    { id: 'ldr',                 nome: 'LDR',                  arquivo: 'ldr.png' },
+    { id: 'termistor',           nome: 'Termistor',            arquivo: 'termistor.png' },
+    { id: 'matriz de led 8x8',   nome: 'Matriz de LED 8x8',    arquivo: 'matriz de led 8x8.png' },
+    { id: 'sensor de som',       nome: 'Sensor de Som',        arquivo: 'sensor de som.png' },
+    { id: 'sensor ultrassonico', nome: 'Sensor Ultrassônico',  arquivo: 'sensor ultrassonico.png' },
+    { id: 'led rgb',             nome: 'LED RGB',              arquivo: 'led rgb.png' },
+    { id: 'jumpers',             nome: 'Jumpers',              arquivo: 'jumpers.png' },
+    { id: 'buzzer',              nome: 'Buzzer',               arquivo: 'buzzer.png' },
+  ];
+}
 
 function getNivelIdx(pts) {
   for (let i = NIVEL_PONTOS.length - 1; i >= 0; i--) { if (pts >= NIVEL_PONTOS[i]) return i; }
@@ -441,4 +454,4 @@ window.voltarCard = function() {
   else window.location.href = '../cards/card.html?id=' + cardId;
 };
 
-init();
+carregarComponentes().then(() => init());
