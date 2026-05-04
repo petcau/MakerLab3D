@@ -118,7 +118,7 @@ async function init() {
         return;
       }
 
-      perguntas = [...cardData.quiz].sort(() => Math.random() - 0.5);
+      perguntas = [...cardData.quiz];
       iniciarJogo();
 
     } catch(e) { erroLoad('Erro: ' + e.message); }
@@ -342,7 +342,7 @@ window.reiniciar = function() {
   if (tentativasUsadas >= tentativasPermitidas) { mostrarBloqueado(null); return; }
   tentativaRegistrada = false;
   atual = 0; acertos = 0; erros = 0; pontosGanhos = 0; respondida = false;
-  perguntas = [...cardData.quiz].sort(() => Math.random() - 0.5);
+  perguntas = [...cardData.quiz];
   document.getElementById('tela-final').style.display = 'none';
   document.getElementById('q-prog-wrap').style.display  = '';
   document.getElementById('q-box').style.display        = '';

@@ -1,0 +1,199 @@
+:root {
+  --jogo:     #3949AB;
+  --jogo-esc: #283593;
+  --jogo-bg:  #e8eaf6;
+  --ouro:     #E5C84C;
+  --ouro-esc: #C9A830;
+  --azul:     #2F3447;
+  --azul-med: #5F6480;
+  --borda:    #DDD8CC;
+  --verde:    #27ae60;
+  --vermelho: #e74c3c;
+  --bg:       #ECEAE4;
+  --cfg-cor:  #3949AB;
+  --rep-cor:  #D84315;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Nunito Sans', sans-serif; background: var(--bg); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px 60px; }
+
+/* Header */
+.q-header { width: 100%; max-width: 860px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.q-logo { font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 900; color: var(--azul); }
+.q-logo span { color: var(--ouro-esc); }
+.q-card-nome { font-size: 13px; font-weight: 700; color: var(--azul-med); }
+.btn-voltar-header { background: var(--azul); color: #fff; border: none; border-radius: 10px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 800; cursor: pointer; }
+
+/* Player card */
+.player-card { width: 100%; max-width: 860px; background: linear-gradient(135deg, #e8eaf6, #dde0f5); border: 2px solid var(--jogo); border-radius: 20px; padding: 14px 20px; display: flex; align-items: center; gap: 14px; margin-bottom: 18px; box-shadow: 0 0 0 4px rgba(57,73,171,0.08); }
+.player-avatar { width: 68px; height: 68px; object-fit: contain; flex-shrink: 0; }
+.player-info { flex: 1; }
+.player-nome { font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 900; color: var(--azul); }
+.player-jogo { display: inline-block; font-size: 11px; font-weight: 900; color: #fff; background: var(--jogo); text-transform: uppercase; letter-spacing: 1.5px; padding: 2px 10px; border-radius: 20px; margin-bottom: 4px; font-family: 'Nunito', sans-serif; }
+.player-escola { font-size: 10px; font-weight: 600; color: #999; margin-top: 1px; font-family: 'Nunito', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.player-nivel { font-size: 11px; font-weight: 700; color: var(--jogo-esc); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.player-pts-box { display: flex; flex-direction: column; align-items: center; background: rgba(57,73,171,0.1); border: 1px solid rgba(57,73,171,0.3); border-radius: 12px; padding: 8px 16px; flex-shrink: 0; }
+.player-pts-val { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900; color: var(--jogo-esc); line-height: 1; }
+.player-pts-label { text-align: center; font-size: 10px; font-weight: 700; color: var(--jogo); text-transform: uppercase; letter-spacing: 1px; }
+
+/* Progresso */
+.q-prog-wrap { width: 100%; max-width: 860px; margin-bottom: 14px; }
+.q-prog-info { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--azul-med); margin-bottom: 6px; }
+.q-prog-bar { height: 8px; background: var(--borda); border-radius: 999px; overflow: hidden; }
+.q-prog-fill { height: 100%; background: linear-gradient(90deg, var(--jogo), var(--jogo-esc)); border-radius: 999px; transition: width 0.4s ease; }
+
+/* Box principal */
+.jogo-box { width: 100%; max-width: 860px; background: #fff; border: 1.5px solid var(--borda); border-radius: 24px; overflow: hidden; box-shadow: 0 4px 24px rgba(47,52,71,0.08); }
+.jogo-box-top { background: linear-gradient(135deg, #1a237e, #3949ab); padding: 20px 28px 16px; position: relative; }
+.jogo-estrelas { font-size: 14px; letter-spacing: 6px; margin-bottom: 8px; opacity: 0.7; }
+.q-num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.45); margin-bottom: 6px; }
+.q-texto { font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 800; color: #fff; line-height: 1.3; }
+.q-pts-badge { position: absolute; top: 18px; right: 22px; background: var(--ouro); color: var(--azul); font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900; padding: 4px 12px; border-radius: 20px; }
+
+/* Tentativas */
+.tentativas-row { display: flex; align-items: center; gap: 4px; margin-top: 10px; }
+
+/* Instrução */
+.jogo-instrucao { text-align: center; font-size: 13px; font-weight: 700; color: var(--jogo-esc); padding: 10px 22px 0; }
+
+/* Workspace */
+.jogo-workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px 22px 4px; }
+.jogo-area-titulo { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--azul-med); margin-bottom: 10px; }
+
+/* Palette */
+.palette-area { min-height: 180px; display: flex; flex-direction: column; gap: 4px; background: #f8f9fc; border: 2px dashed var(--borda); border-radius: 14px; padding: 8px; transition: border-color 0.2s, background 0.2s; }
+.palette-area.drag-over { border-color: var(--jogo); background: var(--jogo-bg); }
+.palette-vazio { color: #aaa; font-size: 12px; text-align: center; padding: 24px 0; font-style: italic; }
+
+/* Zonas */
+.zona-wrap { border-radius: 10px; overflow: hidden; }
+.zona-keyword { padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #fff; }
+.zona-cfg-top { background: var(--cfg-cor); }
+.zona-cfg-bot { background: #283593; color: rgba(255,255,255,0.6); }
+.zona-rep-top { background: var(--rep-cor); }
+.zona-rep-bot { background: #bf360c; color: rgba(255,255,255,0.6); }
+
+.zona-body { min-height: 70px; padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; background: #f8f9fc; border: 2px dashed transparent; transition: background 0.2s, border-color 0.2s; }
+.cfg-body { border-color: rgba(57,73,171,0.25); }
+.rep-body { border-color: rgba(216,67,21,0.25); }
+.zona-body.drag-over { background: var(--jogo-bg); border-color: var(--jogo); }
+.rep-body.drag-over  { background: #fbe9e7; border-color: var(--rep-cor); }
+
+.zona-hint { color: #bbb; font-size: 12px; font-style: italic; text-align: center; padding: 12px 0; pointer-events: none; }
+
+/* ── Blocos estilo Scratch 3.0 ── */
+.bloco {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: grab;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  user-select: none;
+  border: none;
+  transition: transform 0.12s, box-shadow 0.12s, opacity 0.15s;
+  position: relative;
+}
+.bloco:hover  { transform: translateY(-2px) scale(1.02); }
+.bloco:active { cursor: grabbing; transform: scale(0.97); }
+.bloco.dragging { opacity: 0.3; cursor: grabbing; transform: none; }
+
+.bloco-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.25);
+}
+
+/* Palette — azul Scratch */
+.bloco-palette {
+  background: #4C97FF;
+  box-shadow: 0 4px 0 #3373CC, 0 6px 12px rgba(76,151,255,0.35);
+}
+.bloco-palette:hover { box-shadow: 0 6px 0 #3373CC, 0 8px 18px rgba(76,151,255,0.45); }
+
+/* Configurar — roxo Scratch */
+.bloco-configurar {
+  background: #9966FF;
+  box-shadow: 0 4px 0 #6644CC, 0 6px 12px rgba(153,102,255,0.35);
+}
+.bloco-configurar:hover { box-shadow: 0 6px 0 #6644CC, 0 8px 18px rgba(153,102,255,0.45); }
+
+/* Repetir — laranja Scratch */
+.bloco-repetir {
+  background: #FF8C1A;
+  box-shadow: 0 4px 0 #CC6600, 0 6px 12px rgba(255,140,26,0.35);
+}
+.bloco-repetir:hover { box-shadow: 0 6px 0 #CC6600, 0 8px 18px rgba(255,140,26,0.45); }
+
+.insert-line { height: 4px; background: #FFD700; border-radius: 2px; margin: 2px 4px; box-shadow: 0 0 8px rgba(255,215,0,0.7); pointer-events: none; }
+
+/* Feedback */
+.jogo-feedback { margin: 12px 22px; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; line-height: 1.5; }
+.jogo-feedback.acerto { background: #f0fdf4; border: 1px solid #a7f3d0; color: #15803d; }
+.jogo-feedback.erro   { background: #fdf2f2; border: 1px solid #f5c6c6; color: #b91c1c; }
+
+/* Botões */
+.btn-verificar { display: block; width: calc(100% - 44px); margin: 12px 22px 22px; background: linear-gradient(135deg, #1a237e, #3949ab); color: #fff; border: none; border-radius: 14px; padding: 14px; font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 900; cursor: pointer; transition: all 0.2s; }
+.btn-verificar:hover { transform: translateY(-2px); opacity: 0.9; }
+.btn-verificar:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+/* Placar */
+.q-placar { width: 100%; max-width: 860px; display: flex; gap: 10px; margin-top: 14px; }
+.pl-item { flex: 1; background: #fff; border: 1.5px solid var(--borda); border-radius: 14px; padding: 12px; text-align: center; }
+.pl-item.ac { border-color: #a7f3d0; background: #f0fdf4; }
+.pl-item.er { border-color: #f5c6c6; background: #fdf2f2; }
+.pl-item.pt { border-color: var(--jogo); background: var(--jogo-bg); }
+.pl-val { font-family: 'Nunito', sans-serif; font-size: 28px; font-weight: 900; line-height: 1; }
+.ac .pl-val { color: var(--verde); }
+.er .pl-val { color: var(--vermelho); }
+.pt .pl-val { color: var(--jogo-esc); }
+.pl-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--azul-med); margin-top: 4px; }
+
+/* Modal final */
+.tela-final { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 20px; }
+.tela-final-box { background: #fff; border-radius: 24px; width: 100%; max-width: 420px; overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes popIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.tf-top { background: linear-gradient(135deg, #1a237e, #3949ab); padding: 20px 24px 18px; border-radius: 24px 24px 0 0; }
+.tf-top-row { display: flex; align-items: center; gap: 14px; }
+.tf-emoji { font-size: 36px; flex-shrink: 0; }
+.tf-top-text { text-align: left; }
+.tf-titulo { font-family: 'Nunito', sans-serif; font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 2px; }
+.tf-sub { font-size: 12px; color: rgba(255,255,255,0.55); }
+.tf-body { padding: 16px 20px 20px; }
+.tf-avatar-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+.tf-avatar { width: 70px; height: 70px; object-fit: contain; }
+.res-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
+.res-item { text-align: center; padding: 10px 6px; border-radius: 12px; border: 1.5px solid var(--borda); }
+.res-item.rac { border-color: #a7f3d0; background: #f0fdf4; }
+.res-item.rer { border-color: #f5c6c6; background: #fdf2f2; }
+.res-item.rpt { border-color: var(--jogo); background: var(--jogo-bg); }
+.res-val { font-family: 'Nunito', sans-serif; font-size: 26px; font-weight: 900; line-height: 1; }
+.rac .res-val { color: var(--verde); }
+.rer .res-val { color: var(--vermelho); }
+.rpt .res-val { color: var(--jogo-esc); }
+.res-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--azul-med); margin-top: 5px; }
+.res-msg { text-align: center; font-size: 13px; color: var(--azul-med); line-height: 1.5; margin-bottom: 12px; }
+.btn-tentar { display: block; width: 100%; background: linear-gradient(135deg, var(--jogo), var(--jogo-esc)); color: #fff; border: none; border-radius: 12px; padding: 11px; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; margin-bottom: 8px; }
+.btn-tentar:hover { opacity: 0.9; }
+.btn-voltar { display: block; width: 100%; background: var(--azul); color: #fff; border: none; border-radius: 12px; padding: 11px; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; margin-top: 6px; }
+.btn-voltar:hover { background: #3d4460; }
+
+/* Loading */
+.loading { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 80px 20px; color: var(--azul-med); font-size: 15px; }
+.spinner { width: 44px; height: 44px; border: 3px solid var(--borda); border-top-color: var(--jogo); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 640px) {
+  .jogo-workspace { grid-template-columns: 1fr; }
+  .player-card { flex-wrap: wrap; }
+  .q-logo { font-size: 15px; }
+}

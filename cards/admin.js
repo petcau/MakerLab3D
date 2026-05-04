@@ -194,6 +194,7 @@ async function listarCards() {
           { k: 'comp_perguntas', def: 1.0 }, { k: 'ordena_desafios', def: 1.0 },
           { k: 'complete_desafios', def: 1.0 }, { k: 'conecta_desafios', def: 2.0 },
           { k: 'box_desafios', def: 2.0 }, { k: 'binario_desafios', def: 1.0 },
+          { k: 'logica_desafios', def: 2.0 },
         ];
         let qtdJogos = 0;
         let qtdPontos = 0;
@@ -268,6 +269,7 @@ function renderForm(id, d) {
   window.conectaState  = d.conecta_desafios  ? JSON.parse(JSON.stringify(d.conecta_desafios))  : [];
   window.boxState      = d.box_desafios      ? JSON.parse(JSON.stringify(d.box_desafios))      : [];
   window.binarioState  = d.binario_desafios  ? JSON.parse(JSON.stringify(d.binario_desafios))  : [];
+  window.logicaState   = d.logica_desafios   ? JSON.parse(JSON.stringify(d.logica_desafios))   : [];
   window.glossarioState = d.glossario ? JSON.parse(JSON.stringify(d.glossario)) : [];
   window.anexosState   = d.anexos ? JSON.parse(JSON.stringify(d.anexos)) : [];
   // Carrega links de todos os tipos dinâmicos (com fallback para legado)
@@ -728,6 +730,28 @@ function renderForm(id, d) {
       </div>
     </div>
 
+    <div class="form-section form-section-logica">
+      <div class="section-title-row">
+        <span class="section-title">🧩 Lógica do Sistema</span>
+        <button class="btn-toggle-jogo" onclick="toggleLogica()" id="btn-toggle-logica">▼ Criar Jogo</button>
+      </div>
+      <div id="logica-body" style="display:none;">
+        <span class="helper-text" style="display:block;margin-bottom:8px;margin-top:12px;">
+          Drag &amp; drop no estilo Scratch. O aluno arrasta blocos para as zonas <strong>configurar</strong> e <strong>repetir</strong> na ordem correta.
+        </span>
+        <div class="form-row" style="margin-bottom:16px;align-items:flex-end;">
+          <div class="form-group" style="max-width:220px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-logica-tentativas" min="1" max="10" value="${d.logica_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarLogica()">+ Desafio</button>
+          </div>
+        </div>
+        <div id="logica-lista"></div>
+      </div>
+    </div>
+
     </div><!-- /painel-jogos -->
 
     <!-- Anexos -->
@@ -767,6 +791,8 @@ function renderForm(id, d) {
   atualizarBtnBox();
   renderBinarioLista();
   atualizarBtnBinario();
+  renderLogicaLista();
+  atualizarBtnLogica();
   inicializarPainelJogos();
 }
 
@@ -780,6 +806,7 @@ function inicializarPainelJogos() {
     { label: 'Conecta os Pontos', emoji: '🔗', cls: 'form-section-conecta',  bodyId: 'conecta-body',  state: window.conectaState },
     { label: 'Simulador BOX',     emoji: '📦', cls: 'form-section-box',      bodyId: 'box-body',      state: window.boxState },
     { label: 'Código Binário',    emoji: '💻', cls: 'form-section-binario',  bodyId: 'binario-body',  state: window.binarioState },
+    { label: 'Lógica do Sistema', emoji: '🧩', cls: 'form-section-logica',   bodyId: 'logica-body',   state: window.logicaState },
   ];
 
   // Oculta todas as seções sem dados
@@ -1062,7 +1089,7 @@ const CAMPOS_DIFF = [
   'avaliacao','desafio_extra','video_url','publicado',
   'imagem_url','atividade_imagem_url',
   'quiz','bug_codigos','comp_perguntas','ordena_desafios','complete_desafios',
-  'conecta_desafios','box_desafios','binario_desafios','glossario','anexos'
+  'conecta_desafios','box_desafios','binario_desafios','logica_desafios','glossario','anexos'
 ];
 
 const DIFF_LABELS = {
@@ -1076,6 +1103,7 @@ const DIFF_LABELS = {
   quiz:'Quiz', bug_codigos:'Caça ao Bug', comp_perguntas:'Qual Componente',
   ordena_desafios:'Ordena Código', complete_desafios:'Complete o Código',
   conecta_desafios:'Conecta os Pontos', box_desafios:'BOX', binario_desafios:'Binário',
+  logica_desafios:'Lógica do Sistema',
   glossario:'Glossário', anexos:'Anexos',
   pergunta:'Pergunta', resposta:'Resposta', respostas:'Respostas', correta:'Correta',
   pontos:'Pontos', codigo:'Código', titulo:'Título', linhas:'Linhas',
@@ -1166,6 +1194,8 @@ window.salvarCard = async function (publicar) {
     box_tentativas:     parseInt(document.getElementById('f-box-tentativas')?.value) || 3,
     binario_desafios:   window.binarioState  || [],
     binario_tentativas: parseInt(document.getElementById('f-binario-tentativas')?.value) || 3,
+    logica_desafios:    window.logicaState   || [],
+    logica_tentativas:  parseInt(document.getElementById('f-logica-tentativas')?.value)  || 3,
     tentativas:       parseInt(document.getElementById('f-tentativas')?.value) || 3,
     video_url:        document.getElementById('f-video-url')?.value?.trim() || '',
     publicado:        publicar,
@@ -1196,7 +1226,7 @@ window.salvarCard = async function (publicar) {
       iaDescAnterior      = dadosAnt.ia_desc_complementar   || '';
       iaPromptAnterior    = dadosAnt.ia_prompt_usado         || '';
       // Gera diff campo a campo
-      const CAMPOS_JOGOS = new Set(['quiz','bug_codigos','comp_perguntas','ordena_desafios','complete_desafios','conecta_desafios','box_desafios','binario_desafios']);
+      const CAMPOS_JOGOS = new Set(['quiz','bug_codigos','comp_perguntas','ordena_desafios','complete_desafios','conecta_desafios','box_desafios','binario_desafios','logica_desafios']);
       const diff = [];
       CAMPOS_DIFF.forEach(k => {
         if (CAMPOS_JOGOS.has(k)) {
@@ -1446,7 +1476,7 @@ window.deletarCard = async function (id) {
     const COLECOES_RESULTADO = [
       'resultados_quiz','resultados_bug','resultados_comp',
       'resultados_ordena','resultados_complete','resultados_conecta',
-      'resultados_box','resultados_binario'
+      'resultados_box','resultados_binario','resultados_logica'
     ];
 
     // Trilhas que contêm este card
@@ -2895,6 +2925,112 @@ function renderBinarioLista() {
   }).join('');
 }
 
+// ==============================
+// ── LÓGICA DO SISTEMA ──────────
+// ==============================
+
+window.logicaState = [];
+
+window.toggleLogica = function() {
+  const body = document.getElementById('logica-body');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnLogica();
+};
+
+function atualizarBtnLogica() {
+  const btn  = document.getElementById('btn-toggle-logica');
+  const body = document.getElementById('logica-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = (window.logicaState || []).length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' desafio' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Desafios (' + n + ')' : '▼ Criar Jogo');
+}
+
+window.adicionarLogica = function() {
+  if (!window.logicaState) window.logicaState = [];
+  if (window.logicaState.length >= 20) return;
+  window.logicaState.push({ titulo: '', pontos: 2.0, configurar: [], repetir: [] });
+  renderLogicaLista();
+  recalcularPontos();
+  atualizarBtnLogica();
+};
+
+window.removerLogica = function(qi) {
+  window.logicaState.splice(qi, 1);
+  renderLogicaLista();
+  recalcularPontos();
+  atualizarBtnLogica();
+};
+
+window.updateLogica = function(qi, field, value) {
+  if (!window.logicaState[qi]) return;
+  window.logicaState[qi][field] = value;
+  if (field === 'pontos') recalcularPontos();
+};
+
+window.syncLogicaZona = function(qi, zona, value) {
+  const d = window.logicaState[qi];
+  if (!d) return;
+  d[zona] = value.split('\n').map(l => l.trim()).filter(Boolean);
+};
+
+function renderLogicaLista() {
+  const lista = document.getElementById('logica-lista');
+  if (!lista) return;
+  if (!window.logicaState) window.logicaState = [];
+
+  if (window.logicaState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhum desafio cadastrado. Clique em + Desafio para começar.</div>';
+    return;
+  }
+
+  const taStyle = 'width:100%;background:#1A1B26;color:#C8D0E8;border:1.5px solid #2D2F3E;border-radius:7px;padding:8px 10px;font-family:monospace;font-size:12px;line-height:1.7;resize:vertical;min-height:90px;outline:none;';
+
+  lista.innerHTML = window.logicaState.map((d, qi) => `
+    <div class="quiz-card">
+      <div class="quiz-card-header">
+        <strong>Desafio ${qi + 1}</strong>
+        ${d.titulo ? '<span style="font-size:12px;color:#4C97FF;margin-left:8px;">' + escHtml(d.titulo) + '</span>' : ''}
+        <button onclick="removerLogica(${qi})" class="btn-rem-quiz">✕ Remover</button>
+      </div>
+      <div class="quiz-card-body">
+        <div class="form-row" style="gap:14px;align-items:flex-end;margin-bottom:12px;">
+          <div class="form-group" style="flex:1;">
+            <label>Título do Desafio</label>
+            <input type="text" placeholder="Ex: Configure o LED e pisque-o"
+              value="${escHtml(d.titulo || '')}"
+              oninput="updateLogica(${qi},'titulo',this.value)">
+          </div>
+          <div class="form-group" style="max-width:100px;">
+            <label>Pontos</label>
+            <input type="number" min="0.5" max="10" step="0.5"
+              value="${d.pontos || 2}"
+              oninput="updateLogica(${qi},'pontos',parseFloat(this.value)||2)">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div>
+            <div style="font-size:11px;font-weight:800;color:#3949AB;text-transform:uppercase;margin-bottom:6px;">⚙️ Zona: configurar</div>
+            <textarea style="${taStyle}" placeholder="Um bloco por linha..." oninput="syncLogicaZona(${qi},'configurar',this.value)">${escHtml((d.configurar || []).join('\n'))}</textarea>
+            <span class="helper-text">${(d.configurar||[]).length} bloco(s) · cada linha = 1 bloco</span>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:800;color:#D84315;text-transform:uppercase;margin-bottom:6px;">🔄 Zona: repetir</div>
+            <textarea style="${taStyle}" placeholder="Um bloco por linha..." oninput="syncLogicaZona(${qi},'repetir',this.value)">${escHtml((d.repetir || []).join('\n'))}</textarea>
+            <span class="helper-text">${(d.repetir||[]).length} bloco(s) · cada linha = 1 bloco</span>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ── Prompt IA ──────────────────────────────────────────────────────────
 const PROMPT_IA_DEFAULT_FALLBACK = `Crie o conteúdo educacional de um card para a plataforma MakerLab 3D com base nos dados abaixo:
 
@@ -3987,6 +4123,7 @@ window.abrirEstatisticaCards = async function() {
       { key: 'conecta_desafios',  label: 'Conecta Pontos'   },
       { key: 'box_desafios',      label: 'Simulador BOX'    },
       { key: 'binario_desafios',  label: 'Código Binário'   },
+      { key: 'logica_desafios',   label: 'Lógica do Sistema'},
     ];
 
     const tipos       = {};
@@ -4020,6 +4157,7 @@ window.abrirEstatisticaCards = async function() {
           { campo: 'conecta_desafios',  def: 2.0 },
           { campo: 'box_desafios',      def: 2.0 },
           { campo: 'binario_desafios',  def: 1.0 },
+          { campo: 'logica_desafios',   def: 2.0 },
         ];
         jogosFields.forEach(({ campo, def }) => {
           (c[campo] || []).forEach(item => { ptsTotalDisp += parseFloat(item.pontos) || def; });

@@ -154,7 +154,7 @@ async function init() {
         return;
       }
 
-      desafios = [...cardData.binario_desafios].sort(() => Math.random() - 0.5);
+      desafios = [...cardData.binario_desafios];
       iniciarJogo();
 
     } catch(e) { erroLoad('Erro: ' + e.message); }
@@ -322,7 +322,7 @@ window.reiniciar = function() {
   if (tentativasUsadas >= tentativasPermitidas) { mostrarBloqueado(null); return; }
   tentativaRegistrada = false;
   atual = 0; acertos = 0; erros = 0; pontosGanhos = 0; respondida = false;
-  desafios = [...cardData.binario_desafios].sort(() => Math.random() - 0.5);
+  desafios = [...cardData.binario_desafios];
   document.getElementById('tela-final').style.display  = 'none';
   document.getElementById('q-prog-wrap').style.display = '';
   document.getElementById('q-box').style.display       = '';

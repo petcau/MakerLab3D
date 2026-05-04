@@ -194,7 +194,7 @@ async function init() {
 
       if (tentativasUsadas >= tentativasPermitidas) { mostrarBloqueado(resultSnap.data()); return; }
 
-      perguntas = [...cardData.comp_perguntas].sort(() => Math.random() - 0.5);
+      perguntas = [...cardData.comp_perguntas];
       iniciarJogo();
 
     } catch(e) { erroLoad('Erro: ' + e.message); }
@@ -440,7 +440,7 @@ window.reiniciar = function() {
   if (tentativasUsadas >= tentativasPermitidas) { mostrarBloqueado(null); return; }
   atual = 0; acertos = 0; erros = 0; pontosGanhos = 0;
   tentativaRegistrada = false; selecionados = []; respondida = false;
-  perguntas = [...cardData.comp_perguntas].sort(() => Math.random() - 0.5);
+  perguntas = [...cardData.comp_perguntas];
   document.getElementById('tela-final').style.display = 'none';
   document.getElementById('pl-ac').textContent = '0';
   document.getElementById('pl-er').textContent = '0';
