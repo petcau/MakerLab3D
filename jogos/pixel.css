@@ -103,6 +103,23 @@ body {
 }
 
 /* ── Grid ────────────────────────────────────────────── */
+.px-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.px-linha-cells {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.px-linha .px-codigo {
+  padding-left: 12px;
+  flex-shrink: 0;
+}
+
 .px-grid-wrap {
   padding: 24px 24px 16px;
   overflow-x: auto;
@@ -256,17 +273,17 @@ body {
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 520px) {
   :root { --cell-size: 24px; }
-  .px-codigo { font-size: 11px; padding-left: 8px; letter-spacing: 1px; }
   .px-grid-wrap { padding: 14px 10px 10px; }
   .px-actions { gap: 10px; padding: 12px 14px 18px; }
   .px-btn-limpar, .px-btn-verificar { font-size: 13px; padding: 10px 16px; }
+  .px-linha .px-codigo { padding-left: 0; margin-top: 2px; font-size: 13px; letter-spacing: 1px; }
 }
 
 @media (max-width: 400px) {
   body { padding: 12px 8px 60px; }
   :root { --cell-size: 20px; }
-  .px-grid { gap: 3px; }
-  .px-codigo { font-size: 9px; padding-left: 5px; letter-spacing: 0; white-space: normal; }
+  .px-linha-cells { gap: 3px; }
   .px-grid-wrap { padding: 10px 6px 8px; }
   .px-btn-limpar, .px-btn-verificar { font-size: 12px; padding: 9px 14px; }
+  .px-linha .px-codigo { font-size: 11px; }
 }

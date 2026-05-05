@@ -90,22 +90,36 @@ function renderDesafio() {
 
   const container = document.getElementById('px-grid');
   container.innerHTML = '';
-  container.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size)) auto`;
+  container.style.gridTemplateColumns = '';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.gap = '4px';
+  container.style.alignItems = 'flex-start';
 
   d.codigos.forEach((codigo, row) => {
+    const linha = document.createElement('div');
+    linha.className = 'px-linha';
+
+    const cellsWrap = document.createElement('div');
+    cellsWrap.className = 'px-linha-cells';
+
     for (let col = 0; col < cols; col++) {
       const cell = document.createElement('div');
       cell.className = 'px-cell';
       cell.dataset.row = row;
       cell.dataset.col = col;
       cell.onclick = () => window.toggleCell(row, col);
-      container.appendChild(cell);
+      cellsWrap.appendChild(cell);
     }
+
     const label = document.createElement('div');
     label.className = 'px-codigo';
     label.id = `px-codigo-${row}`;
     label.textContent = codigo;
-    container.appendChild(label);
+
+    linha.appendChild(cellsWrap);
+    linha.appendChild(label);
+    container.appendChild(linha);
   });
 }
 

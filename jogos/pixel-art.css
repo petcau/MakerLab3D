@@ -142,6 +142,23 @@ body {
 }
 
 /* ── Grid ────────────────────────────────────────────── */
+.pa-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.pa-linha-cells {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.pa-linha .pa-codigo-input {
+  margin-left: 10px;
+  flex-shrink: 0;
+}
+
 .pa-grid-wrap {
   padding: 24px 24px 16px;
   overflow-x: auto;
@@ -306,17 +323,17 @@ body {
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 520px) {
   :root { --cell-size: 24px; }
-  .pa-codigo-input { font-size: 13px; width: 110px; padding: 4px 7px; margin-left: 10px; }
   .pa-grid-wrap { padding: 14px 10px 10px; }
   .pa-actions { gap: 10px; padding: 12px 14px 18px; }
   .pa-btn-limpar, .pa-btn-avancar, .pa-btn-verificar { font-size: 13px; padding: 10px 16px; }
+  .pa-linha .pa-codigo-input { margin-left: 0; margin-top: 2px; width: 100%; font-size: 13px; }
 }
 
 @media (max-width: 400px) {
   body { padding: 12px 8px 60px; }
   :root { --cell-size: 20px; }
-  .pa-grid { gap: 3px; }
-  .pa-codigo-input { font-size: 11px; width: 86px; padding: 3px 5px; margin-left: 6px; letter-spacing: 1px; }
+  .pa-linha-cells { gap: 3px; }
   .pa-grid-wrap { padding: 10px 6px 8px; }
   .pa-btn-limpar, .pa-btn-avancar, .pa-btn-verificar { font-size: 12px; padding: 9px 14px; }
+  .pa-linha .pa-codigo-input { font-size: 12px; letter-spacing: 1px; }
 }

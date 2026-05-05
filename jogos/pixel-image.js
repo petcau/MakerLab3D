@@ -95,18 +95,26 @@ function renderDesafio() {
 
   const container = document.getElementById('px-grid');
   container.innerHTML = '';
-  // Grid: N células + 1 coluna de input
-  container.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size)) auto`;
+  container.style.gridTemplateColumns = '';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.gap = '4px';
+  container.style.alignItems = 'flex-start';
 
   d.codigos.forEach((codigo, row) => {
-    // Células pintadas (estáticas)
+    const linha = document.createElement('div');
+    linha.className = 'px-linha';
+
+    const cellsWrap = document.createElement('div');
+    cellsWrap.className = 'px-linha-cells';
+
     const cells = decodeLinha(codigo, cols);
     for (let col = 0; col < cols; col++) {
       const cell = document.createElement('div');
       cell.className = 'px-cell' + (cells[col] === 1 ? ' px-cell-on' : '');
-      container.appendChild(cell);
+      cellsWrap.appendChild(cell);
     }
-    // Input do código
+
     const input = document.createElement('input');
     input.type        = 'text';
     input.className   = 'px-codigo-input';
@@ -114,7 +122,10 @@ function renderDesafio() {
     input.placeholder = 'ex: 3 1 2';
     input.autocomplete = 'off';
     input.addEventListener('keydown', e => { if (e.key === 'Enter') window.verificar(); });
-    container.appendChild(input);
+
+    linha.appendChild(cellsWrap);
+    linha.appendChild(input);
+    container.appendChild(linha);
   });
 
   // Foca no primeiro input

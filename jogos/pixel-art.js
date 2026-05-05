@@ -161,14 +161,25 @@ function renderGridCodificar() {
 
   const container = document.getElementById('pa-grid');
   container.innerHTML = '';
-  container.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size)) auto`;
+  container.style.gridTemplateColumns = '';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.gap = '4px';
+  container.style.alignItems = 'flex-start';
 
   for (let row = 0; row < rows; row++) {
+    const linha = document.createElement('div');
+    linha.className = 'pa-linha';
+
+    const cellsWrap = document.createElement('div');
+    cellsWrap.className = 'pa-linha-cells';
+
     for (let col = 0; col < cols; col++) {
       const cell = document.createElement('div');
       cell.className = 'pa-cell' + (estadoGrid[row][col] === 1 ? ' pa-cell-on' : '');
-      container.appendChild(cell);
+      cellsWrap.appendChild(cell);
     }
+
     const input = document.createElement('input');
     input.type         = 'text';
     input.className    = 'pa-codigo-input';
@@ -176,7 +187,10 @@ function renderGridCodificar() {
     input.placeholder  = 'ex: 3 1 2';
     input.autocomplete = 'off';
     input.addEventListener('keydown', e => { if (e.key === 'Enter') window.verificar(); });
-    container.appendChild(input);
+
+    linha.appendChild(cellsWrap);
+    linha.appendChild(input);
+    container.appendChild(linha);
   }
 
   setTimeout(() => document.getElementById('pa-input-0')?.focus(), 100);
