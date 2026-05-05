@@ -105,7 +105,7 @@ body {
 /* ── Grid ────────────────────────────────────────────── */
 .px-linha {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 4px;
 }
@@ -276,7 +276,7 @@ body {
   .px-grid-wrap { padding: 14px 10px 10px; }
   .px-actions { gap: 10px; padding: 12px 14px 18px; }
   .px-btn-limpar, .px-btn-verificar { font-size: 13px; padding: 10px 16px; }
-  .px-linha .px-codigo { padding-left: 0; margin-top: 2px; font-size: 13px; letter-spacing: 1px; }
+  .px-linha .px-codigo { padding-left: 8px; font-size: 13px; letter-spacing: 1px; }
 }
 
 @media (max-width: 400px) {

@@ -144,7 +144,7 @@ body {
 /* ── Grid ────────────────────────────────────────────── */
 .pa-linha {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 4px;
 }
@@ -326,7 +326,7 @@ body {
   .pa-grid-wrap { padding: 14px 10px 10px; }
   .pa-actions { gap: 10px; padding: 12px 14px 18px; }
   .pa-btn-limpar, .pa-btn-avancar, .pa-btn-verificar { font-size: 13px; padding: 10px 16px; }
-  .pa-linha .pa-codigo-input { margin-left: 0; margin-top: 2px; width: 100%; font-size: 13px; }
+  .pa-linha .pa-codigo-input { font-size: 13px; }
 }
 
 @media (max-width: 400px) {
