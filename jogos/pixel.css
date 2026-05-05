@@ -66,17 +66,17 @@ body {
 /* ── Game Box ─────────────────────────────────────────── */
 .px-box {
   width: 100%; max-width: 760px;
-  background: linear-gradient(170deg, #2e6ec4 0%, #2560b0 50%, #2a65bc 100%);
+  background: #fff;
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 12px 50px rgba(0,0,0,0.4), 0 0 0 2px rgba(232,119,34,0.3);
+  box-shadow: 0 12px 50px rgba(0,0,0,0.15), 0 0 0 2px rgba(232,119,34,0.25);
 }
 
 /* ── Top bar ─────────────────────────────────────────── */
 .px-top {
   padding: 18px 24px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  background: rgba(0,0,0,0.2);
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
   text-align: center;
 }
 .px-tag {
@@ -84,7 +84,7 @@ body {
   font-size: 10px; font-weight: 900;
   text-transform: uppercase; letter-spacing: 2px;
   color: #fff;
-  background: rgba(0,0,0,0.3);
+  background: var(--laranja);
   padding: 3px 12px; border-radius: 20px;
   display: inline-block;
   margin-bottom: 8px;
@@ -93,13 +93,13 @@ body {
   font-family: 'Nunito', sans-serif;
   font-size: 11px; font-weight: 900;
   text-transform: uppercase; letter-spacing: 2px;
-  color: rgba(255,255,255,0.9);
+  color: var(--azul);
   margin-bottom: 4px;
 }
 .px-instrucao {
   font-family: 'Nunito', sans-serif;
   font-size: 13px; font-weight: 600;
-  color: rgba(255,255,255,0.6);
+  color: var(--azul-med);
 }
 
 /* ── Grid ────────────────────────────────────────────── */
@@ -134,23 +134,22 @@ body {
 .px-cell {
   width: var(--cell-size);
   height: var(--cell-size);
-  background: rgba(255,255,255,0.15);
-  border: 1.5px solid rgba(255,255,255,0.4);
+  background: #e5e7eb;
+  border: 1.5px solid #d1d5db;
   border-radius: 7px;
   cursor: pointer;
   transition: background 0.1s, transform 0.1s, border-color 0.1s;
 }
 .px-cell:hover {
-  background: rgba(232,119,34,0.35);
-  border-color: rgba(232,119,34,0.7);
-  transform: scale(1.1);
+  background: rgba(232,119,34,0.25);
+  border-color: rgba(232,119,34,0.6);
+  transform: scale(1.08);
 }
 .px-cell-on {
   background: var(--laranja) !important;
-  border-color: var(--laranja) !important;
-  box-shadow: 0 0 8px rgba(232,119,34,0.7), inset 0 1px 0 rgba(255,255,255,0.2);
+  border-color: #c2440e !important;
+  box-shadow: 0 0 6px rgba(232,119,34,0.5);
 }
-.px-cell-on:hover { background: #f08030 !important; border-color: #f08030 !important; }
 .px-cell-certo {
   outline: 2px solid #22c55e;
   outline-offset: 1px;
@@ -164,15 +163,15 @@ body {
 .px-codigo {
   font-family: 'Share Tech Mono', monospace;
   font-size: 18px;
-  color: rgba(255,255,255,0.9);
+  color: var(--azul);
   padding-left: 16px;
   white-space: nowrap;
   letter-spacing: 2px;
   transition: color 0.25s;
   user-select: none;
 }
-.px-codigo-certo  { color: #86efac; font-weight: 700; }
-.px-codigo-errado { color: #fca5a5; }
+.px-codigo-certo  { color: #16a34a; font-weight: 700; }
+.px-codigo-errado { color: #dc2626; }
 
 /* ── Feedback ────────────────────────────────────────── */
 .px-feedback {
@@ -181,8 +180,8 @@ body {
   font-family: 'Nunito', sans-serif;
   font-size: 15px; font-weight: 700; text-align: center;
 }
-.px-feedback-ok  { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); color: #86efac; }
-.px-feedback-err { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; }
+.px-feedback-ok  { background: #f0fdf4; border: 1px solid #a7f3d0; color: #15803d; }
+.px-feedback-err { background: #fdf2f2; border: 1px solid #fca5a5; color: #b91c1c; }
 
 /* ── Actions ─────────────────────────────────────────── */
 .px-actions {
@@ -190,17 +189,18 @@ body {
   justify-content: center;
   gap: 14px;
   padding: 16px 20px 24px;
+  border-top: 1px solid #e5e7eb;
 }
 .px-btn-limpar {
-  background: rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.85);
-  border: 1.5px solid rgba(255,255,255,0.2);
+  background: #f3f4f6;
+  color: var(--azul);
+  border: 1.5px solid #d1d5db;
   border-radius: 14px;
   padding: 12px 24px;
   font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800;
   cursor: pointer; transition: background 0.2s;
 }
-.px-btn-limpar:hover { background: rgba(255,255,255,0.2); }
+.px-btn-limpar:hover { background: #e5e7eb; }
 .px-btn-verificar {
   background: var(--laranja);
   color: #fff; border: none; border-radius: 14px;
