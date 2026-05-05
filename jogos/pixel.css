@@ -135,6 +135,7 @@ body {
   display: grid;
   gap: 4px;
   align-items: center;
+  margin: 0 auto;
 }
 .px-cell {
   width: var(--cell-size);
