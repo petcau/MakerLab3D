@@ -918,57 +918,89 @@ function renderForm(id, d) {
 }
 
 function inicializarPainelJogos() {
-  const jogos = [
-    { label: 'Quiz',              emoji: '🎯', cls: 'form-section-quiz',     bodyId: 'quiz-body',     state: window.quizState },
-    { label: 'Caça ao Bug',       emoji: '🐛', cls: 'form-section-bug',      bodyId: 'bug-body',      state: window.bugState },
-    { label: 'Qual Componente?',  emoji: '🔌', cls: 'form-section-comp',     bodyId: 'comp-body',     state: window.compState },
-    { label: 'Ordena o Código',   emoji: '🔀', cls: 'form-section-ordena',   bodyId: 'ordena-body',   state: window.ordenaState },
-    { label: 'Complete o Código', emoji: '📝', cls: 'form-section-complete', bodyId: 'complete-body', state: window.completeState },
-    { label: 'Conecta os Pontos', emoji: '🔗', cls: 'form-section-conecta',  bodyId: 'conecta-body',  state: window.conectaState },
-    { label: 'Simulador BOX',     emoji: '📦', cls: 'form-section-box',      bodyId: 'box-body',      state: window.boxState },
-    { label: 'Código Binário',    emoji: '💻', cls: 'form-section-binario',  bodyId: 'binario-body',  state: window.binarioState },
-    { label: 'Lógica do Sistema', emoji: '🧩', cls: 'form-section-logica',   bodyId: 'logica-body',   state: window.logicaState },
-    { label: 'Palavra Secreta',   emoji: '🔐', cls: 'form-section-palavra',  bodyId: 'palavra-body',  state: window.palavraState },
-    { label: 'Desarmar a Bomba', emoji: '💣', cls: 'form-section-bomba',    bodyId: 'bomba-body',    state: window.bombaState },
-    { label: 'Pixel Image',      emoji: '🖼️', cls: 'form-section-pixel-img', bodyId: 'pixel-img-body', state: window.pixelImgState },
-    { label: 'Pixel Code',       emoji: '🎨', cls: 'form-section-pixel',    bodyId: 'pixel-body',    state: window.pixelState },
-    { label: 'Pixel Art',        emoji: '🖌️', cls: 'form-section-pixel-art', bodyId: 'pixel-art-body', state: window.pixelArtState },
+  const grupos = [
+    {
+      label: 'Geral',
+      jogos: [
+        { label: 'Quiz',              emoji: '🎯', cls: 'form-section-quiz',     bodyId: 'quiz-body',     state: window.quizState },
+      ],
+    },
+    {
+      label: 'Eletrônica',
+      jogos: [
+        { label: 'Qual Componente?',  emoji: '🔌', cls: 'form-section-comp',     bodyId: 'comp-body',     state: window.compState },
+        { label: 'Conecta os Pontos', emoji: '🔗', cls: 'form-section-conecta',  bodyId: 'conecta-body',  state: window.conectaState },
+        { label: 'Simulador BOX',     emoji: '📦', cls: 'form-section-box',      bodyId: 'box-body',      state: window.boxState },
+      ],
+    },
+    {
+      label: 'Programação',
+      jogos: [
+        { label: 'Caça ao Bug',       emoji: '🐛', cls: 'form-section-bug',      bodyId: 'bug-body',      state: window.bugState },
+        { label: 'Ordena o Código',   emoji: '🔀', cls: 'form-section-ordena',   bodyId: 'ordena-body',   state: window.ordenaState },
+        { label: 'Complete o Código', emoji: '📝', cls: 'form-section-complete', bodyId: 'complete-body', state: window.completeState },
+        { label: 'Lógica do Sistema', emoji: '🧩', cls: 'form-section-logica',   bodyId: 'logica-body',   state: window.logicaState },
+      ],
+    },
+    {
+      label: 'Pensamento Computacional',
+      jogos: [
+        { label: 'Código Binário',   emoji: '💻', cls: 'form-section-binario',   bodyId: 'binario-body',   state: window.binarioState },
+        { label: 'Palavra Secreta',  emoji: '🔐', cls: 'form-section-palavra',   bodyId: 'palavra-body',   state: window.palavraState },
+        { label: 'Desarmar a Bomba', emoji: '💣', cls: 'form-section-bomba',     bodyId: 'bomba-body',     state: window.bombaState },
+        { label: 'Pixel Code',       emoji: '🎨', cls: 'form-section-pixel',     bodyId: 'pixel-body',     state: window.pixelState },
+        { label: 'Pixel Image',      emoji: '🖼️', cls: 'form-section-pixel-img', bodyId: 'pixel-img-body', state: window.pixelImgState },
+        { label: 'Pixel Art',        emoji: '🖌️', cls: 'form-section-pixel-art', bodyId: 'pixel-art-body', state: window.pixelArtState },
+      ],
+    },
   ];
 
+  const todosJogos = grupos.flatMap(g => g.jogos);
+
   // Oculta todas as seções sem dados
-  jogos.forEach(j => {
+  todosJogos.forEach(j => {
     const sec = document.querySelector('.' + j.cls);
     if (sec) sec.style.display = (j.state && j.state.length > 0) ? '' : 'none';
   });
 
-  // Cria barra de botões
+  // Cria barra de botões agrupada
   const bar = document.createElement('div');
   bar.className = 'jogos-nav-bar';
 
-  jogos.forEach(j => {
-    const temDados = j.state && j.state.length > 0;
-    const btn = document.createElement('button');
-    btn.className = 'jogo-nav-btn' + (temDados ? ' tem-dados' : '');
-    btn.innerHTML = `${j.emoji} ${j.label}${temDados ? ` <span class="jogo-nav-count">${j.state.length}</span>` : ''}`;
-    btn.title = temDados ? `${j.state.length} item(s) criado(s)` : 'Clique para criar';
+  grupos.forEach(grupo => {
+    const row = document.createElement('div');
+    row.className = 'jogos-nav-grupo';
 
-    btn.onclick = () => {
-      const sec = document.querySelector('.' + j.cls);
-      if (!sec) return;
-      const visivel = sec.style.display !== 'none';
-      sec.style.display = visivel ? 'none' : '';
-      btn.classList.toggle('ativo', !visivel);
-      // Ao abrir, expande o corpo do jogo se estiver colapsado
-      if (!visivel) {
-        const body = document.getElementById(j.bodyId);
-        if (body && body.style.display === 'none') body.style.display = '';
-        setTimeout(() => sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
-      }
-    };
+    const catLabel = document.createElement('span');
+    catLabel.className = 'jogos-nav-cat';
+    catLabel.textContent = grupo.label + ':';
+    row.appendChild(catLabel);
 
-    // Marca como ativo se a seção está visível
-    if (temDados) btn.classList.add('ativo');
-    bar.appendChild(btn);
+    grupo.jogos.forEach(j => {
+      const temDados = j.state && j.state.length > 0;
+      const btn = document.createElement('button');
+      btn.className = 'jogo-nav-btn' + (temDados ? ' tem-dados' : '');
+      btn.innerHTML = `${j.emoji} ${j.label}${temDados ? ` <span class="jogo-nav-count">${j.state.length}</span>` : ''}`;
+      btn.title = temDados ? `${j.state.length} item(s) criado(s)` : 'Clique para criar';
+
+      btn.onclick = () => {
+        const sec = document.querySelector('.' + j.cls);
+        if (!sec) return;
+        const visivel = sec.style.display !== 'none';
+        sec.style.display = visivel ? 'none' : '';
+        btn.classList.toggle('ativo', !visivel);
+        if (!visivel) {
+          const body = document.getElementById(j.bodyId);
+          if (body && body.style.display === 'none') body.style.display = '';
+          setTimeout(() => sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+        }
+      };
+
+      if (temDados) btn.classList.add('ativo');
+      row.appendChild(btn);
+    });
+
+    bar.appendChild(row);
   });
 
   // Insere a barra após o título do painel
