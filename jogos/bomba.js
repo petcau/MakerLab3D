@@ -1,5 +1,5 @@
 import { db }                                from './shared/firebase.js';
-import { somEntrada, somAcerto, somErro, somFinalBom, somFinalRuim } from './shared/audio.js';
+import { somEntrada, somAcerto, somErro, somFinalBom, somFinalRuim, nota, getAudioCtx } from './shared/audio.js';
 import { carregarPlayerCard }               from './shared/player-card.js';
 import { registrarTentativa, salvarResultado } from './shared/resultado.js';
 import { erroLoad, mostrarBloqueado, mostrarTelaFinal, voltarCard as _voltarCard } from './shared/ui.js';
@@ -177,11 +177,16 @@ function iniciarTimer() {
   timerInterval = setInterval(timerTick, 1000);
 }
 
+function somTick() {
+  try { const c = getAudioCtx(); nota(c, 880, 'square', 0, 0.06, 0.18); } catch(e) {}
+}
+
 function timerTick() {
   timerRestante--;
   atualizarTimer();
   if (timerRestante <= 10) {
     document.getElementById('bm-timer').classList.add('urgente');
+    somTick();
   }
   if (timerRestante <= 0) {
     clearInterval(timerInterval);
@@ -306,10 +311,55 @@ function mostrarFeedback(texto, ok) {
   fb.style.display = '';
 }
 
+function somExplosao() {
+  try {
+    const c = getAudioCtx();
+    const now = c.currentTime;
+
+    // Grave profundo (boom)
+    const osc1 = c.createOscillator(), g1 = c.createGain();
+    osc1.connect(g1); g1.connect(c.destination);
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(90, now);
+    osc1.frequency.exponentialRampToValueAtTime(18, now + 1.2);
+    g1.gain.setValueAtTime(0, now);
+    g1.gain.linearRampToValueAtTime(1.0, now + 0.015);
+    g1.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+    osc1.start(now); osc1.stop(now + 1.4);
+
+    // Ruído de explosão
+    const bufSize = c.sampleRate * 1.8;
+    const buf = c.createBuffer(1, bufSize, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+    const noise = c.createBufferSource();
+    noise.buffer = buf;
+    const filt = c.createBiquadFilter();
+    filt.type = 'lowpass'; filt.frequency.value = 1200;
+    const gn = c.createGain();
+    noise.connect(filt); filt.connect(gn); gn.connect(c.destination);
+    gn.gain.setValueAtTime(0, now);
+    gn.gain.linearRampToValueAtTime(0.9, now + 0.02);
+    gn.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+    noise.start(now); noise.stop(now + 1.8);
+
+    // Crunch médio
+    const osc2 = c.createOscillator(), g2 = c.createGain();
+    osc2.connect(g2); g2.connect(c.destination);
+    osc2.type = 'sawtooth';
+    osc2.frequency.setValueAtTime(220, now);
+    osc2.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+    g2.gain.setValueAtTime(0, now);
+    g2.gain.linearRampToValueAtTime(0.55, now + 0.01);
+    g2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    osc2.start(now); osc2.stop(now + 0.4);
+  } catch(e) {}
+}
+
 // ── Bomb explodes ─────────────────────────────────────
 function bombaExplode() {
   jogoAtivo = false;
-  somFinalRuim();
+  somExplosao();
   document.getElementById('bm-bomba-emoji').textContent = '💥';
   document.body.classList.add('explodindo');
   // mark remaining wires as failed

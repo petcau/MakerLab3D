@@ -104,18 +104,18 @@ body.explodindo {
   margin-bottom: 4px;
 }
 .bm-timer {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 52px; font-weight: 400;
-  color: #ff4d4d;
+  font-family: 'Nunito', sans-serif;
+  font-size: 52px; font-weight: 900;
+  color: #ffffff;
   line-height: 1;
-  text-shadow: 0 0 20px rgba(255,77,77,0.9), 0 0 40px rgba(255,77,77,0.5);
-  letter-spacing: 4px;
+  text-shadow: 0 0 16px rgba(255,255,255,0.9), 0 0 40px rgba(255,255,255,0.5), 0 2px 0 rgba(0,0,0,0.5);
+  letter-spacing: 2px;
   transition: color 0.3s;
 }
 .bm-timer.urgente {
   animation: timer-pulsa 0.5s ease-in-out infinite;
-  color: #ff2020;
-  text-shadow: 0 0 30px rgba(255,32,32,0.8);
+  color: #FF2020;
+  text-shadow: 0 0 20px rgba(255,32,32,1), 0 0 50px rgba(255,32,32,0.8), 0 0 80px rgba(255,32,32,0.4), 0 2px 0 rgba(0,0,0,0.5);
 }
 @keyframes timer-pulsa {
   0%, 100% { transform: scale(1); }
@@ -152,8 +152,8 @@ body.explodindo {
   transition: opacity 0.3s;
 }
 .bm-fio.bm-fio-atual { opacity: 1; }
-.bm-fio.bm-fio-ok    { opacity: 0.45; }
-.bm-fio.bm-fio-err   { opacity: 0.6; }
+.bm-fio.bm-fio-ok    { opacity: 1; }
+.bm-fio.bm-fio-err   { opacity: 1; }
 
 .bm-fio-conector {
   width: 18px; height: 18px;
@@ -173,7 +173,7 @@ body.explodindo {
   transition: all 0.3s;
 }
 .bm-fio-ok .bm-fio-linha {
-  opacity: 0.35;
+  opacity: 1;
 }
 .bm-fio-ok .bm-fio-linha::after {
   content: '';
@@ -443,7 +443,7 @@ body.explodindo {
 @media (max-width: 520px) {
   /* Top row */
   .bm-top-row { gap: 10px; padding: 12px 14px; }
-  .bm-timer { font-size: 32px; letter-spacing: 1px; }
+  .bm-timer { font-size: 30px; letter-spacing: 1px; }
   .bm-timer-label { font-size: 8px; letter-spacing: 1px; }
   .bm-bomb-emoji { font-size: 44px; }
   .bm-fios { gap: 10px; padding: 12px 10px; }
@@ -455,12 +455,12 @@ body.explodindo {
   /* Challenge — botão cai em linha separada, full-width */
   .bm-desafio-wrap { padding: 14px 12px; }
   .bm-challenge { gap: 8px; flex-wrap: wrap; justify-content: center; }
-  .bm-val-box { padding: 10px 14px; min-width: 0; }
-  .bm-input-box { padding: 10px 12px; min-width: 0; }
-  .bm-arrow { font-size: 20px; }
-  .bm-valor { font-size: 30px; }
-  .bm-input { font-size: 30px; width: 90px; }
-  .bm-input::placeholder { font-size: 26px; }
+  .bm-val-box { padding: 10px 12px; min-width: 0; flex: 1; }
+  .bm-input-box { padding: 10px 10px; min-width: 0; flex: 1; }
+  .bm-arrow { font-size: 20px; flex-shrink: 0; }
+  .bm-valor { font-size: 22px; letter-spacing: 1px; }
+  .bm-input { font-size: 22px; width: 100%; letter-spacing: 1px; }
+  .bm-input::placeholder { font-size: 20px; }
   .bm-sistema { font-size: 9px; margin-top: 6px; }
   .bm-sistema-alvo { font-size: 9px; margin-top: 6px; }
   .bm-btn { flex: 0 0 100%; padding: 10px; font-size: 14px; margin-top: 2px; }
@@ -486,9 +486,9 @@ body.explodindo {
   .bm-bomb-emoji { font-size: 36px; }
   .bm-fio-num { font-size: 9px; }
   .bm-fio-meta { gap: 4px; }
-  .bm-valor { font-size: 26px; }
-  .bm-input { font-size: 26px; width: 80px; }
-  .bm-input::placeholder { font-size: 22px; }
+  .bm-valor { font-size: 20px; letter-spacing: 1px; }
+  .bm-input { font-size: 20px; width: 100%; letter-spacing: 1px; }
+  .bm-input::placeholder { font-size: 18px; }
   .ps-bit-card { width: 50px; height: 66px; padding: 6px 4px 8px; }
   .ps-bit-circle { width: 30px; height: 30px; }
   .ps-board { gap: 5px; }
