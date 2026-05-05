@@ -163,7 +163,7 @@ body {
   padding: 24px 24px 16px;
   overflow-x: auto;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
 }
 .pa-grid {
   display: grid;
