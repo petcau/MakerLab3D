@@ -305,9 +305,18 @@ body {
 
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 520px) {
-  :root { --cell-size: 26px; }
-  .pa-codigo-input { font-size: 13px; width: 120px; padding: 4px 7px; }
-  .pa-grid-wrap { padding: 14px 12px 10px; }
+  :root { --cell-size: 24px; }
+  .pa-codigo-input { font-size: 13px; width: 110px; padding: 4px 7px; margin-left: 10px; }
+  .pa-grid-wrap { padding: 14px 10px 10px; }
   .pa-actions { gap: 10px; padding: 12px 14px 18px; }
   .pa-btn-limpar, .pa-btn-avancar, .pa-btn-verificar { font-size: 13px; padding: 10px 16px; }
+}
+
+@media (max-width: 400px) {
+  body { padding: 12px 8px 60px; }
+  :root { --cell-size: 20px; }
+  .pa-grid { gap: 3px; }
+  .pa-codigo-input { font-size: 11px; width: 86px; padding: 3px 5px; margin-left: 6px; letter-spacing: 1px; }
+  .pa-grid-wrap { padding: 10px 6px 8px; }
+  .pa-btn-limpar, .pa-btn-avancar, .pa-btn-verificar { font-size: 12px; padding: 9px 14px; }
 }
