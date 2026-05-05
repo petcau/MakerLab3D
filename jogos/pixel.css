@@ -255,9 +255,18 @@ body {
 
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 520px) {
-  :root { --cell-size: 26px; }
+  :root { --cell-size: 24px; }
   .px-codigo { font-size: 11px; padding-left: 8px; letter-spacing: 1px; }
-  .px-grid-wrap { padding: 14px 12px 10px; }
+  .px-grid-wrap { padding: 14px 10px 10px; }
   .px-actions { gap: 10px; padding: 12px 14px 18px; }
   .px-btn-limpar, .px-btn-verificar { font-size: 13px; padding: 10px 16px; }
+}
+
+@media (max-width: 400px) {
+  body { padding: 12px 8px 60px; }
+  :root { --cell-size: 20px; }
+  .px-grid { gap: 3px; }
+  .px-codigo { font-size: 9px; padding-left: 5px; letter-spacing: 0; white-space: normal; }
+  .px-grid-wrap { padding: 10px 6px 8px; }
+  .px-btn-limpar, .px-btn-verificar { font-size: 12px; padding: 9px 14px; }
 }
