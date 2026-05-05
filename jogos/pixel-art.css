@@ -164,7 +164,12 @@ body {
   overflow-x: auto;
   display: flex;
   justify-content: flex-start;
+  scrollbar-width: thick;
+  scrollbar-color: var(--laranja) #e5e7eb;
 }
+.pa-grid-wrap::-webkit-scrollbar { height: 8px; }
+.pa-grid-wrap::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 4px; }
+.pa-grid-wrap::-webkit-scrollbar-thumb { background: var(--laranja); border-radius: 4px; }
 .pa-grid {
   display: grid;
   gap: 4px;

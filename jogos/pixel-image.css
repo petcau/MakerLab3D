@@ -125,7 +125,12 @@ body {
   overflow-x: auto;
   display: flex;
   justify-content: flex-start;
+  scrollbar-width: thick;
+  scrollbar-color: var(--laranja) #e5e7eb;
 }
+.px-grid-wrap::-webkit-scrollbar { height: 8px; }
+.px-grid-wrap::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 4px; }
+.px-grid-wrap::-webkit-scrollbar-thumb { background: var(--laranja); border-radius: 4px; }
 .px-grid {
   display: grid;
   gap: 4px;
