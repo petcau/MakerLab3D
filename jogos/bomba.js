@@ -117,7 +117,8 @@ window.clicarLetra = function(letra) {
   if (!jogoAtivo) return;
   const input = document.getElementById('bm-input');
   if (!input || input.disabled) return;
-  input.value = letra;
+  const d = desafios[atualDesafio];
+  input.value = (d?.para === 'decimal') ? letraParaNum(letra).toString() : letra;
   input.classList.add('bm-input-flash');
   setTimeout(() => {
     input.classList.remove('bm-input-flash');
@@ -245,7 +246,6 @@ function renderDesafio() {
   input.value = '';
   input.disabled = false;
   input.placeholder = '?';
-  input.focus();
   document.getElementById('bm-feedback').style.display = 'none';
 }
 
@@ -295,7 +295,6 @@ window.confirmarResposta = function() {
       document.getElementById('bm-feedback').style.display = 'none';
       input.value = '';
       input.disabled = false;
-      input.focus();
     }, 1200);
   }
 };

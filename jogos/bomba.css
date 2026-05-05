@@ -350,7 +350,8 @@ body.explodindo {
   caret-color: var(--danger);
 }
 .bm-input::placeholder { color: rgba(255,255,255,0.35); font-size: 36px; }
-.bm-input:focus { border-bottom-color: #fff; }
+.bm-input[readonly] { cursor: default; caret-color: transparent; }
+.bm-input:focus { border-bottom-color: rgba(255,255,255,0.85); outline: none; }
 .bm-input-shake { animation: shake 0.35s ease; }
 @keyframes shake {
   0%,100% { transform: translateX(0); }
