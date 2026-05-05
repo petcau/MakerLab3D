@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Code | MakerLab 3D</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="pixel.css">
+</head>
+<body>
+
+  <div class="q-header">
+    <div class="q-logo">MAKER<span>LAB</span> 3D</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="q-card-nome" id="q-card-nome">Carregando...</div>
+      <button onclick="voltarCard()" style="background:#2F3447;color:#fff;border:none;border-radius:10px;padding:6px 14px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;">← Voltar</button>
+    </div>
+  </div>
+
+  <div class="player-card" id="player-card" style="display:none;">
+    <img class="player-avatar" id="player-avatar" src="../assets/robo 1_transparente.png" alt="Avatar">
+    <div class="player-info">
+      <div class="player-jogo" id="player-jogo">Pixel Code</div>
+      <div class="player-nome" id="player-nome">—</div>
+      <div class="player-escola" id="player-escola"></div>
+      <div class="player-nivel" id="player-nivel">Nível 1</div>
+    </div>
+    <div class="player-pts-box">
+      <div class="player-pts-val" id="player-pts">0</div>
+      <div class="player-pts-label">Pontos<br>acumulados</div>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    Carregando jogo...
+  </div>
+
+  <!-- Game Box -->
+  <div class="px-box" id="px-box" style="display:none;">
+
+    <div class="px-top">
+      <div class="px-tag">🔌 TECNOLOGIA UNPLUG</div>
+      <div class="px-num" id="px-num">DESAFIO 1 DE 1</div>
+      <div class="px-instrucao">Pinte os pixels seguindo os códigos de cada linha</div>
+    </div>
+
+    <div class="px-grid-wrap">
+      <div class="px-grid" id="px-grid"></div>
+    </div>
+
+    <div class="px-feedback" id="px-feedback" style="display:none;"></div>
+
+    <div class="px-actions">
+      <button class="px-btn-limpar" onclick="limparGrid()">🗑 Limpar</button>
+      <button class="px-btn-verificar" onclick="verificar()">✅ Verificar</button>
+    </div>
+
+  </div>
+
+  <!-- Tela Final -->
+  <div class="tela-final" id="tela-final" style="display:none;">
+    <div class="tela-final-box">
+      <div class="tf-top" id="tf-top">
+        <div class="tf-top-row">
+          <div class="tf-emoji" id="tf-emoji">🎨</div>
+          <div class="tf-top-text">
+            <div class="tf-titulo" id="tf-titulo">Resultado</div>
+            <div class="tf-sub" id="tf-sub"></div>
+          </div>
+        </div>
+      </div>
+      <div class="tf-body">
+        <div id="tf-badge-concluido" style="display:none;text-align:center;margin-bottom:16px;">
+          <span style="background:#f0fdf4;border:1.5px solid #a7f3d0;color:#15803d;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;padding:6px 18px;border-radius:20px;">✅ Desafio Concluído!</span>
+        </div>
+        <div class="tf-avatar-wrap">
+          <img class="tf-avatar" id="tf-avatar" src="../assets/robo 1_transparente.png" alt="">
+        </div>
+        <div class="res-grid">
+          <div class="res-item rac">
+            <div class="res-val" id="res-ac">0</div>
+            <div class="res-label">Grids<br>Corretos</div>
+          </div>
+          <div class="res-item rer">
+            <div class="res-val" id="res-er">0</div>
+            <div class="res-label">Grids<br>Errados</div>
+          </div>
+          <div class="res-item rpt">
+            <div class="res-val" id="res-pt">0</div>
+            <div class="res-label">Pontos</div>
+          </div>
+        </div>
+        <p class="res-msg" id="res-msg"></p>
+        <p style="text-align:center;font-size:13px;font-weight:700;margin-bottom:16px;" id="tf-tentativas-restantes"></p>
+        <button class="btn-tentar" onclick="reiniciar()">🔄 Tentar Novamente</button>
+        <div style="height:10px;"></div>
+        <button class="btn-voltar" onclick="voltarCard()">← Voltar ao Card</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="pixel.js"></script>
+</body>
+</html>

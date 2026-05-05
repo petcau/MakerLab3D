@@ -1,0 +1,313 @@
+:root {
+  --danger:   #ef4444;
+  --success:  #22c55e;
+  --ouro:     #E5C84C;
+  --ouro-esc: #C9A830;
+  --azul:     #2F3447;
+  --azul-med: #5F6480;
+  --borda:    #DDD8CC;
+  --bg:       #ECEAE4;
+  --vermelho: #e74c3c;
+  --laranja:  #E87722;
+  --cell-size: 38px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito Sans', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 60px;
+}
+
+/* ── Header ─────────────────────────────────────────── */
+.q-header {
+  width: 100%; max-width: 760px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.q-logo { font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 900; color: var(--azul); }
+.q-logo span { color: var(--ouro-esc); }
+.q-card-nome { font-size: 13px; font-weight: 700; color: var(--azul-med); max-width: 200px; text-align: right; }
+
+/* ── Player Card ─────────────────────────────────────── */
+.player-card {
+  width: 100%; max-width: 760px;
+  background: linear-gradient(135deg, #fffbea, #fff8d0);
+  border: 2px solid var(--ouro-esc);
+  border-radius: 20px;
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 18px;
+  box-shadow: 0 0 0 4px rgba(201,168,48,0.10);
+}
+.player-avatar { width: 68px; height: 68px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 8px rgba(201,168,48,0.3)); }
+.player-info { flex: 1; }
+.player-nome { font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 900; color: var(--azul); }
+.player-jogo { display: inline-block; font-size: 11px; font-weight: 900; color: #fff; background: #7c3aed; text-transform: uppercase; letter-spacing: 1.5px; padding: 2px 10px; border-radius: 20px; margin-bottom: 4px; font-family: 'Nunito', sans-serif; }
+.player-escola { font-size: 10px; font-weight: 600; color: #999; margin-top: 1px; font-family: 'Nunito', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.player-nivel { font-size: 11px; font-weight: 700; color: var(--ouro-esc); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.player-pts-box {
+  display: flex; flex-direction: column; align-items: center;
+  background: rgba(201,168,48,0.12); border: 1px solid rgba(201,168,48,0.3);
+  border-radius: 12px; padding: 8px 16px; flex-shrink: 0;
+}
+.player-pts-val { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900; color: var(--ouro-esc); line-height: 1; }
+.player-pts-label { text-align: center; font-size: 10px; font-weight: 700; color: #b8910e; text-transform: uppercase; letter-spacing: 1px; }
+
+/* ── Loading ─────────────────────────────────────────── */
+.loading { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 80px 20px; color: var(--azul-med); font-size: 15px; }
+.spinner { width: 44px; height: 44px; border: 3px solid var(--borda); border-top-color: var(--laranja); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Game Box ─────────────────────────────────────────── */
+.pa-box {
+  width: 100%; max-width: 760px;
+  background: #fff;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 12px 50px rgba(0,0,0,0.12), 0 0 0 2px rgba(232,119,34,0.2);
+}
+
+/* ── Top bar ─────────────────────────────────────────── */
+.pa-top {
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  text-align: center;
+}
+.pa-tag {
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px; font-weight: 900;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: #fff;
+  background: var(--laranja);
+  padding: 3px 12px; border-radius: 20px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+.pa-num {
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px; font-weight: 900;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: var(--azul);
+  margin-bottom: 12px;
+}
+
+/* ── Barra de fases ──────────────────────────────────── */
+.pa-fase-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 10px;
+}
+.pa-fase-step {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.pa-fase-dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 900;
+  background: #e5e7eb; color: #9ca3af;
+  transition: all 0.3s;
+}
+.pa-fase-label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: #9ca3af;
+  transition: color 0.3s;
+}
+.pa-fase-linha {
+  width: 60px; height: 2px;
+  background: #e5e7eb;
+  margin: 0 8px;
+  margin-bottom: 18px;
+  transition: background 0.3s;
+}
+.pa-fase-step.ativa .pa-fase-dot  { background: var(--laranja); color: #fff; box-shadow: 0 4px 12px rgba(232,119,34,0.4); }
+.pa-fase-step.ativa .pa-fase-label { color: var(--laranja); }
+.pa-fase-step.concluida .pa-fase-dot  { background: var(--success); color: #fff; }
+.pa-fase-step.concluida .pa-fase-label { color: var(--success); }
+.pa-fase-linha.ativa { background: var(--laranja); }
+
+.pa-instrucao {
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: var(--azul-med);
+}
+
+/* ── Grid ────────────────────────────────────────────── */
+.pa-grid-wrap {
+  padding: 24px 24px 16px;
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+}
+.pa-grid {
+  display: grid;
+  gap: 4px;
+  align-items: center;
+}
+
+/* Fase 1: células clicáveis */
+.pa-cell {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  background: #e5e7eb;
+  border: 1.5px solid #d1d5db;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.1s, transform 0.1s, border-color 0.1s;
+}
+.pa-cell.clickavel:hover {
+  background: rgba(232,119,34,0.3);
+  border-color: rgba(232,119,34,0.6);
+  transform: scale(1.08);
+}
+.pa-cell-on {
+  background: var(--laranja) !important;
+  border-color: #c2440e !important;
+  box-shadow: 0 0 6px rgba(232,119,34,0.5);
+}
+.pa-cell-on.clickavel:hover { background: #f08030 !important; }
+.pa-cell-certo  { outline: 2px solid #22c55e; outline-offset: 1px; }
+.pa-cell-errado { outline: 2px solid #ef4444; outline-offset: 1px; }
+
+/* Input do código (fase 2) */
+.pa-codigo-input {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  color: var(--azul);
+  background: #f3f4f6;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
+  padding: 4px 10px;
+  margin-left: 14px;
+  width: 160px;
+  outline: none;
+  letter-spacing: 2px;
+  transition: border-color 0.2s, background 0.2s;
+  caret-color: var(--laranja);
+}
+.pa-codigo-input::placeholder { color: #9ca3af; }
+.pa-codigo-input:focus { border-color: var(--laranja); background: #fff; }
+.pa-codigo-input.pa-input-certo  { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
+.pa-codigo-input.pa-input-errado { border-color: #ef4444; background: #fdf2f2; color: #b91c1c; }
+
+/* ── Feedback ────────────────────────────────────────── */
+.pa-feedback {
+  margin: 0 20px 4px;
+  padding: 12px 18px; border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px; font-weight: 700; text-align: center;
+}
+.pa-feedback-ok  { background: #f0fdf4; border: 1px solid #a7f3d0; color: #15803d; }
+.pa-feedback-err { background: #fdf2f2; border: 1px solid #fca5a5; color: #b91c1c; }
+
+/* ── Actions ─────────────────────────────────────────── */
+.pa-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  padding: 16px 20px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+.pa-btn-limpar {
+  background: #f3f4f6; color: var(--azul);
+  border: 1.5px solid #d1d5db; border-radius: 14px;
+  padding: 12px 24px;
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800;
+  cursor: pointer; transition: background 0.2s;
+}
+.pa-btn-limpar:hover { background: #e5e7eb; }
+.pa-btn-avancar {
+  background: var(--azul); color: #fff;
+  border: none; border-radius: 14px;
+  padding: 12px 32px;
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(47,52,71,0.3);
+}
+.pa-btn-avancar:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(47,52,71,0.4); }
+.pa-btn-verificar {
+  background: var(--laranja); color: #fff;
+  border: none; border-radius: 14px;
+  padding: 12px 32px;
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(232,119,34,0.4);
+}
+.pa-btn-verificar:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,119,34,0.55); }
+
+/* ── Final Screen ────────────────────────────────────── */
+.tela-final {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.tela-final-box {
+  background: #fff; border-radius: 24px;
+  width: 100%; max-width: 420px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+  animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+.tf-top { padding: 20px 24px 18px; border-radius: 24px 24px 0 0; }
+.tf-top.top-ok  { background: linear-gradient(135deg, #14532d, #16a34a); }
+.tf-top.top-err { background: linear-gradient(135deg, #7f1d1d, #dc2626); }
+.tf-top-row { display: flex; align-items: center; gap: 14px; }
+.tf-top-text { flex: 1; }
+.tf-emoji { font-size: 40px; flex-shrink: 0; }
+.tf-titulo { font-family: 'Nunito', sans-serif; font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 2px; }
+.tf-sub { font-size: 12px; color: rgba(255,255,255,0.6); }
+.tf-body { padding: 16px 20px 20px; }
+.tf-avatar-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+.tf-avatar { width: 70px; height: 70px; object-fit: contain; }
+.res-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
+.res-item { text-align: center; padding: 10px 6px; border-radius: 12px; border: 1.5px solid #e5e7eb; }
+.res-val { font-family: 'Nunito', sans-serif; font-size: 26px; font-weight: 900; line-height: 1; }
+.res-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--azul-med); margin-top: 5px; }
+.rac { border-color: #a7f3d0; background: #f0fdf4; }
+.rer { border-color: #fca5a5; background: #fdf2f2; }
+.rpt { border-color: var(--ouro); background: #fffbea; }
+.rac .res-val { color: var(--success); }
+.rer .res-val { color: var(--vermelho); }
+.rpt .res-val { color: var(--ouro-esc); }
+.res-msg { text-align: center; font-size: 13px; color: var(--azul-med); line-height: 1.5; margin-bottom: 12px; }
+.btn-tentar {
+  display: block; width: 100%;
+  background: linear-gradient(135deg, #16a34a, #166534);
+  color: #fff; border: none; border-radius: 12px; padding: 11px;
+  font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
+  cursor: pointer; margin-bottom: 8px; transition: all 0.2s;
+}
+.btn-tentar:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-voltar {
+  display: block; width: 100%;
+  background: var(--azul); color: #fff;
+  border: none; border-radius: 12px; padding: 11px;
+  font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
+  cursor: pointer; transition: background 0.2s;
+}
+.btn-voltar:hover { background: #3d4460; }
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 520px) {
+  :root { --cell-size: 26px; }
+  .pa-codigo-input { font-size: 13px; width: 120px; padding: 4px 7px; }
+  .pa-grid-wrap { padding: 14px 12px 10px; }
+  .pa-actions { gap: 10px; padding: 12px 14px 18px; }
+  .pa-btn-limpar, .pa-btn-avancar, .pa-btn-verificar { font-size: 13px; padding: 10px 16px; }
+}

@@ -276,6 +276,12 @@ async function carregarCard() {
           { col: 'resultados_conecta',  sufixo: '_conecta_'  },
           { col: 'resultados_box',      sufixo: '_box_'      },
           { col: 'resultados_binario',  sufixo: '_binario_'  },
+          { col: 'resultados_logica',   sufixo: '_logica_'   },
+          { col: 'resultados_palavra',  sufixo: '_palavra_'  },
+          { col: 'resultados_bomba',    sufixo: '_bomba_'    },
+          { col: 'resultados_pixel',     sufixo: '_pixel_'     },
+          { col: 'resultados_pixel_img', sufixo: '_pixel_img_' },
+          { col: 'resultados_pixel_art', sufixo: '_pixel_art_' },
         ];
         await Promise.all(todosIds.flatMap(id =>
           colsJogos.map(async ({ col, sufixo }) => {
@@ -449,6 +455,11 @@ async function carregarCard() {
     const temBox      = (d.box_desafios      || []).length > 0;
     const temBinario  = (d.binario_desafios  || []).length > 0;
     const temLogica   = (d.logica_desafios   || []).length > 0;
+    const temPalavra  = (d.palavra_desafios  || []).length > 0;
+    const temBomba    = (d.bomba_desafios    || []).length > 0;
+    const temPixel    = (d.pixel_desafios      || []).length > 0;
+    const temPixelImg = (d.pixel_img_desafios  || []).length > 0;
+    const temPixelArt = (d.pixel_art_desafios  || []).length > 0;
 
     if (temQuiz) {
       const totalPerguntas = d.quiz.length;
@@ -550,6 +561,61 @@ async function carregarCard() {
       if (btnLogica) btnLogica.onclick = () => window.open('../jogos/logica-sistema.html?card=' + cardId, '_blank');
     }
 
+    if (temPalavra) {
+      const totalDesafios = d.palavra_desafios.length;
+      const totalPontos   = d.palavra_desafios.reduce((sum, p) => sum + (parseFloat(p.pontos) || 1.0), 0);
+      document.getElementById('palavra-total-desafios').textContent  = totalDesafios;
+      document.getElementById('palavra-total-pontos').textContent    = totalPontos % 1 === 0 ? totalPontos : totalPontos.toFixed(1);
+      document.getElementById('palavra-tentativas-stat').textContent = d.palavra_tentativas || 3;
+      show('sec-palavra');
+      const btnPalavra = document.getElementById('palavra-jogar-btn');
+      if (btnPalavra) btnPalavra.onclick = () => window.open('../jogos/palavra-secreta.html?card=' + cardId, '_blank');
+    }
+
+    if (temBomba) {
+      const totalDesafios = d.bomba_desafios.length;
+      const totalPontos   = d.bomba_desafios.reduce((sum, p) => sum + (parseFloat(p.pontos) || 2.0), 0);
+      document.getElementById('bomba-total-desafios').textContent  = totalDesafios;
+      document.getElementById('bomba-total-pontos').textContent    = totalPontos % 1 === 0 ? totalPontos : totalPontos.toFixed(1);
+      document.getElementById('bomba-tentativas-stat').textContent = d.bomba_tentativas || 3;
+      show('sec-bomba');
+      const btnBomba = document.getElementById('bomba-jogar-btn');
+      if (btnBomba) btnBomba.onclick = () => window.open('../jogos/bomba.html?card=' + cardId, '_blank');
+    }
+
+    if (temPixel) {
+      const totalDesafios = d.pixel_desafios.length;
+      const totalPontos   = d.pixel_desafios.reduce((sum, p) => sum + (parseFloat(p.pontos) || 2.0), 0);
+      document.getElementById('pixel-total-desafios').textContent  = totalDesafios;
+      document.getElementById('pixel-total-pontos').textContent    = totalPontos % 1 === 0 ? totalPontos : totalPontos.toFixed(1);
+      document.getElementById('pixel-tentativas-stat').textContent = d.pixel_tentativas || 3;
+      show('sec-pixel');
+      const btnPixel = document.getElementById('pixel-jogar-btn');
+      if (btnPixel) btnPixel.onclick = () => window.open('../jogos/pixel.html?card=' + cardId, '_blank');
+    }
+
+    if (temPixelImg) {
+      const totalDesafios = d.pixel_img_desafios.length;
+      const totalPontos   = d.pixel_img_desafios.reduce((sum, p) => sum + (parseFloat(p.pontos) || 2.0), 0);
+      document.getElementById('pixel-img-total-desafios').textContent  = totalDesafios;
+      document.getElementById('pixel-img-total-pontos').textContent    = totalPontos % 1 === 0 ? totalPontos : totalPontos.toFixed(1);
+      document.getElementById('pixel-img-tentativas-stat').textContent = d.pixel_img_tentativas || 3;
+      show('sec-pixel-img');
+      const btnPixelImg = document.getElementById('pixel-img-jogar-btn');
+      if (btnPixelImg) btnPixelImg.onclick = () => window.open('../jogos/pixel-image.html?card=' + cardId, '_blank');
+    }
+
+    if (temPixelArt) {
+      const totalDesafios = d.pixel_art_desafios.length;
+      const totalPontos   = d.pixel_art_desafios.reduce((sum, p) => sum + (parseFloat(p.pontos) || 5.0), 0);
+      document.getElementById('pixel-art-total-desafios').textContent  = totalDesafios;
+      document.getElementById('pixel-art-total-pontos').textContent    = totalPontos % 1 === 0 ? totalPontos : totalPontos.toFixed(1);
+      document.getElementById('pixel-art-tentativas-stat').textContent = d.pixel_art_tentativas || 3;
+      show('sec-pixel-art');
+      const btnPixelArt = document.getElementById('pixel-art-jogar-btn');
+      if (btnPixelArt) btnPixelArt.onclick = () => window.open('../jogos/pixel-art.html?card=' + cardId, '_blank');
+    }
+
     // Retorna lista de sufixos dos jogos presentes em um card
     function jogosDoCardData(data) {
       const jogos = [];
@@ -562,11 +628,16 @@ async function carregarCard() {
       if ((data.box_desafios     || []).length > 0) jogos.push('_box_');
       if ((data.binario_desafios || []).length > 0) jogos.push('_binario_');
       if ((data.logica_desafios  || []).length > 0) jogos.push('_logica_');
+      if ((data.palavra_desafios || []).length > 0) jogos.push('_palavra_');
+      if ((data.bomba_desafios   || []).length > 0) jogos.push('_bomba_');
+      if ((data.pixel_desafios     || []).length > 0) jogos.push('_pixel_');
+      if ((data.pixel_img_desafios || []).length > 0) jogos.push('_pixel_img_');
+      if ((data.pixel_art_desafios || []).length > 0) jogos.push('_pixel_art_');
       return jogos;
     }
 
     // ---- AUTH — atualiza quiz e bug juntos ----
-    if (temQuiz || temBug || temComp || temOrdena || temComplete || temConecta || temBox || temBinario || temLogica || todosIds.length > 0) {
+    if (temQuiz || temBug || temComp || temOrdena || temComplete || temConecta || temBox || temBinario || temLogica || temPalavra || temBomba || temPixel || temPixelImg || temPixelArt || todosIds.length > 0) {
       // Carrega níveis customizados da seção (se houver)
       let NIVEL_NOMES  = ['Explorador Iniciante','Curioso Digital','Aprendiz Maker','Construtor Criativo','Inventor em Ação','Programador Maker','Engenheiro Criativo','Inovador Maker','Mentor Maker','Mestre Maker'];
       let NIVEL_PONTOS = [0,100,250,500,900,1400,2000,2700,3500,4500];
@@ -615,7 +686,7 @@ async function carregarCard() {
             if (ptsVal) ptsVal.textContent = pts;
 
             // Tentativas
-            const docId      = alunoLogado.uid + (prefixo === 'bug' ? '_bug_' : prefixo === 'comp' ? '_comp_' : prefixo === 'ordena' ? '_ordena_' : prefixo === 'complete' ? '_complete_' : prefixo === 'conecta' ? '_conecta_' : prefixo === 'box' ? '_box_' : prefixo === 'binario' ? '_binario_' : prefixo === 'logica' ? '_logica_' : '_') + cardId;
+            const docId      = alunoLogado.uid + (prefixo === 'bug' ? '_bug_' : prefixo === 'comp' ? '_comp_' : prefixo === 'ordena' ? '_ordena_' : prefixo === 'complete' ? '_complete_' : prefixo === 'conecta' ? '_conecta_' : prefixo === 'box' ? '_box_' : prefixo === 'binario' ? '_binario_' : prefixo === 'logica' ? '_logica_' : prefixo === 'palavra' ? '_palavra_' : prefixo === 'bomba' ? '_bomba_' : prefixo === 'pixel' ? '_pixel_' : prefixo === 'pixel-img' ? '_pixel_img_' : prefixo === 'pixel-art' ? '_pixel_art_' : '_') + cardId;
             const resultSnap = await getDoc(doc(db, cardCollecao, docId));
             const usadas     = resultSnap.exists() ? (resultSnap.data().tentativas_usadas || 0) : 0;
 
@@ -645,8 +716,8 @@ async function carregarCard() {
             if (btnWrap && usadas >= tentPermitidas && resultSnap.exists()) {
               const r = resultSnap.data();
               const melhorPts = (r.melhor_pontos || 0) % 1 === 0 ? (r.melhor_pontos || 0) : (r.melhor_pontos || 0).toFixed(1);
-              const totalItens = prefixo === 'bug' ? r.total_codigos : (prefixo === 'ordena' || prefixo === 'complete' || prefixo === 'conecta' || prefixo === 'box' || prefixo === 'binario' || prefixo === 'logica') ? r.total_desafios : r.total_perguntas;
-              const labelItens = prefixo === 'bug' ? 'bugs encontrados' : (prefixo === 'ordena' || prefixo === 'complete' || prefixo === 'conecta' || prefixo === 'box' || prefixo === 'binario' || prefixo === 'logica') ? 'desafios' : 'perguntas corretas';
+              const totalItens = prefixo === 'bug' ? r.total_codigos : (prefixo === 'ordena' || prefixo === 'complete' || prefixo === 'conecta' || prefixo === 'box' || prefixo === 'binario' || prefixo === 'logica' || prefixo === 'palavra' || prefixo === 'bomba' || prefixo === 'pixel' || prefixo === 'pixel-img' || prefixo === 'pixel-art') ? r.total_desafios : r.total_perguntas;
+              const labelItens = prefixo === 'bug' ? 'bugs encontrados' : prefixo === 'palavra' ? 'palavras' : prefixo === 'bomba' ? 'códigos' : (prefixo === 'pixel' || prefixo === 'pixel-img' || prefixo === 'pixel-art') ? 'grids' : (prefixo === 'ordena' || prefixo === 'complete' || prefixo === 'conecta' || prefixo === 'box' || prefixo === 'binario' || prefixo === 'logica') ? 'desafios' : 'perguntas corretas';
               btnWrap.innerHTML =
                 '<div class="quiz-encerrado-box">' +
                   '<div class="quiz-encerrado-titulo">🔒 ' + (prefixo === 'bug' ? 'Caça encerrada' : prefixo === 'comp' ? 'Jogo encerrado' : prefixo === 'ordena' ? 'Jogo encerrado' : prefixo === 'conecta' ? 'Jogo encerrado' : 'Quiz encerrado') + '</div>' +
@@ -670,6 +741,11 @@ async function carregarCard() {
           if (temBox)      await preencherBloco('box',      'resultados_box',      d.box_tentativas      || 3);
           if (temBinario)  await preencherBloco('binario',  'resultados_binario',  d.binario_tentativas  || 3);
           if (temLogica)   await preencherBloco('logica',   'resultados_logica',   d.logica_tentativas   || 3);
+          if (temPalavra)  await preencherBloco('palavra',  'resultados_palavra',  d.palavra_tentativas  || 3);
+          if (temBomba)    await preencherBloco('bomba',    'resultados_bomba',    d.bomba_tentativas    || 3);
+          if (temPixel)    await preencherBloco('pixel',      'resultados_pixel',     d.pixel_tentativas     || 3);
+          if (temPixelImg) await preencherBloco('pixel-img', 'resultados_pixel_img', d.pixel_img_tentativas || 3);
+          if (temPixelArt) await preencherBloco('pixel-art', 'resultados_pixel_art', d.pixel_art_tentativas || 3);
 
           // ---- PONTOS CONQUISTADOS (soma de todos os jogos deste card) ----
           const uid = alunoLogado.uid;
@@ -683,6 +759,11 @@ async function carregarCard() {
             getDoc(doc(db, 'resultados_box',      uid + '_box_' + cardId)),
             getDoc(doc(db, 'resultados_binario',  uid + '_binario_' + cardId)),
             getDoc(doc(db, 'resultados_logica',   uid + '_logica_'  + cardId)),
+            getDoc(doc(db, 'resultados_palavra',  uid + '_palavra_' + cardId)),
+            getDoc(doc(db, 'resultados_bomba',    uid + '_bomba_'   + cardId)),
+            getDoc(doc(db, 'resultados_pixel',     uid + '_pixel_'       + cardId)),
+            getDoc(doc(db, 'resultados_pixel_img', uid + '_pixel_img_'   + cardId)),
+            getDoc(doc(db, 'resultados_pixel_art', uid + '_pixel_art_'   + cardId)),
           ]);
           const totalConquistado = resultDocs.reduce((sum, s) => sum + (s.exists() ? (parseFloat(s.data().melhor_pontos) || 0) : 0), 0);
           if (totalConquistado > 0) {
@@ -695,7 +776,8 @@ async function carregarCard() {
           const idxAtual = [
             temQuiz ? 0 : -1, temBug ? 1 : -1, temComp ? 2 : -1, temOrdena ? 3 : -1,
             temComplete ? 4 : -1, temConecta ? 5 : -1, temBox ? 6 : -1, temBinario ? 7 : -1,
-            temLogica ? 8 : -1,
+            temLogica ? 8 : -1, temPalavra ? 9 : -1, temBomba ? 10 : -1,
+            temPixel ? 11 : -1, temPixelImg ? 12 : -1, temPixelArt ? 13 : -1,
           ].filter(i => i >= 0);
 
           // Card sem jogos próprios → auto-aprovado; com jogos → todos devem ter sido jogados
@@ -741,7 +823,7 @@ async function carregarCard() {
           alunoLogado = aluno;
           await atualizarDadosAluno();
         } else {
-          ['quiz', 'bug', 'comp', 'ordena', 'complete', 'conecta', 'box', 'binario', 'logica'].forEach(p => {
+          ['quiz', 'bug', 'comp', 'ordena', 'complete', 'conecta', 'box', 'binario', 'logica', 'palavra', 'bomba', 'pixel', 'pixel-img', 'pixel-art'].forEach(p => {
             const btn   = document.getElementById(p + '-jogar-btn');
             const aviso = document.getElementById(p + '-login-aviso');
             if (btn)   { btn.textContent = '🔒 Fazer Login'; btn.onclick = () => window.location.href = '../login.html'; }

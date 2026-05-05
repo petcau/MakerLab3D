@@ -195,6 +195,10 @@ async function listarCards() {
           { k: 'complete_desafios', def: 1.0 }, { k: 'conecta_desafios', def: 2.0 },
           { k: 'box_desafios', def: 2.0 }, { k: 'binario_desafios', def: 1.0 },
           { k: 'logica_desafios', def: 2.0 },
+          { k: 'palavra_desafios', def: 1.0 },
+          { k: 'bomba_desafios', def: 2.0 },
+          { k: 'pixel_desafios', def: 2.0 },
+          { k: 'pixel_art_desafios', def: 5.0 },
         ];
         let qtdJogos = 0;
         let qtdPontos = 0;
@@ -270,6 +274,11 @@ function renderForm(id, d) {
   window.boxState      = d.box_desafios      ? JSON.parse(JSON.stringify(d.box_desafios))      : [];
   window.binarioState  = d.binario_desafios  ? JSON.parse(JSON.stringify(d.binario_desafios))  : [];
   window.logicaState   = d.logica_desafios   ? JSON.parse(JSON.stringify(d.logica_desafios))   : [];
+  window.palavraState  = d.palavra_desafios  ? JSON.parse(JSON.stringify(d.palavra_desafios))  : [];
+  window.bombaState    = d.bomba_desafios    ? JSON.parse(JSON.stringify(d.bomba_desafios))    : [];
+  window.pixelState    = d.pixel_desafios     ? JSON.parse(JSON.stringify(d.pixel_desafios))     : [];
+  window.pixelImgState = d.pixel_img_desafios ? JSON.parse(JSON.stringify(d.pixel_img_desafios)) : [];
+  window.pixelArtState = d.pixel_art_desafios ? JSON.parse(JSON.stringify(d.pixel_art_desafios)) : [];
   window.glossarioState = d.glossario ? JSON.parse(JSON.stringify(d.glossario)) : [];
   window.anexosState   = d.anexos ? JSON.parse(JSON.stringify(d.anexos)) : [];
   // Carrega links de todos os tipos dinâmicos (com fallback para legado)
@@ -752,6 +761,108 @@ function renderForm(id, d) {
       </div>
     </div>
 
+    <div class="form-section form-section-palavra">
+      <div class="section-title-row">
+        <span class="section-title">🔐 Palavra Secreta</span>
+        <button class="btn-toggle-jogo" onclick="togglePalavra()" id="btn-toggle-palavra">▼ Criar Jogo</button>
+      </div>
+      <div id="palavra-body" style="display:none;">
+        <span class="helper-text" style="display:block;margin-bottom:8px;margin-top:12px;">
+          O aluno usa o tabuleiro binário (CS Unplugged) para decodificar cada letra e descobrir a palavra secreta que abre o cofre.
+        </span>
+        <div class="form-row" style="margin-bottom:16px;align-items:flex-end;">
+          <div class="form-group" style="max-width:220px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-palavra-tentativas" min="1" max="10" value="${d.palavra_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarPalavra()">+ Palavra</button>
+          </div>
+        </div>
+        <div id="palavra-lista"></div>
+      </div>
+    </div>
+
+    <div class="form-section form-section-bomba">
+      <div class="section-title-row">
+        <span class="section-title">💣 Desarmar a Bomba</span>
+        <button class="btn-toggle-jogo" onclick="toggleBomba()" id="btn-toggle-bomba">▼ Criar Jogo</button>
+      </div>
+      <div id="bomba-body" style="display:none;">
+        <div class="form-row" style="gap:14px;flex-wrap:wrap;margin-bottom:12px;">
+          <div class="form-group" style="max-width:160px;">
+            <label>Tempo (segundos)</label>
+            <input type="number" id="f-bomba-tempo" min="10" max="600" value="${d.bomba_tempo || 60}">
+          </div>
+          <div class="form-group" style="max-width:160px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-bomba-tentativas" min="1" max="10" value="${d.bomba_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarBomba()">+ Código</button>
+          </div>
+        </div>
+        <div id="bomba-lista"></div>
+      </div>
+    </div>
+
+    <div class="form-section form-section-pixel-img">
+      <div class="section-title-row">
+        <span class="section-title">🖼️ Pixel Image</span>
+        <button class="btn-toggle-jogo" onclick="togglePixelImg()" id="btn-toggle-pixel-img">▼ Criar Jogo</button>
+      </div>
+      <div id="pixel-img-body" style="display:none;">
+        <div class="form-row" style="gap:14px;flex-wrap:wrap;margin-bottom:12px;">
+          <div class="form-group" style="max-width:160px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-pixel-img-tentativas" min="1" max="10" value="${d.pixel_img_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarPixelImg()">+ Grid</button>
+          </div>
+        </div>
+        <div id="pixel-img-lista"></div>
+      </div>
+    </div>
+
+    <div class="form-section form-section-pixel">
+      <div class="section-title-row">
+        <span class="section-title">🎨 Pixel Code</span>
+        <button class="btn-toggle-jogo" onclick="togglePixel()" id="btn-toggle-pixel">▼ Criar Jogo</button>
+      </div>
+      <div id="pixel-body" style="display:none;">
+        <div class="form-row" style="gap:14px;flex-wrap:wrap;margin-bottom:12px;">
+          <div class="form-group" style="max-width:160px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-pixel-tentativas" min="1" max="10" value="${d.pixel_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarPixel()">+ Grid</button>
+          </div>
+        </div>
+        <div id="pixel-lista"></div>
+      </div>
+    </div>
+
+    <div class="form-section form-section-pixel-art">
+      <div class="section-title-row">
+        <span class="section-title">🖌️ Pixel Art</span>
+        <button class="btn-toggle-jogo" onclick="togglePixelArt()" id="btn-toggle-pixel-art">▼ Criar Jogo</button>
+      </div>
+      <div id="pixel-art-body" style="display:none;">
+        <div class="form-row" style="gap:14px;flex-wrap:wrap;margin-bottom:12px;">
+          <div class="form-group" style="max-width:160px;">
+            <label>Tentativas permitidas</label>
+            <input type="number" id="f-pixel-art-tentativas" min="1" max="10" value="${d.pixel_art_tentativas || 3}">
+          </div>
+          <div style="margin-left:12px;">
+            <button class="vg-btn-add" onclick="adicionarPixelArt()">+ Grid</button>
+          </div>
+        </div>
+        <div id="pixel-art-lista"></div>
+      </div>
+    </div>
+
     </div><!-- /painel-jogos -->
 
     <!-- Anexos -->
@@ -793,6 +904,16 @@ function renderForm(id, d) {
   atualizarBtnBinario();
   renderLogicaLista();
   atualizarBtnLogica();
+  renderPalavraLista();
+  atualizarBtnPalavra();
+  renderBombaLista();
+  atualizarBtnBomba();
+  renderPixelImgLista();
+  atualizarBtnPixelImg();
+  renderPixelLista();
+  atualizarBtnPixel();
+  renderPixelArtLista();
+  atualizarBtnPixelArt();
   inicializarPainelJogos();
 }
 
@@ -807,6 +928,11 @@ function inicializarPainelJogos() {
     { label: 'Simulador BOX',     emoji: '📦', cls: 'form-section-box',      bodyId: 'box-body',      state: window.boxState },
     { label: 'Código Binário',    emoji: '💻', cls: 'form-section-binario',  bodyId: 'binario-body',  state: window.binarioState },
     { label: 'Lógica do Sistema', emoji: '🧩', cls: 'form-section-logica',   bodyId: 'logica-body',   state: window.logicaState },
+    { label: 'Palavra Secreta',   emoji: '🔐', cls: 'form-section-palavra',  bodyId: 'palavra-body',  state: window.palavraState },
+    { label: 'Desarmar a Bomba', emoji: '💣', cls: 'form-section-bomba',    bodyId: 'bomba-body',    state: window.bombaState },
+    { label: 'Pixel Image',      emoji: '🖼️', cls: 'form-section-pixel-img', bodyId: 'pixel-img-body', state: window.pixelImgState },
+    { label: 'Pixel Code',       emoji: '🎨', cls: 'form-section-pixel',    bodyId: 'pixel-body',    state: window.pixelState },
+    { label: 'Pixel Art',        emoji: '🖌️', cls: 'form-section-pixel-art', bodyId: 'pixel-art-body', state: window.pixelArtState },
   ];
 
   // Oculta todas as seções sem dados
@@ -1089,7 +1215,7 @@ const CAMPOS_DIFF = [
   'avaliacao','desafio_extra','video_url','publicado',
   'imagem_url','atividade_imagem_url',
   'quiz','bug_codigos','comp_perguntas','ordena_desafios','complete_desafios',
-  'conecta_desafios','box_desafios','binario_desafios','logica_desafios','glossario','anexos'
+  'conecta_desafios','box_desafios','binario_desafios','logica_desafios','palavra_desafios','bomba_desafios','pixel_desafios','pixel_img_desafios','pixel_art_desafios','glossario','anexos'
 ];
 
 const DIFF_LABELS = {
@@ -1103,7 +1229,7 @@ const DIFF_LABELS = {
   quiz:'Quiz', bug_codigos:'Caça ao Bug', comp_perguntas:'Qual Componente',
   ordena_desafios:'Ordena Código', complete_desafios:'Complete o Código',
   conecta_desafios:'Conecta os Pontos', box_desafios:'BOX', binario_desafios:'Binário',
-  logica_desafios:'Lógica do Sistema',
+  logica_desafios:'Lógica do Sistema', palavra_desafios:'Palavra Secreta', bomba_desafios:'Desarmar Bomba', pixel_desafios:'Pixel Code', pixel_img_desafios:'Pixel Image', pixel_art_desafios:'Pixel Art',
   glossario:'Glossário', anexos:'Anexos',
   pergunta:'Pergunta', resposta:'Resposta', respostas:'Respostas', correta:'Correta',
   pontos:'Pontos', codigo:'Código', titulo:'Título', linhas:'Linhas',
@@ -1196,6 +1322,17 @@ window.salvarCard = async function (publicar) {
     binario_tentativas: parseInt(document.getElementById('f-binario-tentativas')?.value) || 3,
     logica_desafios:    window.logicaState   || [],
     logica_tentativas:  parseInt(document.getElementById('f-logica-tentativas')?.value)  || 3,
+    palavra_desafios:   window.palavraState  || [],
+    palavra_tentativas: parseInt(document.getElementById('f-palavra-tentativas')?.value) || 3,
+    bomba_desafios:     window.bombaState    || [],
+    bomba_tempo:        parseInt(document.getElementById('f-bomba-tempo')?.value)        || 60,
+    bomba_tentativas:   parseInt(document.getElementById('f-bomba-tentativas')?.value)   || 3,
+    pixel_img_desafios:     window.pixelImgState  || [],
+    pixel_img_tentativas:   parseInt(document.getElementById('f-pixel-img-tentativas')?.value) || 3,
+    pixel_desafios:         window.pixelState     || [],
+    pixel_tentativas:       parseInt(document.getElementById('f-pixel-tentativas')?.value)     || 3,
+    pixel_art_desafios:     window.pixelArtState  || [],
+    pixel_art_tentativas:   parseInt(document.getElementById('f-pixel-art-tentativas')?.value) || 3,
     tentativas:       parseInt(document.getElementById('f-tentativas')?.value) || 3,
     video_url:        document.getElementById('f-video-url')?.value?.trim() || '',
     publicado:        publicar,
@@ -1226,7 +1363,7 @@ window.salvarCard = async function (publicar) {
       iaDescAnterior      = dadosAnt.ia_desc_complementar   || '';
       iaPromptAnterior    = dadosAnt.ia_prompt_usado         || '';
       // Gera diff campo a campo
-      const CAMPOS_JOGOS = new Set(['quiz','bug_codigos','comp_perguntas','ordena_desafios','complete_desafios','conecta_desafios','box_desafios','binario_desafios','logica_desafios']);
+      const CAMPOS_JOGOS = new Set(['quiz','bug_codigos','comp_perguntas','ordena_desafios','complete_desafios','conecta_desafios','box_desafios','binario_desafios','logica_desafios','palavra_desafios','bomba_desafios','pixel_desafios','pixel_img_desafios','pixel_art_desafios']);
       const diff = [];
       CAMPOS_DIFF.forEach(k => {
         if (CAMPOS_JOGOS.has(k)) {
@@ -3038,8 +3175,557 @@ function renderLogicaLista() {
     </div>`).join('');
 }
 
+// ==============================
+// ── PALAVRA SECRETA ────────────
+// ==============================
+
+window.palavraState = [];
+
+window.togglePalavra = function() {
+  const body = document.getElementById('palavra-body');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnPalavra();
+};
+
+function atualizarBtnPalavra() {
+  const btn  = document.getElementById('btn-toggle-palavra');
+  const body = document.getElementById('palavra-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = (window.palavraState || []).length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' palavra' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Palavras (' + n + ')' : '▼ Criar Jogo');
+}
+
+window.adicionarPalavra = function() {
+  if (!window.palavraState) window.palavraState = [];
+  if (window.palavraState.length >= 20) return;
+  window.palavraState.push({ palavra: '', dica: '', pontos: 1.0, tempo: 0 });
+  renderPalavraLista();
+  recalcularPontos();
+  atualizarBtnPalavra();
+};
+
+window.removerPalavra = function(di) {
+  window.palavraState.splice(di, 1);
+  renderPalavraLista();
+  recalcularPontos();
+  atualizarBtnPalavra();
+};
+
+window.updatePalavra = function(di, field, value) {
+  if (!window.palavraState[di]) return;
+  window.palavraState[di][field] = value;
+  if (field === 'pontos') recalcularPontos();
+  if (field === 'palavra') renderPalavraLista();
+};
+
+function renderPalavraLista() {
+  const lista = document.getElementById('palavra-lista');
+  if (!lista) return;
+  if (!window.palavraState) window.palavraState = [];
+
+  if (window.palavraState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhuma palavra cadastrada. Clique em + Palavra para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = window.palavraState.map((d, di) => {
+    const pw = (d.palavra || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 15);
+    const binPreview = pw
+      ? pw.split('').map(l => (l.charCodeAt(0) - 64).toString(2).padStart(5, '0')).join(' ')
+      : '';
+    return `
+    <div class="quiz-card">
+      <div class="quiz-card-header">
+        <strong>Palavra ${di + 1}</strong>
+        ${pw ? '<span style="font-size:12px;color:#16a34a;margin-left:8px;font-weight:900;letter-spacing:3px;">' + pw + '</span>' : ''}
+        <button onclick="removerPalavra(${di})" class="btn-rem-quiz">✕ Remover</button>
+      </div>
+      <div class="quiz-card-body">
+        <div class="form-row" style="gap:14px;flex-wrap:wrap;">
+          <div class="form-group" style="flex:1;min-width:160px;">
+            <label>Palavra Secreta (A–Z)</label>
+            <input type="text" maxlength="15" placeholder="Ex: MAKER"
+              value="${escHtml(d.palavra || '')}"
+              oninput="updatePalavra(${di},'palavra',this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,15));this.value=window.palavraState[${di}].palavra"
+              style="font-family:'Nunito',sans-serif;letter-spacing:3px;font-size:16px;font-weight:900;text-transform:uppercase;">
+            <span class="helper-text">Apenas letras A–Z, sem acentos ou espaços</span>
+          </div>
+          <div class="form-group" style="max-width:90px;">
+            <label>Pontos</label>
+            <input type="number" min="0.5" max="20" step="0.5"
+              value="${d.pontos || 1}"
+              oninput="updatePalavra(${di},'pontos',parseFloat(this.value)||1)">
+          </div>
+          <div class="form-group" style="max-width:110px;">
+            <label>Tempo (s)</label>
+            <input type="number" min="0" max="600" step="10"
+              value="${d.tempo || 0}" placeholder="0 = sem limite"
+              oninput="updatePalavra(${di},'tempo',parseInt(this.value)||0)">
+            <span class="helper-text">0 = sem timer</span>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:10px;">
+          <label>Dica (opcional)</label>
+          <input type="text" maxlength="120" placeholder="Ex: Plataforma educacional maker"
+            value="${escHtml(d.dica || '')}"
+            oninput="updatePalavra(${di},'dica',this.value)">
+        </div>
+        ${binPreview ? `<div style="margin-top:8px;font-family:monospace;font-size:10px;color:#5F6480;letter-spacing:1px;background:#f5f3ee;padding:6px 10px;border-radius:6px;word-break:break-all;">🔢 ${escHtml(binPreview)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Bomba ─────────────────────────────────────────────
+// Alphabet code: A=1 … Z=26
+const BOMBA_SISTEMAS = ['decimal','binario','letra'];
+const BOMBA_LABELS   = { decimal:'Decimal', binario:'Binário', letra:'Letra (A–Z)' };
+
+function calcularRespostaAdmin(valor, de, para) {
+  let n;
+  if (de === 'decimal') n = parseInt(valor, 10);
+  else if (de === 'binario') n = parseInt(valor, 2);
+  else if (de === 'letra') { const c = (valor || '').toUpperCase().trim(); n = (c.length === 1 && c >= 'A' && c <= 'Z') ? c.charCodeAt(0) - 64 : NaN; }
+  if (isNaN(n) || n < 1 || n > 26) return '?';
+  if (para === 'decimal') return n.toString();
+  if (para === 'binario') return n.toString(2);
+  if (para === 'letra')   return String.fromCharCode(n + 64);
+  return '?';
+}
+
+function sistemasOpts(sel) {
+  return BOMBA_SISTEMAS.map(s =>
+    `<option value="${s}" ${sel === s ? 'selected' : ''}>${BOMBA_LABELS[s]}</option>`
+  ).join('');
+}
+
+window.toggleBomba = function() {
+  const body = document.getElementById('bomba-body');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnBomba();
+};
+
+function atualizarBtnBomba() {
+  const btn  = document.getElementById('btn-toggle-bomba');
+  const body = document.getElementById('bomba-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = (window.bombaState || []).length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' código' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Códigos (' + n + ')' : '▼ Criar Jogo');
+}
+
+window.adicionarBomba = function() {
+  if (!window.bombaState) window.bombaState = [];
+  if (window.bombaState.length >= 12) return;
+  window.bombaState.push({ de: 'decimal', valor: '', para: 'letra', pontos: 2.0 });
+  renderBombaLista();
+  recalcularPontos();
+  atualizarBtnBomba();
+};
+
+window.removerBomba = function(i) {
+  window.bombaState.splice(i, 1);
+  renderBombaLista();
+  recalcularPontos();
+  atualizarBtnBomba();
+};
+
+window.updateBomba = function(i, field, value) {
+  if (!window.bombaState[i]) return;
+  window.bombaState[i][field] = value;
+  if (field === 'pontos') recalcularPontos();
+  renderBombaLista();
+};
+
+function renderBombaLista() {
+  const lista = document.getElementById('bomba-lista');
+  if (!lista) return;
+  if (!window.bombaState) window.bombaState = [];
+
+  if (window.bombaState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhum código cadastrado. Clique em + Código para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = window.bombaState.map((d, i) => {
+    const prev = d.valor ? calcularRespostaAdmin(d.valor, d.de, d.para) : '?';
+    return `
+    <div class="quiz-card">
+      <div class="quiz-card-header">
+        <strong>Código ${i + 1}</strong>
+        ${d.valor ? `<span style="font-size:12px;color:#ef4444;margin-left:8px;font-weight:900;">${escHtml(d.valor)} → ${escHtml(prev)}</span>` : ''}
+        <button onclick="removerBomba(${i})" class="btn-rem-quiz">✕ Remover</button>
+      </div>
+      <div class="quiz-card-body">
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:nowrap;">
+          <div class="form-group" style="flex:1.2;min-width:0;">
+            <label style="font-size:11px;">Origem</label>
+            <select oninput="updateBomba(${i},'de',this.value)">${sistemasOpts(d.de)}</select>
+          </div>
+          <div class="form-group" style="flex:1;min-width:0;">
+            <label style="font-size:11px;">Valor</label>
+            <input type="text" maxlength="10" placeholder="Ex: 5, A, 101"
+              value="${escHtml(d.valor || '')}"
+              oninput="updateBomba(${i},'valor',this.value.trim())">
+          </div>
+          <div class="form-group" style="flex:1.2;min-width:0;">
+            <label style="font-size:11px;">Destino</label>
+            <select oninput="updateBomba(${i},'para',this.value)">${sistemasOpts(d.para)}</select>
+          </div>
+          <div class="form-group" style="width:72px;flex-shrink:0;">
+            <label style="font-size:11px;">Pontos</label>
+            <input type="number" min="0.5" max="20" step="0.5"
+              value="${d.pontos || 2}"
+              oninput="updateBomba(${i},'pontos',parseFloat(this.value)||2)">
+          </div>
+          ${d.valor ? `<div style="flex-shrink:0;font-size:12px;color:#15803d;background:#f0fdf4;border:1px solid #a7f3d0;padding:6px 10px;border-radius:8px;font-weight:800;white-space:nowrap;align-self:flex-end;margin-bottom:1px;">✓ ${escHtml(prev)}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function escHtml(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Pixel Image ───────────────────────────────────────
+window.togglePixelImg = function() {
+  const body = document.getElementById('pixel-img-body');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnPixelImg();
+};
+
+function atualizarBtnPixelImg() {
+  const btn  = document.getElementById('btn-toggle-pixel-img');
+  const body = document.getElementById('pixel-img-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = (window.pixelImgState || []).length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' grid' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Grids (' + n + ')' : '▼ Criar Jogo');
+}
+
+window.adicionarPixelImg = function() {
+  if (!window.pixelImgState) window.pixelImgState = [];
+  if (window.pixelImgState.length >= 10) return;
+  window.pixelImgState.push({ colunas: 10, codigos: [], pontos: 2.0 });
+  renderPixelImgLista();
+  recalcularPontos();
+  atualizarBtnPixelImg();
+};
+
+window.removerPixelImg = function(i) {
+  window.pixelImgState.splice(i, 1);
+  renderPixelImgLista();
+  recalcularPontos();
+  atualizarBtnPixelImg();
+};
+
+window.updatePixelImgColunas = function(i, val) {
+  if (!window.pixelImgState[i]) return;
+  window.pixelImgState[i].colunas = parseInt(val) || 10;
+  renderPixelImgLista();
+};
+
+window.updatePixelImgPontos = function(i, val) {
+  if (!window.pixelImgState[i]) return;
+  window.pixelImgState[i].pontos = parseFloat(val) || 2.0;
+  recalcularPontos();
+};
+
+window.updatePixelImgCodigos = function(i, val) {
+  if (!window.pixelImgState[i]) return;
+  window.pixelImgState[i].codigos = val.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  renderPixelImgPreview(i);
+};
+
+function renderPixelImgPreview(idx) {
+  const preview = document.getElementById('pixel-img-preview-' + idx);
+  if (!preview) return;
+  const d = window.pixelImgState[idx];
+  if (!d || !d.codigos || d.codigos.length === 0) { preview.innerHTML = ''; return; }
+  const cols = d.colunas || 10;
+  const cellSize = Math.min(18, Math.floor(300 / cols));
+  let html = '<div style="display:inline-flex;flex-direction:column;gap:2px;margin-top:8px;">';
+  d.codigos.forEach(codigo => {
+    const nums = codigo.trim().split(/\s+/).map(Number);
+    const cells = [];
+    nums.forEach((n, i) => { for (let j = 0; j < n; j++) cells.push(i % 2 === 0 ? 0 : 1); });
+    while (cells.length < cols) cells.push(0);
+    html += '<div style="display:flex;gap:2px;">';
+    for (let c = 0; c < cols; c++) {
+      const on = cells[c] === 1;
+      html += `<div style="width:${cellSize}px;height:${cellSize}px;border-radius:2px;background:${on ? '#E87722' : '#ddd'};border:1px solid ${on ? '#c2440e' : '#ccc'};"></div>`;
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  preview.innerHTML = html;
+}
+
+function renderPixelImgLista() {
+  const lista = document.getElementById('pixel-img-lista');
+  if (!lista) return;
+  if (!window.pixelImgState) window.pixelImgState = [];
+
+  if (window.pixelImgState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhum grid cadastrado. Clique em + Grid para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = window.pixelImgState.map((d, i) => `
+    <div class="quiz-card">
+      <div class="quiz-card-header">
+        <strong>Grid ${i + 1}</strong>
+        <span style="font-size:11px;color:#6b7280;margin-left:8px;">${(d.codigos||[]).length} linha${(d.codigos||[]).length !== 1 ? 's' : ''} × ${d.colunas || 10} col</span>
+        <button onclick="removerPixelImg(${i})" class="btn-rem-quiz">✕ Remover</button>
+      </div>
+      <div class="quiz-card-body">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;">
+          <div class="form-group" style="width:100px;flex-shrink:0;">
+            <label style="font-size:11px;">Colunas</label>
+            <input type="number" min="1" max="20" value="${d.colunas || 10}"
+              oninput="updatePixelImgColunas(${i}, this.value)">
+          </div>
+          <div class="form-group" style="width:80px;flex-shrink:0;">
+            <label style="font-size:11px;">Pontos</label>
+            <input type="number" min="0.5" max="20" step="0.5" value="${d.pontos || 2}"
+              oninput="updatePixelImgPontos(${i}, this.value)">
+          </div>
+          <div class="form-group" style="flex:1;min-width:200px;">
+            <label style="font-size:11px;">Códigos (1 por linha — Ex: <code>3 1 2</code>)</label>
+            <textarea rows="6" style="font-family:monospace;font-size:12px;resize:vertical;"
+              oninput="updatePixelImgCodigos(${i}, this.value)">${escHtml((d.codigos||[]).join('\n'))}</textarea>
+          </div>
+        </div>
+        <div id="pixel-img-preview-${i}"></div>
+      </div>
+    </div>`
+  ).join('');
+
+  window.pixelImgState.forEach((_, i) => renderPixelImgPreview(i));
+}
+
+// ── Pixel Code ────────────────────────────────────────
+window.togglePixel = function() {
+  const body = document.getElementById('pixel-body');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnPixel();
+};
+
+function atualizarBtnPixel() {
+  const btn  = document.getElementById('btn-toggle-pixel');
+  const body = document.getElementById('pixel-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = (window.pixelState || []).length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' grid' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Grids (' + n + ')' : '▼ Criar Jogo');
+}
+
+window.adicionarPixel = function() {
+  if (!window.pixelState) window.pixelState = [];
+  if (window.pixelState.length >= 10) return;
+  window.pixelState.push({ colunas: 10, codigos: [], pontos: 2.0 });
+  renderPixelLista();
+  recalcularPontos();
+  atualizarBtnPixel();
+};
+
+window.removerPixel = function(i) {
+  window.pixelState.splice(i, 1);
+  renderPixelLista();
+  recalcularPontos();
+  atualizarBtnPixel();
+};
+
+window.updatePixelColunas = function(i, val) {
+  if (!window.pixelState[i]) return;
+  window.pixelState[i].colunas = parseInt(val) || 10;
+  renderPixelLista();
+};
+
+window.updatePixelPontos = function(i, val) {
+  if (!window.pixelState[i]) return;
+  window.pixelState[i].pontos = parseFloat(val) || 2.0;
+  recalcularPontos();
+};
+
+window.updatePixelCodigos = function(i, val) {
+  if (!window.pixelState[i]) return;
+  window.pixelState[i].codigos = val.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  renderPixelPreview(i);
+};
+
+function renderPixelPreview(idx) {
+  const preview = document.getElementById('pixel-preview-' + idx);
+  if (!preview) return;
+  const d = window.pixelState[idx];
+  if (!d || !d.codigos || d.codigos.length === 0) { preview.innerHTML = ''; return; }
+  const cols = d.colunas || 10;
+  const cellSize = Math.min(18, Math.floor(300 / cols));
+  let html = '<div style="display:inline-flex;flex-direction:column;gap:2px;margin-top:8px;">';
+  d.codigos.forEach(codigo => {
+    const nums = codigo.trim().split(/\s+/).map(Number);
+    const cells = [];
+    nums.forEach((n, i) => { for (let j = 0; j < n; j++) cells.push(i % 2 === 0 ? 0 : 1); });
+    while (cells.length < cols) cells.push(0);
+    html += '<div style="display:flex;gap:2px;">';
+    for (let c = 0; c < cols; c++) {
+      const on = cells[c] === 1;
+      html += `<div style="width:${cellSize}px;height:${cellSize}px;border-radius:2px;background:${on ? '#E87722' : '#ddd'};border:1px solid ${on ? '#c2440e' : '#ccc'};"></div>`;
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  preview.innerHTML = html;
+}
+
+function renderPixelLista() {
+  const lista = document.getElementById('pixel-lista');
+  if (!lista) return;
+  if (!window.pixelState) window.pixelState = [];
+
+  if (window.pixelState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhum grid cadastrado. Clique em + Grid para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = window.pixelState.map((d, i) => `
+    <div class="quiz-card">
+      <div class="quiz-card-header">
+        <strong>Grid ${i + 1}</strong>
+        <span style="font-size:11px;color:#6b7280;margin-left:8px;">${(d.codigos||[]).length} linha${(d.codigos||[]).length !== 1 ? 's' : ''} × ${d.colunas || 10} col</span>
+        <button onclick="removerPixel(${i})" class="btn-rem-quiz">✕ Remover</button>
+      </div>
+      <div class="quiz-card-body">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;">
+          <div class="form-group" style="width:100px;flex-shrink:0;">
+            <label style="font-size:11px;">Colunas</label>
+            <input type="number" min="1" max="20" value="${d.colunas || 10}"
+              oninput="updatePixelColunas(${i}, this.value)">
+          </div>
+          <div class="form-group" style="width:80px;flex-shrink:0;">
+            <label style="font-size:11px;">Pontos</label>
+            <input type="number" min="0.5" max="20" step="0.5" value="${d.pontos || 2}"
+              oninput="updatePixelPontos(${i}, this.value)">
+          </div>
+          <div class="form-group" style="flex:1;min-width:200px;">
+            <label style="font-size:11px;">Códigos (1 por linha — Ex: <code>3 1 2</code>)</label>
+            <textarea rows="6" style="font-family:monospace;font-size:12px;resize:vertical;"
+              oninput="updatePixelCodigos(${i}, this.value)">${escHtml((d.codigos||[]).join('\n'))}</textarea>
+          </div>
+        </div>
+        <div id="pixel-preview-${i}"></div>
+      </div>
+    </div>`
+  ).join('');
+
+  window.pixelState.forEach((_, i) => renderPixelPreview(i));
+}
+
+// ── Pixel Art ────────────────────────────────────────
+window.togglePixelArt = function() {
+  const body = document.getElementById('pixel-art-body');
+  if (!body) return;
+  body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  atualizarBtnPixelArt();
+};
+
+function atualizarBtnPixelArt() {
+  const btn  = document.getElementById('btn-toggle-pixel-art');
+  const body = document.getElementById('pixel-art-body');
+  if (!btn || !body) return;
+  const aberto = body.style.display !== 'none';
+  const n = (window.pixelArtState || []).length;
+  btn.textContent = aberto
+    ? (n > 0 ? '▲ Fechar (' + n + ' grid' + (n !== 1 ? 's' : '') + ')' : '▲ Fechar')
+    : (n > 0 ? '▼ Editar Grids (' + n + ')' : '▼ Criar Jogo');
+}
+
+window.adicionarPixelArt = function() {
+  if (!window.pixelArtState) window.pixelArtState = [];
+  if (window.pixelArtState.length >= 10) return;
+  window.pixelArtState.push({ colunas: 10, linhas: 10, pontos: 5.0 });
+  renderPixelArtLista();
+  recalcularPontos();
+  atualizarBtnPixelArt();
+};
+
+window.removerPixelArt = function(i) {
+  window.pixelArtState.splice(i, 1);
+  renderPixelArtLista();
+  recalcularPontos();
+  atualizarBtnPixelArt();
+};
+
+window.updatePixelArtColunas = function(i, val) {
+  if (!window.pixelArtState[i]) return;
+  window.pixelArtState[i].colunas = parseInt(val) || 10;
+};
+
+window.updatePixelArtLinhas = function(i, val) {
+  if (!window.pixelArtState[i]) return;
+  window.pixelArtState[i].linhas = parseInt(val) || 10;
+};
+
+window.updatePixelArtPontos = function(i, val) {
+  if (!window.pixelArtState[i]) return;
+  window.pixelArtState[i].pontos = parseFloat(val) || 5.0;
+  recalcularPontos();
+};
+
+function renderPixelArtLista() {
+  const lista = document.getElementById('pixel-art-lista');
+  if (!lista) return;
+  if (!window.pixelArtState) window.pixelArtState = [];
+
+  if (window.pixelArtState.length === 0) {
+    lista.innerHTML = '<div class="quiz-empty">Nenhum grid cadastrado. Clique em + Grid para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = window.pixelArtState.map((d, i) => `
+    <div class="quiz-card">
+      <div class="quiz-card-header">
+        <strong>Grid ${i + 1}</strong>
+        <span style="font-size:11px;color:#6b7280;margin-left:8px;">${d.linhas || 10} linhas × ${d.colunas || 10} col</span>
+        <button onclick="removerPixelArt(${i})" class="btn-rem-quiz">✕ Remover</button>
+      </div>
+      <div class="quiz-card-body">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="form-group" style="width:100px;flex-shrink:0;">
+            <label style="font-size:11px;">Colunas</label>
+            <input type="number" min="1" max="20" value="${d.colunas || 10}"
+              oninput="updatePixelArtColunas(${i}, this.value)">
+          </div>
+          <div class="form-group" style="width:100px;flex-shrink:0;">
+            <label style="font-size:11px;">Linhas</label>
+            <input type="number" min="1" max="20" value="${d.linhas || 10}"
+              oninput="updatePixelArtLinhas(${i}, this.value)">
+          </div>
+          <div class="form-group" style="width:80px;flex-shrink:0;">
+            <label style="font-size:11px;">Pontos</label>
+            <input type="number" min="0.5" max="20" step="0.5" value="${d.pontos || 5}"
+              oninput="updatePixelArtPontos(${i}, this.value)">
+          </div>
+          <p style="font-size:11px;color:#6b7280;margin:0 0 6px;">O aluno cria livremente e codifica. Nenhum código pré-definido.</p>
+        </div>
+      </div>
+    </div>`
+  ).join('');
 }
 
 // ── Prompt IA ──────────────────────────────────────────────────────────
@@ -4135,6 +4821,11 @@ window.abrirEstatisticaCards = async function() {
       { key: 'box_desafios',      label: 'Simulador BOX'    },
       { key: 'binario_desafios',  label: 'Código Binário'   },
       { key: 'logica_desafios',   label: 'Lógica do Sistema'},
+      { key: 'palavra_desafios',  label: 'Palavra Secreta'  },
+      { key: 'bomba_desafios',    label: 'Desarmar Bomba'   },
+      { key: 'pixel_desafios',     label: 'Pixel Code'       },
+      { key: 'pixel_img_desafios', label: 'Pixel Image'      },
+      { key: 'pixel_art_desafios', label: 'Pixel Art'        },
     ];
 
     const tipos       = {};
@@ -4169,6 +4860,8 @@ window.abrirEstatisticaCards = async function() {
           { campo: 'box_desafios',      def: 2.0 },
           { campo: 'binario_desafios',  def: 1.0 },
           { campo: 'logica_desafios',   def: 2.0 },
+          { campo: 'palavra_desafios',  def: 1.0 },
+          { campo: 'bomba_desafios',    def: 2.0 },
         ];
         jogosFields.forEach(({ campo, def }) => {
           (c[campo] || []).forEach(item => { ptsTotalDisp += parseFloat(item.pontos) || def; });
