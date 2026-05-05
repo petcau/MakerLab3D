@@ -440,18 +440,57 @@ body.explodindo {
 
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 520px) {
-  .bm-top-row { gap: 12px; padding: 14px 16px; }
-  .bm-timer { font-size: 38px; letter-spacing: 2px; }
-  .bm-bomb-emoji { font-size: 52px; }
-  .bm-val-box { padding: 16px 22px; min-width: 100px; }
-  .bm-valor { font-size: 48px; }
-  .bm-sistema-alvo { font-size: 9px; }
-  .bm-challenge { gap: 16px; }
-  .ps-bit-card { width: 64px; height: 82px; }
-  .ps-bit-circle { width: 40px; height: 40px; }
-  .ps-bit-val { font-size: 13px; }
-  .alfa-card { min-width: 34px; }
-  .alfa-letra { font-size: 17px; }
+  /* Top row */
+  .bm-top-row { gap: 10px; padding: 12px 14px; }
+  .bm-timer { font-size: 32px; letter-spacing: 1px; }
+  .bm-timer-label { font-size: 8px; letter-spacing: 1px; }
+  .bm-bomb-emoji { font-size: 44px; }
+  .bm-fios { gap: 10px; padding: 12px 10px; }
+  .bm-fio { gap: 6px; }
+  .bm-fio-conector { width: 14px; height: 14px; }
+  .bm-fio-linha { height: 8px; }
+  .bm-fio-num { font-size: 10px; letter-spacing: 0; }
+  .bm-fio-status { font-size: 16px; }
+  /* Challenge — botão cai em linha separada, full-width */
+  .bm-desafio-wrap { padding: 14px 12px; }
+  .bm-challenge { gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .bm-val-box { padding: 10px 14px; min-width: 0; }
+  .bm-input-box { padding: 10px 12px; min-width: 0; }
+  .bm-arrow { font-size: 20px; }
+  .bm-valor { font-size: 30px; }
+  .bm-input { font-size: 30px; width: 90px; }
+  .bm-input::placeholder { font-size: 26px; }
+  .bm-sistema { font-size: 9px; margin-top: 6px; }
+  .bm-sistema-alvo { font-size: 9px; margin-top: 6px; }
+  .bm-btn { flex: 0 0 100%; padding: 10px; font-size: 14px; margin-top: 2px; }
+  /* Binary board */
+  .ps-bit-card { width: 58px; height: 76px; padding: 8px 6px 10px; }
+  .ps-bit-circle { width: 36px; height: 36px; }
+  .ps-bit-val { font-size: 12px; }
+  .ps-board { gap: 8px; }
+  /* Alphabet */
+  .bm-tabela-wrap { margin: 0 10px 4px; }
+  .alfa-card { min-width: 30px; padding: 4px 4px; }
+  .alfa-letra { font-size: 16px; }
+  .alfa-num { font-size: 9px; }
+  /* Player */
   .player-avatar { width: 52px; height: 52px; }
   .q-logo { font-size: 15px; }
+}
+
+@media (max-width: 400px) {
+  body { padding: 12px 10px 60px; }
+  .bm-top-row { gap: 8px; padding: 10px 10px; }
+  .bm-timer { font-size: 26px; }
+  .bm-bomb-emoji { font-size: 36px; }
+  .bm-fio-num { font-size: 9px; }
+  .bm-fio-meta { gap: 4px; }
+  .bm-valor { font-size: 26px; }
+  .bm-input { font-size: 26px; width: 80px; }
+  .bm-input::placeholder { font-size: 22px; }
+  .ps-bit-card { width: 50px; height: 66px; padding: 6px 4px 8px; }
+  .ps-bit-circle { width: 30px; height: 30px; }
+  .ps-board { gap: 5px; }
+  .alfa-card { min-width: 26px; padding: 3px 3px; }
+  .alfa-letra { font-size: 14px; }
 }
